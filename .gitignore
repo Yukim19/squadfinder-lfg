@@ -1,0 +1,32 @@
+# Secretos y variables de entorno (NUNCA subir a GitHub)
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node (por si se usan herramientas de frontend)
+node_modules/
+
+# Editor
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# Sistema operativo / OneDrive
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
