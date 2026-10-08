@@ -1,0 +1,17 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.debugpy",
+    "charliermarsh.ruff",
+    "ritwickdey.LiveServer",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    "rangav.vscode-thunder-client",
+    "eamodio.gitlens",
+    "esbenp.prettier-vscode",
+    "usernamehw.errorlens",
+    "hediet.vscode-drawio",
+    "bierner.markdown-mermaid"
+  ]
+}
