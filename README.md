@@ -7,7 +7,10 @@ Proyecto final del curso COMP2053 Integrat Web Dev (Full-Stack).
 ## Estructura
 
 ```
-/frontend            8 páginas HTML + CSS/JS (Bootstrap 5, i18next)
+/frontend            11 páginas HTML (8 de la propuesta + usuario.html, admin_reportes.html y 404.html)
+  /css/theme.css     Tema visual (paleta neón morado/cian)
+  /js/catalogo.js    Catálogo y datos de prueba (se reemplazan por la API)
+  /js/ui.js          Componentes compartidos: avisos, confirmaciones, menú de usuario
 /backend
   /database          schema.sql, seed.sql, seed_demo.sql
 /docs                Documentación de las fases del proyecto

@@ -31,8 +31,10 @@ Los jugadores de juegos multijugador tienen problemas para encontrar compañeros
 | Módulo | Funciones |
 |---|---|
 | Autenticación | Inicio de sesión con Auth0 (correo o Google), tokens JWT, protección de rutas en el frontend y en el backend |
-| Perfil | Onboarding inicial, edición de preferencias (juegos, géneros, idiomas, nivel del filtro), vinculación y desvinculación de Discord, Steam, Twitch y Kick, eliminación de la cuenta |
-| Salas LFG | CRUD completo de publicaciones, búsqueda con filtros y % de compatibilidad |
+| Perfil | Onboarding inicial donde el usuario elige su región y **los juegos en los que busca compañeros**; edición posterior de esas preferencias (juegos, géneros, región, idiomas, nivel del filtro); vinculación y desvinculación de Discord, Steam, Twitch y Kick; eliminación de la cuenta |
+| Salas LFG | CRUD completo de publicaciones (solo de los juegos elegidos en el perfil), con tipo de partida (casual o competitiva con rango mínimo), una o varias plataformas según el crossplay del juego, e idioma español, inglés o todos; feed con la región del anfitrión, búsqueda con filtros y % de compatibilidad |
+| Historial | Partidas terminadas con la lista de compañeros (usuario, región, Honor Score) y las opciones de calificar o **reportar** a cada uno |
+| Moderación | Reportes de jugadores tóxicos con motivo y comentario; evidencia automática con los mensajes que marcó el filtro; panel de administrador para descartar el reporte, suspender la cuenta 7 días o eliminarla |
 | Solicitudes | CRUD completo: solicitar unirse, ver solicitudes, aceptar o rechazar, retirar la solicitud |
 | Reputación | Reseñas post-partida (crear, ver, editar, eliminar) y Honor Score promedio |
 | Chat | Mensajes en tiempo real por WebSocket con filtro anti-toxicidad (OFF, MEDIUM, STRICT) e historial |
@@ -126,8 +128,11 @@ flowchart TD
     CREAR["crear_post.html<br/>Crear sala"]
     DET["detalle_post.html<br/>Detalle de sala"]
     CHAT["chat_sala.html<br/>Chat de la sala"]
-    PERFIL["perfil_config.html<br/>Mi perfil"]
+    PERFIL["perfil_config.html<br/>Configurar perfil"]
     HIST["historial_partidas.html<br/>Historial y reseñas"]
+    USR["usuario.html<br/>Perfil público"]
+    E404["404.html<br/>Página no encontrada"]
+    ADMIN["admin_reportes.html<br/>Moderación (solo ADMIN)"]
 
     LOGIN -- "primer inicio" --> ONB
     LOGIN -- "usuario existente" --> INDEX
@@ -139,8 +144,46 @@ flowchart TD
     CHAT --> DET
     INDEX --> PERFIL
     INDEX --> HIST
-    HIST -- "ver sala" --> DET
-    PERFIL -- "cerrar sesión" --> LOGIN
+    HIST -- "calificar compañeros" --> HIST
+    DET -- "clic en un jugador" --> USR
+    HIST -- "clic en un jugador" --> USR
+    CHAT -- "clic en un jugador" --> USR
+    PERFIL -- "ver mi perfil público" --> USR
+    PERFIL -- "cerrar sesión / eliminar cuenta" --> LOGIN
+    DET -. "sala inexistente" .-> E404
+    HIST -- "reportar jugador" --> ADMIN
+    USR -- "reportar jugador" --> ADMIN
+    ADMIN -- "ver perfil del reportado" --> USR
 ```
 
-Todas las páginas, excepto `login.html`, son **rutas protegidas**: si no hay una sesión válida, el usuario es redirigido a `login.html`. La barra de navegación (presente en todas las páginas) permite ir directamente a Inicio, Crear búsqueda, Historial y Mi perfil.
+Todas las páginas, excepto `login.html` y `404.html`, son **rutas protegidas**: si no hay una sesión válida, el usuario es redirigido a `login.html`. `admin_reportes.html` además exige `role = 'ADMIN'`; el backend responde `403 Forbidden` a cualquier otro usuario.
+
+La barra de navegación de todas las páginas tiene:
+
+- enlaces a Salas, Crear búsqueda e Historial;
+- un menú de usuario con Configurar perfil, Ver mi perfil público, Historial y Cerrar sesión;
+- para administradores, la opción **Moderación**, con el número de reportes pendientes.
+
+### Páginas adicionales a la propuesta
+
+Además de las 8 páginas de la propuesta, se agregaron 3:
+
+| Página | Motivo |
+|---|---|
+| `usuario.html` | Perfil público de cada jugador: Honor Score, reseñas recibidas, etiquetas destacadas, juegos y cuentas vinculadas. Permite decidir con quién jugar antes de aceptar una solicitud. Usa `GET /api/v1/users/{id}` y `GET /api/v1/reputation/users/{id}` |
+| `404.html` | Página de error para salas eliminadas o direcciones mal escritas. Netlify la muestra automáticamente |
+| `admin_reportes.html` | Panel de moderación: reportes pendientes y resueltos, evidencia del chat marcada por el filtro y acciones de sanción. Usa `GET /api/v1/admin/reports` y `PUT /api/v1/admin/reports/{id}` |
+
+### Operaciones CRUD por página
+
+| Página | Create | Read | Update | Delete |
+|---|---|---|---|---|
+| onboarding.html | Perfil inicial | — | — | — |
+| perfil_config.html | Vincular cuenta | Mis datos | Preferencias, juegos, región | Desvincular cuenta, eliminar cuenta |
+| crear_post.html | Sala | Mis juegos | — | — |
+| index.html | — | Salas activas con filtros | — | — |
+| detalle_post.html | Solicitud para unirse | Sala, integrantes, solicitudes | Editar sala, aceptar o rechazar solicitud, terminar partida | Eliminar sala, retirar solicitud, salir de la sala |
+| chat_sala.html | Mensaje | Historial del chat | — | — |
+| historial_partidas.html | Reseña, reporte | Partidas y compañeros | Editar reseña | Borrar reseña, eliminar sala |
+| usuario.html | Reporte | Perfil público y reseñas | — | — |
+| admin_reportes.html | — | Reportes y evidencia | Resolver reporte: descartar, suspender o eliminar la cuenta | — |

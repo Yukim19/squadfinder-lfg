@@ -25,6 +25,12 @@ erDiagram
     users ||--o{ user_reviews : "recibe (target)"
     lfg_posts ||--o{ chat_messages : "contiene"
     users ||--o{ chat_messages : "envía"
+    games ||--|{ game_platforms : "disponible en"
+    lfg_posts ||--|{ post_platforms : "se juega desde"
+    users ||--o{ user_reports : "reporta (reporter)"
+    users ||--o{ user_reports : "es reportado"
+    users ||--o{ user_reports : "resuelve (admin)"
+    lfg_posts ||--o{ user_reports : "ocurrió en"
 
     users {
         int id PK
@@ -34,8 +40,12 @@ erDiagram
         char preferred_language_speak
         char preferred_language_write
         varchar toxicity_filter_level
+        varchar region
         numeric honor_score
         boolean is_onboarding_completed
+        varchar role
+        varchar account_status
+        timestamptz suspended_until
         timestamptz created_at
         timestamptz updated_at
     }
@@ -55,6 +65,28 @@ erDiagram
         int id PK
         varchar name UK
         smallint genre_id FK
+        boolean crossplay
+    }
+    game_platforms {
+        int game_id PK, FK
+        varchar platform PK
+    }
+    post_platforms {
+        int post_id PK, FK
+        varchar platform PK
+    }
+    user_reports {
+        int id PK
+        int reporter_id FK
+        int reported_user_id FK
+        int post_id FK
+        varchar reason
+        varchar comment
+        varchar status
+        int resolved_by FK
+        varchar admin_notes
+        timestamptz resolved_at
+        timestamptz created_at
     }
     user_genres {
         int user_id PK, FK
@@ -70,11 +102,11 @@ erDiagram
         int game_id FK
         varchar title
         varchar description
-        varchar platform
         smallint max_players
+        varchar play_mode
         varchar rank_required
         boolean mic_required
-        char required_language
+        varchar required_language
         varchar status
         timestamptz created_at
         timestamptz updated_at
@@ -125,23 +157,39 @@ erDiagram
 | Usuario – reseñas | 1:N dos veces | `reviewer_id` (quien califica) y `target_user_id` (quien es calificado) |
 | Sala – mensajes | 1:N | `chat_messages.post_id` → `lfg_posts.id` |
 | Usuario – mensajes | 1:N | `chat_messages.sender_id` → `users.id` |
+| Juego – plataformas | 1:N (catálogo) | `game_platforms.game_id` → `games.id` |
+| Sala – plataformas | 1:N | `post_platforms.post_id` → `lfg_posts.id`; varias solo si el juego tiene `crossplay` |
+| Usuario – reportes | 1:N tres veces | `reporter_id` (quien reporta), `reported_user_id` (reportado), `resolved_by` (administrador) |
+| Sala – reportes | 1:N | `user_reports.post_id` → `lfg_posts.id` (partida donde ocurrió) |
 
 ## 2. Esquema relacional
 
 Notación: **subrayado = PK**, *cursiva = FK*.
 
 - **genres** (<u>id</u>, name)
-- **games** (<u>id</u>, name, *genre_id*)
-- **users** (<u>id</u>, auth0_id, username, ui_language, preferred_language_speak, preferred_language_write, toxicity_filter_level, honor_score, is_onboarding_completed, created_at, updated_at)
+- **games** (<u>id</u>, name, *genre_id*, crossplay)
+- **game_platforms** (<u>*game_id*</u>, <u>platform</u>)
+- **users** (<u>id</u>, auth0_id, username, ui_language, preferred_language_speak, preferred_language_write, toxicity_filter_level, region, honor_score, is_onboarding_completed, role, account_status, suspended_until, created_at, updated_at)
 - **linked_accounts** (<u>id</u>, *user_id*, provider, external_username, external_id, created_at)
 - **user_genres** (<u>*user_id*</u>, <u>*genre_id*</u>)
 - **user_games** (<u>*user_id*</u>, <u>*game_id*</u>)
-- **lfg_posts** (<u>id</u>, *host_id*, *game_id*, title, description, platform, max_players, rank_required, mic_required, required_language, status, created_at, updated_at, closed_at)
+- **lfg_posts** (<u>id</u>, *host_id*, *game_id*, title, description, max_players, play_mode, rank_required, mic_required, required_language, status, created_at, updated_at, closed_at)
+- **post_platforms** (<u>*post_id*</u>, <u>platform</u>)
 - **applications** (<u>id</u>, *post_id*, *applicant_id*, status, message, created_at, updated_at)
 - **user_reviews** (<u>id</u>, *post_id*, *reviewer_id*, *target_user_id*, rating, tag, comment, created_at, updated_at)
 - **chat_messages** (<u>id</u>, *post_id*, *sender_id*, message, toxicity_level, sent_at)
+- **user_reports** (<u>id</u>, *reporter_id*, *reported_user_id*, *post_id*, reason, comment, status, *resolved_by*, admin_notes, resolved_at, created_at)
 
-**Vista:** `v_lfg_posts` = `lfg_posts` + nombre del juego + usuario y Honor Score del anfitrión + `current_players` (calculado).
+**Vistas:**
+
+| Vista | Contenido | Página que la usa |
+|---|---|---|
+| `v_lfg_posts` | `lfg_posts` + nombre del juego + usuario, Honor Score y **región** del anfitrión + `current_players` (calculado) | `index.html`, `detalle_post.html` |
+| `v_post_members` | Miembros de cada sala: el anfitrión (`HOST`) y las solicitudes aceptadas (`MEMBER`), con usuario, región y Honor Score | `detalle_post.html` |
+| `v_match_history` | Una fila por usuario, partida terminada y **compañero con el que jugó**, e indica si ya lo calificó (`already_reviewed`) o reportó (`already_reported`) | `historial_partidas.html` |
+| `v_reports_admin` | Reportes con usuario del reportado y del que reporta, total de reportes del reportado y **cuántos de sus mensajes en esa partida marcó el filtro PNL** (evidencia) | `admin_reportes.html` |
+
+`v_lfg_posts` también incluye `platforms` (lista de plataformas de la sala) y `game_crossplay`.
 
 ## 3. Diccionario de datos
 
@@ -165,10 +213,16 @@ Todas las PK numéricas se generan automáticamente (`GENERATED ALWAYS AS IDENTI
 | preferred_language_speak | CHAR(2) | No | — | `'es'` | Idioma en que habla: `es` o `en` |
 | preferred_language_write | CHAR(2) | No | — | `'es'` | Idioma en que escribe: `es` o `en` |
 | toxicity_filter_level | VARCHAR(6) | No | — | `'MEDIUM'` | Nivel del filtro de chat: `OFF`, `MEDIUM` o `STRICT` |
+| region | VARCHAR(11) | Sí | — | — | Región de juego: `NA_EAST`, `NA_WEST`, `LATAM_NORTH`, `LATAM_SOUTH`, `BRAZIL`, `EUROPE`, `ASIA` u `OCEANIA`. Se pide en el onboarding (vacía hasta completarlo) y se muestra en el feed de salas |
 | honor_score | NUMERIC(3,2) | No | — | 0 | Promedio de reseñas recibidas (0–5); lo actualiza un trigger |
 | is_onboarding_completed | BOOLEAN | No | — | FALSE | Indica si completó la configuración inicial |
+| role | VARCHAR(5) | No | — | `'USER'` | `USER` (jugador) o `ADMIN` (puede revisar reportes y sancionar) |
+| account_status | VARCHAR(9) | No | — | `'ACTIVE'` | `ACTIVE`, `SUSPENDED` (temporal) o `BANNED` (cuenta eliminada por un administrador) |
+| suspended_until | TIMESTAMPTZ | Sí | — | — | Fin de la suspensión; obligatorio si `account_status = 'SUSPENDED'` |
 | created_at | TIMESTAMPTZ | No | — | NOW() | Fecha de registro |
 | updated_at | TIMESTAMPTZ | No | — | NOW() | Última modificación (trigger) |
+
+Una cuenta `BANNED` se conserva (en lugar de borrarse) para que el mismo `auth0_id` no pueda volver a registrarse y para mantener la evidencia de los reportes. El backend rechaza con `403` cualquier petición de un usuario `SUSPENDED` o `BANNED`.
 
 ### 3.2 `linked_accounts`: cuentas externas vinculadas
 
@@ -197,8 +251,18 @@ Restricción: `UNIQUE (user_id, provider)`, para que haya una sola cuenta por pr
 | id | INTEGER | No | PK | auto | Identificador |
 | name | VARCHAR(100) | No | UK | — | Nombre del juego |
 | genre_id | SMALLINT | No | FK → genres | — | Género principal; no se puede borrar un género en uso |
+| crossplay | BOOLEAN | No | — | FALSE | Indica si jugadores de distintas plataformas pueden jugar juntos |
+
+### 3.4b `game_platforms`: plataformas de cada juego
+
+| Campo | Tipo | Nulo | Clave | Descripción |
+|---|---|---|---|---|
+| game_id | INTEGER | No | PK, FK → games | Juego |
+| platform | VARCHAR(12) | No | PK | `PC`, `PlayStation`, `Xbox`, `Switch` o `Mobile` |
 
 ### 3.5 `user_genres` y `user_games`: preferencias (M:N)
+
+`user_games` guarda **los juegos en los que el usuario busca compañeros**. Se eligen en el onboarding y se editan en el perfil. La API solo permite crear salas (`lfg_posts`) de juegos que estén en esta tabla para el anfitrión. Esta regla se valida en el backend y no con una FK, porque el usuario puede quitar un juego después de haber creado salas de él.
 
 | Campo | Tipo | Nulo | Clave | Descripción |
 |---|---|---|---|---|
@@ -216,15 +280,29 @@ La PK compuesta evita que una preferencia se repita.
 | game_id | INTEGER | No | FK → games | — | Juego de la sala |
 | title | VARCHAR(100) | No | — | — | Título; mínimo 3 caracteres |
 | description | VARCHAR(500) | Sí | — | — | Descripción opcional |
-| platform | VARCHAR(12) | No | — | — | `PC`, `PlayStation`, `Xbox`, `Switch` o `Mobile` |
 | max_players | SMALLINT | No | — | — | Cupos totales, entre 2 y 10 |
-| rank_required | VARCHAR(50) | Sí | — | — | Rango mínimo (texto libre) |
+| play_mode | VARCHAR(11) | No | — | `'CASUAL'` | `CASUAL` o `COMPETITIVE` |
+| rank_required | VARCHAR(50) | Sí | — | — | Rango mínimo; solo permitido si `play_mode = 'COMPETITIVE'` |
 | mic_required | BOOLEAN | No | — | FALSE | Indica si se requiere micrófono |
-| required_language | CHAR(2) | No | — | `'es'` | Idioma de la sala: `es` o `en` |
+| required_language | VARCHAR(3) | No | — | `'es'` | Idioma de la sala: `es`, `en` o `any` (todos los idiomas) |
 | status | VARCHAR(11) | No | — | `'OPEN'` | `OPEN`, `FULL`, `IN_PROGRESS`, `CLOSED` o `CANCELLED` |
 | created_at | TIMESTAMPTZ | No | — | NOW() | Fecha de creación |
 | updated_at | TIMESTAMPTZ | No | — | NOW() | Última modificación (trigger) |
 | closed_at | TIMESTAMPTZ | Sí | — | — | Fecha en que terminó la partida (para el historial) |
+
+Restricción: `CHECK (play_mode = 'COMPETITIVE' OR rank_required IS NULL)`, para que las salas casuales no pidan rango.
+
+### 3.6b `post_platforms`: plataformas de cada sala
+
+| Campo | Tipo | Nulo | Clave | Descripción |
+|---|---|---|---|---|
+| post_id | INTEGER | No | PK, FK → lfg_posts | Sala |
+| platform | VARCHAR(12) | No | PK | Plataforma desde la que se puede entrar |
+
+El trigger `trg_post_platforms_check` valida dos reglas:
+
+- la plataforma debe existir para el juego (`game_platforms`);
+- si el juego **no tiene crossplay**, la sala solo puede tener **una** plataforma.
 
 ### 3.7 `applications`: solicitudes para unirse
 
@@ -270,6 +348,30 @@ Restricciones:
 | toxicity_level | VARCHAR(6) | No | — | `'NONE'` | Resultado del filtro PNL: `NONE`, `MILD` o `SEVERE` |
 | sent_at | TIMESTAMPTZ | No | — | NOW() | Fecha y hora de envío |
 
+### 3.9b `user_reports`: reportes de moderación
+
+Un jugador reporta a otro (por ejemplo, por toxicidad en el chat). Un administrador lo revisa en `admin_reportes.html` y decide la sanción.
+
+| Campo | Tipo | Nulo | Clave | Default | Descripción / restricciones |
+|---|---|---|---|---|---|
+| id | INTEGER | No | PK | auto | Identificador |
+| reporter_id | INTEGER | No | FK → users | — | Quien reporta |
+| reported_user_id | INTEGER | No | FK → users | — | Quien es reportado |
+| post_id | INTEGER | Sí | FK → lfg_posts | — | Partida donde ocurrió; se usa para buscar la evidencia del chat |
+| reason | VARCHAR(15) | No | — | — | `TOXIC_CHAT`, `HARASSMENT`, `AFK_GRIEFING`, `CHEATING` u `OTHER` |
+| comment | VARCHAR(500) | No | — | — | Explicación para el administrador; mínimo 10 caracteres |
+| status | VARCHAR(9) | No | — | `'PENDING'` | `PENDING`, `DISMISSED` (descartado), `SUSPENDED` o `BANNED` |
+| resolved_by | INTEGER | Sí | FK → users | — | Administrador que tomó la decisión |
+| admin_notes | VARCHAR(500) | Sí | — | — | Justificación de la decisión |
+| resolved_at | TIMESTAMPTZ | Sí | — | — | Fecha de la decisión |
+| created_at | TIMESTAMPTZ | No | — | NOW() | Fecha del reporte |
+
+Restricciones:
+
+- `CHECK (reporter_id <> reported_user_id)`: nadie puede reportarse a sí mismo.
+- `CHECK ((status = 'PENDING') = (resolved_at IS NULL))`: todo reporte resuelto tiene fecha, y uno pendiente no la tiene.
+- Índice único `(reporter_id, reported_user_id, post_id)`: no se puede reportar dos veces a la misma persona por la misma partida.
+
 ### 3.10 Índices
 
 | Índice | Tabla (columnas) | Para qué sirve |
@@ -279,6 +381,9 @@ Restricciones:
 | idx_applications_applicant | applications (applicant_id) | Salas en las que participó un usuario |
 | idx_user_reviews_target | user_reviews (target_user_id) | Cálculo del Honor Score |
 | idx_chat_messages_post_sent | chat_messages (post_id, sent_at) | Historial del chat en orden |
+| uq_user_reports_once | user_reports (reporter_id, reported_user_id, post_id) | Evita reportes duplicados (único) |
+| idx_user_reports_status | user_reports (status, created_at) | Lista de reportes pendientes del panel de moderación |
+| idx_user_reports_reported | user_reports (reported_user_id) | Contar los reportes de un usuario |
 
 ### 3.11 Triggers
 
@@ -286,6 +391,7 @@ Restricciones:
 |---|---|---|
 | trg_*_updated_at | users, lfg_posts, applications, user_reviews | Actualiza `updated_at` en cada UPDATE |
 | trg_reviews_honor | user_reviews | Recalcula `users.honor_score` al crear, editar o borrar una reseña |
+| trg_post_platforms_check | post_platforms | Rechaza plataformas que el juego no tiene, y más de una plataforma si el juego no tiene crossplay |
 
 ## 4. Normalización
 
@@ -314,6 +420,12 @@ El diseño cumple la **Tercera Forma Normal (3FN)**:
 | `chat_messages.was_filtered` | `chat_messages.toxicity_level` | Más información, para el filtro por usuario |
 | `user_reviews` sin partida | `user_reviews.post_id` y restricciones | Las reseñas se atan a una partida real; se evitan duplicados y autocalificaciones |
 | Sin fechas en salas y solicitudes | `created_at`, `updated_at`, `closed_at` | Historial y auditoría |
+| Sin región | `users.region` | Mostrar la región de cada jugador en las salas activas |
+| Historial sin compañeros | Vistas `v_post_members` y `v_match_history` | Mostrar con quién jugaste y a quién falta calificar |
+| `lfg_posts.platform` (una sola) | Tabla `post_platforms` + `games.crossplay` + `game_platforms` | Salas con varias plataformas cuando el juego tiene crossplay |
+| Sin tipo de partida | `lfg_posts.play_mode` (casual / competitivo) | El rango solo se pide en partidas competitivas |
+| Idioma `es` o `en` | `required_language` acepta `any` | Salas abiertas a todos los idiomas |
+| Sin moderación | Tabla `user_reports`, `users.role`, `users.account_status` y vista `v_reports_admin` | Reportar jugadores tóxicos; un administrador revisa la evidencia y suspende o elimina la cuenta |
 
 ## 6. Script de creación
 
