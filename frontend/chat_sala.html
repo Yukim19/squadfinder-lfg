@@ -1,46 +1,187 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chat de sala - SquadFinder LFG</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <link href="css/theme.css" rel="stylesheet">
 </head>
 
-<body class="bg-dark text-light">
+<body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-black">
+    <nav class="navbar navbar-expand-lg sf-navbar sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="index.html">SquadFinder LFG</a>
+            <a class="navbar-brand" href="index.html">Squad<span>Finder</span></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav-principal"
                 aria-controls="nav-principal" aria-expanded="false" aria-label="Abrir menú">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="nav-principal">
                 <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="index.html">Salas</a>
                     <a class="nav-link" href="crear_post.html">Crear búsqueda</a>
                     <a class="nav-link" href="historial_partidas.html">Historial</a>
-                    <a class="nav-link" href="perfil_config.html">Mi perfil</a>
-                    <a class="btn btn-primary ms-lg-2 mt-2 mt-lg-0" href="login.html">Entrar</a>
+                    <div class="nav-item dropdown ms-lg-2">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="sf-avatar sf-avatar-sm" id="nav-avatar" aria-hidden="true">?</span>
+                            <span id="nav-username">Mi cuenta</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="perfil_config.html">Configurar perfil</a></li>
+                            <li><a class="dropdown-item" id="nav-perfil-publico" href="usuario.html">Ver mi perfil público</a></li>
+                            <li><a class="dropdown-item" href="historial_partidas.html">Historial</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item text-danger" id="btn-logout" type="button">Cerrar sesión</button></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </nav>
 
-    <main class="container py-4" style="max-width: 700px;">
-        <h1>Chat de la sala</h1>
-        <div id="mensajes" class="border rounded p-3 mb-3 bg-black" style="height: 400px; overflow-y: auto;">
-            <p class="text-secondary">Los mensajes aparecerán aquí.</p>
+    <main class="container py-4">
+        <a href="index.html" class="d-inline-block mb-3" id="enlace-sala">← Volver a la sala</a>
+
+        <div class="row g-4">
+            <section class="col-lg-8">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <div>
+                        <h1 class="h2 mb-0" id="chat-titulo">Chat de la sala</h1>
+                        <small class="text-secondary" id="chat-juego"></small>
+                    </div>
+                    <a href="perfil_config.html" class="badge sf-badge-honor text-decoration-none" id="chat-filtro"
+                        title="Cambiar el nivel del filtro en tu perfil"></a>
+                </div>
+
+                <div id="no-miembro" class="sf-card text-center d-none">
+                    <p class="mb-3">Solo los integrantes de la sala pueden ver el chat.</p>
+                    <a class="btn btn-primary" id="btn-ver-sala" href="index.html">Ver la sala</a>
+                </div>
+
+                <div id="zona-chat">
+                    <div id="mensajes" class="sf-card sf-chat mb-3" aria-live="polite" aria-label="Mensajes del chat"></div>
+                    <form id="form-chat">
+                        <div class="input-group">
+                            <label class="visually-hidden" for="input-mensaje">Mensaje</label>
+                            <input type="text" class="form-control" id="input-mensaje" placeholder="Escribe un mensaje..."
+                                autocomplete="off" maxlength="500" required>
+                            <button class="btn btn-primary" type="submit">Enviar</button>
+                        </div>
+                        <div class="form-text text-end"><span id="contador">0</span>/500</div>
+                    </form>
+                </div>
+            </section>
+
+            <aside class="col-lg-4">
+                <section class="sf-card">
+                    <h2 class="h5 mb-2">En la sala</h2>
+                    <div id="lista-miembros"></div>
+                    <p class="small text-secondary mt-3 mb-0">🛡️ Los mensajes pasan por un filtro anti-toxicidad. Cada jugador decide qué tan estricto es desde su perfil.</p>
+                </section>
+            </aside>
         </div>
-        <form id="form-chat" class="input-group">
-            <input type="text" class="form-control" id="input-mensaje" placeholder="Escribe un mensaje..."
-                autocomplete="off">
-            <button class="btn btn-primary" type="submit">Enviar</button>
-        </form>
     </main>
 
+    <footer class="sf-footer py-4 mt-5">
+        <div class="container d-flex flex-wrap justify-content-between gap-2">
+            <span>© 2026 SquadFinder LFG · Proyecto Full-Stack COMP2053</span>
+            <span><a href="index.html">Salas</a> · <a href="crear_post.html">Crear búsqueda</a> · <a href="perfil_config.html">Mi perfil</a></span>
+        </div>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/catalogo.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        // Semana 5: el historial llega de GET /api/v1/chat/posts/{id}/history y los
+        // mensajes nuevos por WebSocket (/ws/chat/{post_id}).
+        const sala = SALAS_DEMO.find((s) => s.id === idDeUrl(1));
+        if (!sala) {
+            location.replace('404.html');
+            throw new Error('Sala no encontrada');
+        }
+        const miembros = MIEMBROS_DEMO[sala.id] ?? [];
+        const mensajes = [...(MENSAJES_DEMO[sala.id] ?? [])];
+        const nivel = USUARIO_DEMO.toxicity_filter_level;
+
+        document.title = `Chat: ${sala.title} - SquadFinder LFG`;
+        document.getElementById('chat-titulo').textContent = sala.title;
+        document.getElementById('chat-juego').textContent = `${sala.game_name} · ${textoPlataformas(sala.platforms)}`;
+        document.getElementById('enlace-sala').href = `detalle_post.html?id=${sala.id}`;
+        document.getElementById('btn-ver-sala').href = `detalle_post.html?id=${sala.id}`;
+        document.getElementById('chat-filtro').textContent = `🛡️ Filtro: ${NIVELES_FILTRO[nivel]}`;
+
+        document.getElementById('lista-miembros').innerHTML = miembros.map((m) => `
+            <div class="d-flex align-items-center gap-2 py-1">
+                ${avatar(m.username, 'sf-avatar-sm')} ${enlaceUsuario(m.user_id, m.username)}
+                ${m.role === 'HOST' ? '<span class="badge text-bg-warning">Anfitrión</span>' : ''}
+            </div>`).join('');
+
+        // Solo los integrantes pueden chatear
+        if (!miembros.some((m) => m.user_id === USUARIO_DEMO.id)) {
+            document.getElementById('zona-chat').classList.add('d-none');
+            document.getElementById('no-miembro').classList.remove('d-none');
+        }
+
+        // STRICT oculta MILD y SEVERE; MEDIUM oculta SEVERE; OFF muestra todo
+        function debeOcultarse(toxicidad) {
+            if (nivel === 'STRICT') return toxicidad !== 'NONE';
+            if (nivel === 'MEDIUM') return toxicidad === 'SEVERE';
+            return false;
+        }
+
+        const caja = document.getElementById('mensajes');
+
+        function pintarMensajes() {
+            if (mensajes.length === 0) {
+                caja.innerHTML = '<p class="text-secondary text-center m-auto">Aún no hay mensajes. ¡Saluda a tu squad!</p>';
+                return;
+            }
+            caja.innerHTML = mensajes.map((m, i) => {
+                const mio = m.sender_id === USUARIO_DEMO.id;
+                const oculto = debeOcultarse(m.toxicity_level);
+                const texto = oculto
+                    ? `<span class="sf-msg-oculto">🚫 Mensaje oculto por tu filtro (${esc(NIVELES_FILTRO[nivel])}).</span>
+                       <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-mostrar="${i}">Mostrar</button>`
+                    : esc(m.message);
+                return `
+                    <div class="sf-msg ${mio ? 'sf-msg-mio' : ''}">
+                        <small class="d-block">${mio ? 'Tú' : esc(m.username)} · ${esc(m.sent_at)}</small>
+                        <span data-texto="${i}">${texto}</span>
+                    </div>`;
+            }).join('');
+            caja.scrollTop = caja.scrollHeight;
+        }
+
+        caja.addEventListener('click', (e) => {
+            const i = e.target.dataset.mostrar;
+            if (i !== undefined) caja.querySelector(`[data-texto="${i}"]`).textContent = mensajes[i].message;
+        });
+
+        const input = document.getElementById('input-mensaje');
+        input.addEventListener('input', () => {
+            document.getElementById('contador').textContent = input.value.length;
+        });
+
+        document.getElementById('form-chat').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const texto = input.value.trim();
+            if (!texto) return;
+            const hora = new Date().toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+            // Semana 5: socket.send(texto); el servidor lo filtra y lo reenvía a todos
+            mensajes.push({ sender_id: USUARIO_DEMO.id, username: USUARIO_DEMO.username, message: texto, toxicity_level: 'NONE', sent_at: hora });
+            input.value = '';
+            document.getElementById('contador').textContent = '0';
+            pintarMensajes();
+        });
+
+        pintarMensajes();
+    </script>
 </body>
 
 </html>

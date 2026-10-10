@@ -1,0 +1,632 @@
+/* =====================================================================
+   SquadFinder LFG - Tema "Neón morado/cian"
+   Se carga DESPUÉS de Bootstrap y sobrescribe sus variables.
+   Para cambiar un color en todo el sitio, edita solo :root.
+   ===================================================================== */
+
+:root {
+    /* Paleta */
+    --sf-bg: #0E0B16;            /* fondo de la página */
+    --sf-surface: #1A1625;       /* tarjetas, navbar */
+    --sf-surface-2: #241E33;     /* hover, elementos elevados */
+    --sf-border: #2E2742;
+    --sf-primary: #8B5CF6;       /* morado (bordes, acentos, foco) */
+    --sf-primary-strong: #7C3AED;/* fondo de botones (mejor contraste con texto blanco) */
+    --sf-primary-hover: #6D28D9;
+    --sf-primary-soft: #A78BFA;  /* enlaces sobre fondo oscuro */
+    --sf-accent: #22D3EE;        /* cian: EN VIVO, detalles */
+    --sf-success: #22C55E;
+    --sf-danger: #F43F5E;
+    --sf-warning: #FBBF24;
+    --sf-text: #E9E7F0;
+    --sf-text-muted: #A39FB5;
+
+    /* Tipografía */
+    --sf-font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --sf-font-display: "Rajdhani", "Inter", system-ui, sans-serif;
+}
+
+/* ---------------------------------------------------------------------
+   Variables de Bootstrap (modo oscuro)
+   --------------------------------------------------------------------- */
+[data-bs-theme="dark"] {
+    --bs-body-bg: var(--sf-bg);
+    --bs-body-bg-rgb: 14, 11, 22;
+    --bs-body-color: var(--sf-text);
+    --bs-body-font-family: var(--sf-font-body);
+    --bs-emphasis-color: #FFFFFF;
+    --bs-secondary-color: var(--sf-text-muted);
+    --bs-secondary-rgb: 163, 159, 181;
+    --bs-secondary-bg: var(--sf-surface-2);
+    --bs-tertiary-bg: var(--sf-surface);
+    --bs-border-color: var(--sf-border);
+    --bs-primary: var(--sf-primary);
+    --bs-primary-rgb: 139, 92, 246;
+    --bs-success-rgb: 34, 197, 94;
+    --bs-danger-rgb: 244, 63, 94;
+    --bs-warning-rgb: 251, 191, 36;
+    --bs-info-rgb: 34, 211, 238;
+    --bs-link-color: var(--sf-primary-soft);
+    --bs-link-color-rgb: 167, 139, 250;
+    --bs-link-hover-color: var(--sf-accent);
+    --bs-link-hover-color-rgb: 34, 211, 238;
+    --bs-form-valid-color: var(--sf-success);
+    --bs-form-valid-border-color: var(--sf-success);
+    --bs-form-invalid-color: var(--sf-danger);
+    --bs-form-invalid-border-color: var(--sf-danger);
+}
+
+body {
+    background:
+        radial-gradient(1200px 500px at 85% -10%, rgba(139, 92, 246, 0.18), transparent 60%),
+        radial-gradient(900px 400px at -10% 110%, rgba(34, 211, 238, 0.08), transparent 60%),
+        var(--sf-bg);
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, .navbar-brand, .sf-display {
+    font-family: var(--sf-font-display);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+/* ---------------------------------------------------------------------
+   Navbar
+   --------------------------------------------------------------------- */
+.sf-navbar {
+    background-color: rgba(26, 22, 37, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--sf-border);
+}
+
+.sf-navbar .navbar-brand {
+    font-size: 1.5rem;
+    color: #FFFFFF;
+}
+
+.sf-navbar .navbar-brand span {
+    color: var(--sf-accent);
+}
+
+.sf-navbar .nav-link {
+    color: var(--sf-text-muted);
+    font-weight: 500;
+}
+
+.sf-navbar .nav-link:hover,
+.sf-navbar .nav-link:focus-visible {
+    color: var(--sf-text);
+}
+
+.sf-navbar .nav-link.active {
+    color: #FFFFFF;
+    box-shadow: inset 0 -2px 0 var(--sf-primary);
+}
+
+/* ---------------------------------------------------------------------
+   Botones
+   --------------------------------------------------------------------- */
+.btn {
+    font-weight: 600;
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--sf-primary-strong);
+    --bs-btn-border-color: var(--sf-primary-strong);
+    --bs-btn-hover-bg: var(--sf-primary-hover);
+    --bs-btn-hover-border-color: var(--sf-primary-hover);
+    --bs-btn-active-bg: var(--sf-primary-hover);
+    --bs-btn-active-border-color: var(--sf-primary-hover);
+    --bs-btn-disabled-bg: var(--sf-primary-strong);
+    --bs-btn-disabled-border-color: var(--sf-primary-strong);
+    --bs-btn-focus-shadow-rgb: 139, 92, 246;
+    box-shadow: 0 0 18px rgba(139, 92, 246, 0.35);
+}
+
+.btn-outline-light {
+    --bs-btn-color: var(--sf-text);
+    --bs-btn-border-color: var(--sf-border);
+    --bs-btn-hover-bg: var(--sf-surface-2);
+    --bs-btn-hover-color: #FFFFFF;
+    --bs-btn-hover-border-color: var(--sf-primary);
+    --bs-btn-active-bg: var(--sf-surface-2);
+    --bs-btn-active-color: #FFFFFF;
+    --bs-btn-active-border-color: var(--sf-primary);
+}
+
+.btn-success {
+    --bs-btn-bg: #16A34A;
+    --bs-btn-border-color: #16A34A;
+    --bs-btn-hover-bg: #15803D;
+    --bs-btn-hover-border-color: #15803D;
+}
+
+.btn-danger {
+    --bs-btn-bg: #E11D48;
+    --bs-btn-border-color: #E11D48;
+    --bs-btn-hover-bg: #BE123C;
+    --bs-btn-hover-border-color: #BE123C;
+}
+
+.btn-outline-danger {
+    --bs-btn-color: var(--sf-danger);
+    --bs-btn-border-color: var(--sf-danger);
+    --bs-btn-hover-bg: var(--sf-danger);
+    --bs-btn-hover-border-color: var(--sf-danger);
+}
+
+.btn-warning {
+    --bs-btn-bg: var(--sf-warning);
+    --bs-btn-border-color: var(--sf-warning);
+    --bs-btn-hover-bg: #F59E0B;
+    --bs-btn-hover-border-color: #F59E0B;
+}
+
+/* ---------------------------------------------------------------------
+   Formularios (Bootstrap trae el foco en azul fijo; lo cambiamos a morado)
+   --------------------------------------------------------------------- */
+.form-control,
+.form-select {
+    background-color: var(--sf-bg);
+    border-color: var(--sf-border);
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+    border-color: var(--sf-primary);
+    box-shadow: 0 0 0 0.25rem rgba(139, 92, 246, 0.25);
+}
+
+.form-control::placeholder {
+    color: #6F6987;
+}
+
+.form-check-input:checked {
+    background-color: var(--sf-primary-strong);
+    border-color: var(--sf-primary-strong);
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+/* ---------------------------------------------------------------------
+   Superficies: tarjetas, listas, tablas
+   --------------------------------------------------------------------- */
+.sf-card,
+.list-group-item {
+    background-color: var(--sf-surface);
+    border: 1px solid var(--sf-border);
+}
+
+.sf-card {
+    border-radius: 1rem;
+    padding: 1.5rem;
+}
+
+.sf-surface {
+    background-color: var(--sf-surface);
+    border-color: var(--sf-border) !important;
+}
+
+.table {
+    --bs-table-bg: var(--sf-surface);
+    --bs-table-striped-bg: var(--sf-surface-2);
+    --bs-table-border-color: var(--sf-border);
+}
+
+.sf-hero {
+    padding: 2.5rem 0 1.5rem;
+}
+
+.sf-kicker {
+    color: var(--sf-accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.8rem;
+}
+
+/* ---------------------------------------------------------------------
+   Chips seleccionables (juegos, géneros)
+   --------------------------------------------------------------------- */
+.sf-chip {
+    border-radius: 50rem;
+    padding: 0.35rem 0.9rem;
+    font-weight: 500;
+}
+
+.btn-check:checked + .sf-chip {
+    background-color: rgba(139, 92, 246, 0.2);
+    border-color: var(--sf-primary);
+    color: #FFFFFF;
+}
+
+.btn-check:checked + .sf-chip::before {
+    content: "✓ ";
+    color: var(--sf-accent);
+}
+
+.sf-fieldset legend {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* ---------------------------------------------------------------------
+   Historial: compañeros de partida
+   --------------------------------------------------------------------- */
+.sf-mate {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--sf-border);
+}
+
+.sf-avatar {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--sf-primary-strong), var(--sf-accent));
+    color: #FFFFFF;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------------
+   Badges propios del proyecto
+   --------------------------------------------------------------------- */
+.sf-badge-honor {
+    background-color: rgba(34, 197, 94, 0.15);
+    color: var(--sf-success);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.sf-badge-live {
+    background-color: rgba(34, 211, 238, 0.15);
+    color: var(--sf-accent);
+    border: 1px solid rgba(34, 211, 238, 0.5);
+}
+
+.sf-badge-live::before {
+    content: "";
+    display: inline-block;
+    width: 0.5em;
+    height: 0.5em;
+    margin-right: 0.35em;
+    border-radius: 50%;
+    background-color: var(--sf-accent);
+    animation: sf-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes sf-pulse {
+    50% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sf-badge-live::before { animation: none; }
+}
+
+/* ---------------------------------------------------------------------
+   Estructura: el pie de página siempre queda abajo
+   --------------------------------------------------------------------- */
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+body > main {
+    flex: 1 0 auto;
+}
+
+.sf-footer {
+    border-top: 1px solid var(--sf-border);
+    background-color: rgba(26, 22, 37, 0.6);
+    color: var(--sf-text-muted);
+    font-size: 0.875rem;
+}
+
+.sf-footer a {
+    color: var(--sf-text-muted);
+    text-decoration: none;
+}
+
+.sf-footer a:hover {
+    color: var(--sf-text);
+}
+
+/* ---------------------------------------------------------------------
+   Menú de usuario, enlaces a perfiles y avatares
+   --------------------------------------------------------------------- */
+.dropdown-menu {
+    --bs-dropdown-bg: var(--sf-surface);
+    --bs-dropdown-border-color: var(--sf-border);
+    --bs-dropdown-link-hover-bg: var(--sf-surface-2);
+    --bs-dropdown-link-active-bg: var(--sf-primary-strong);
+}
+
+.sf-user-link {
+    color: var(--sf-text);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.sf-user-link:hover {
+    color: var(--sf-accent);
+    text-decoration: underline;
+}
+
+.sf-avatar.sf-avatar-sm {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.8rem;
+}
+
+.sf-avatar.sf-avatar-lg {
+    width: 5rem;
+    height: 5rem;
+    font-size: 2rem;
+}
+
+.sf-stars {
+    color: var(--sf-warning);
+    letter-spacing: 0.05em;
+}
+
+.sf-stars-off {
+    color: #4A4360;
+}
+
+/* ---------------------------------------------------------------------
+   Toasts y modales
+   --------------------------------------------------------------------- */
+.sf-toast {
+    background-color: var(--sf-surface-2);
+    color: var(--sf-text);
+    border-left: 4px solid var(--sf-success) !important;
+}
+
+.sf-toast-danger { border-left-color: var(--sf-danger) !important; }
+.sf-toast-info { border-left-color: var(--sf-accent) !important; }
+.sf-toast-warning { border-left-color: var(--sf-warning) !important; }
+
+.sf-modal {
+    background-color: var(--sf-surface);
+    border: 1px solid var(--sf-border);
+    border-radius: 1rem;
+}
+
+/* ---------------------------------------------------------------------
+   Calificación con estrellas (formulario de reseña)
+   Las estrellas van en orden inverso en el HTML para poder pintar
+   "esta y las anteriores" solo con CSS.
+   --------------------------------------------------------------------- */
+.sf-rating {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: 0.25rem;
+}
+
+.sf-rating input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.sf-rating label {
+    font-size: 2rem;
+    line-height: 1;
+    color: #4A4360;
+    cursor: pointer;
+}
+
+.sf-rating input:checked ~ label,
+.sf-rating label:hover,
+.sf-rating label:hover ~ label {
+    color: var(--sf-warning);
+}
+
+.sf-rating input:focus-visible + label {
+    outline: 2px solid var(--sf-primary);
+    border-radius: 0.25rem;
+}
+
+/* ---------------------------------------------------------------------
+   Detalle de sala
+   --------------------------------------------------------------------- */
+.sf-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.sf-meta .badge {
+    font-weight: 500;
+    background-color: var(--sf-surface-2);
+    color: var(--sf-text);
+    border: 1px solid var(--sf-border);
+}
+
+.progress {
+    --bs-progress-bg: var(--sf-surface-2);
+    --bs-progress-bar-bg: var(--sf-primary);
+    height: 0.5rem;
+}
+
+/* ---------------------------------------------------------------------
+   Chat
+   --------------------------------------------------------------------- */
+.sf-chat {
+    height: min(60vh, 520px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.sf-msg {
+    max-width: 80%;
+    padding: 0.5rem 0.85rem;
+    border-radius: 1rem;
+    background-color: var(--sf-surface-2);
+    border-bottom-left-radius: 0.25rem;
+    align-self: flex-start;
+    overflow-wrap: anywhere;
+}
+
+.sf-msg.sf-msg-mio {
+    align-self: flex-end;
+    background-color: rgba(124, 58, 237, 0.35);
+    border-bottom-left-radius: 1rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+.sf-msg-oculto {
+    font-style: italic;
+    color: var(--sf-text-muted);
+}
+
+.sf-msg small {
+    color: var(--sf-text-muted);
+}
+
+/* ---------------------------------------------------------------------
+   Crear búsqueda: opciones grandes, contador de cupos y vista previa
+   --------------------------------------------------------------------- */
+.sf-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 6.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--sf-border);
+    background-color: var(--sf-bg);
+    color: var(--sf-text);
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s, transform 0.15s;
+}
+
+.sf-option:hover {
+    border-color: var(--sf-primary);
+    transform: translateY(-2px);
+}
+
+.sf-option .sf-option-icono {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.sf-option small {
+    color: var(--sf-text-muted);
+}
+
+.btn-check:checked + .sf-option {
+    border-color: var(--sf-primary);
+    background-color: rgba(139, 92, 246, 0.18);
+    box-shadow: 0 0 0 1px var(--sf-primary), 0 0 18px rgba(139, 92, 246, 0.3);
+}
+
+.btn-check:focus-visible + .sf-option {
+    outline: 2px solid var(--sf-accent);
+    outline-offset: 2px;
+}
+
+.sf-option-juego {
+    min-width: 9rem;
+    align-items: flex-start;
+}
+
+.sf-paso {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-right: 0.5rem;
+    border-radius: 50%;
+    background-color: var(--sf-primary-strong);
+    color: #FFFFFF;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.sf-stepper {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--sf-border);
+    border-radius: 50rem;
+    overflow: hidden;
+}
+
+.sf-stepper button {
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 0;
+    background-color: var(--sf-surface-2);
+    color: var(--sf-text);
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.sf-stepper button:hover:not(:disabled) {
+    background-color: var(--sf-primary-strong);
+}
+
+.sf-stepper button:disabled {
+    opacity: 0.4;
+}
+
+.sf-stepper output {
+    min-width: 3rem;
+    text-align: center;
+    font-family: var(--sf-font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.sf-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.sf-slot {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 2px dashed var(--sf-border);
+}
+
+.sf-slot.sf-slot-lleno {
+    border: 0;
+    background: linear-gradient(135deg, var(--sf-primary-strong), var(--sf-accent));
+}
+
+.sf-preview {
+    position: sticky;
+    top: 5.5rem;
+}
+
+.sf-preview .sf-card {
+    border-color: var(--sf-primary);
+    box-shadow: 0 0 28px rgba(139, 92, 246, 0.18);
+}
+
+/* ---------------------------------------------------------------------
+   Zona de peligro (eliminar cuenta)
+   --------------------------------------------------------------------- */
+.sf-danger-zone {
+    border-color: rgba(244, 63, 94, 0.5);
+}

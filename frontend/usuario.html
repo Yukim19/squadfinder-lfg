@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Perfil de jugador - SquadFinder LFG</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <link href="css/theme.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg sf-navbar sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">Squad<span>Finder</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav-principal"
+                aria-controls="nav-principal" aria-expanded="false" aria-label="Abrir menú">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="nav-principal">
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="index.html">Salas</a>
+                    <a class="nav-link" href="crear_post.html">Crear búsqueda</a>
+                    <a class="nav-link" href="historial_partidas.html">Historial</a>
+                    <div class="nav-item dropdown ms-lg-2">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="sf-avatar sf-avatar-sm" id="nav-avatar" aria-hidden="true">?</span>
+                            <span id="nav-username">Mi cuenta</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="perfil_config.html">Configurar perfil</a></li>
+                            <li><a class="dropdown-item" id="nav-perfil-publico" href="usuario.html">Ver mi perfil público</a></li>
+                            <li><a class="dropdown-item" href="historial_partidas.html">Historial</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item text-danger" id="btn-logout" type="button">Cerrar sesión</button></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-4" style="max-width: 900px;">
+        <header class="sf-card d-flex flex-wrap align-items-center gap-4 mb-4">
+            <span class="sf-avatar sf-avatar-lg" id="u-avatar" aria-hidden="true">?</span>
+            <div class="flex-grow-1">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <h1 class="mb-0" id="u-nombre">Jugador</h1>
+                    <span class="badge sf-badge-live d-none" id="u-en-vivo">EN VIVO</span>
+                </div>
+                <p class="text-secondary mb-0" id="u-detalles"></p>
+            </div>
+            <div class="text-center">
+                <div class="display-6 sf-display" id="u-honor">0.0</div>
+                <div id="u-estrellas"></div>
+                <small class="text-secondary" id="u-total-resenas">0 reseñas</small>
+            </div>
+            <a class="btn btn-outline-light d-none" id="u-editar" href="perfil_config.html">Editar mi perfil</a>
+            <button type="button" class="btn btn-outline-danger d-none" id="u-reportar">🚩 Reportar</button>
+        </header>
+
+        <div class="row g-4">
+            <aside class="col-md-5 d-grid gap-4 align-content-start">
+                <section class="sf-card">
+                    <h2 class="h5">Busca compañeros en</h2>
+                    <div class="d-flex flex-wrap gap-2" id="u-juegos"></div>
+                    <h2 class="h6 mt-3">Géneros favoritos</h2>
+                    <p class="text-secondary mb-0" id="u-generos"></p>
+                </section>
+                <section class="sf-card">
+                    <h2 class="h5">Lo que más destacan</h2>
+                    <div id="u-etiquetas" class="d-grid gap-2"></div>
+                </section>
+                <section class="sf-card">
+                    <h2 class="h5">Cuentas</h2>
+                    <div id="u-cuentas"></div>
+                </section>
+            </aside>
+
+            <section class="col-md-7">
+                <div class="sf-card">
+                    <h2 class="h5">Reseñas recibidas</h2>
+                    <div id="u-resenas"></div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="sf-footer py-4 mt-5">
+        <div class="container d-flex flex-wrap justify-content-between gap-2">
+            <span>© 2026 SquadFinder LFG · Proyecto Full-Stack COMP2053</span>
+            <span><a href="index.html">Salas</a> · <a href="crear_post.html">Crear búsqueda</a> · <a href="perfil_config.html">Mi perfil</a></span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/catalogo.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        // Semana 3: GET /api/v1/users/{id} y GET /api/v1/reputation/users/{id}
+        const u = usuarioPorId(idDeUrl(USUARIO_DEMO.id));
+        if (!u) {
+            location.replace('404.html');
+            throw new Error('Usuario no encontrado');
+        }
+        const resenas = RESENAS_DEMO.filter((r) => r.target_user_id === u.id);
+        const esMiPerfil = u.id === USUARIO_DEMO.id;
+
+        document.title = `${u.username} - SquadFinder LFG`;
+        document.getElementById('u-avatar').textContent = u.username[0];
+        document.getElementById('u-nombre').textContent = u.username;
+        document.getElementById('u-en-vivo').classList.toggle('d-none', !u.en_vivo);
+        document.getElementById('u-detalles').textContent =
+            `🌎 ${REGIONES[u.region] ?? 'Sin región'} · Miembro desde ${u.miembro_desde}`;
+        document.getElementById('u-honor').textContent = u.honor_score.toFixed(1);
+        document.getElementById('u-estrellas').innerHTML = estrellas(u.honor_score);
+        document.getElementById('u-total-resenas').textContent = `${resenas.length} ${resenas.length === 1 ? 'reseña' : 'reseñas'}`;
+        document.getElementById('u-editar').classList.toggle('d-none', !esMiPerfil);
+
+        const botonReportar = document.getElementById('u-reportar');
+        botonReportar.classList.toggle('d-none', esMiPerfil);
+        botonReportar.addEventListener('click', () => abrirReporte({
+            usuarioId: u.id,
+            username: u.username,
+            alEnviar: () => {
+                botonReportar.disabled = true;
+                botonReportar.textContent = '🚩 Reportado';
+            },
+        }));
+
+        document.getElementById('u-juegos').innerHTML = u.juegos
+            .map((id) => `<span class="badge sf-badge-live">${esc(juegoPorId(id)?.name)}</span>`).join('')
+            || '<span class="text-secondary">Sin juegos elegidos.</span>';
+        document.getElementById('u-generos').textContent = u.generos.join(', ') || 'Sin géneros elegidos.';
+
+        // Conteo de etiquetas recibidas
+        const conteo = {};
+        for (const r of resenas) if (r.tag) conteo[r.tag] = (conteo[r.tag] ?? 0) + 1;
+        document.getElementById('u-etiquetas').innerHTML = Object.entries(conteo)
+            .sort((a, b) => b[1] - a[1])
+            .map(([tag, n]) => `<div class="d-flex justify-content-between"><span>${esc(ETIQUETAS_RESENA[tag])}</span><span class="badge sf-badge-honor">×${n}</span></div>`)
+            .join('') || '<span class="text-secondary">Todavía nadie le ha dado una etiqueta.</span>';
+
+        const cuentas = Object.entries(u.cuentas);
+        document.getElementById('u-cuentas').innerHTML = cuentas.length
+            ? cuentas.map(([clave, usuario]) => {
+                const enVivo = u.en_vivo && (clave === 'twitch' || clave === 'kick');
+                const enlace = clave === 'twitch' ? `https://www.twitch.tv/${encodeURIComponent(usuario)}`
+                    : clave === 'kick' ? `https://kick.com/${encodeURIComponent(usuario)}` : null;
+                return `<div class="d-flex justify-content-between align-items-center py-1">
+                    <span>${esc(PROVEEDORES[clave])}</span>
+                    <span>${enlace ? `<a href="${enlace}" target="_blank" rel="noopener">${esc(usuario)}</a>` : esc(usuario)}
+                        ${enVivo ? '<span class="badge sf-badge-live ms-1">EN VIVO</span>' : ''}</span>
+                </div>`;
+            }).join('')
+            : '<span class="text-secondary">No tiene cuentas vinculadas.</span>';
+
+        document.getElementById('u-resenas').innerHTML = resenas.length
+            ? resenas.map((r) => `
+                <div class="sf-mate d-block">
+                    <div class="d-flex flex-wrap justify-content-between gap-2">
+                        <span>${avatar(r.reviewer_username, 'sf-avatar-sm')} ${enlaceUsuario(r.reviewer_id, r.reviewer_username)}</span>
+                        ${estrellas(r.rating)}
+                    </div>
+                    <small class="text-secondary d-block mt-1">${esc(r.game_name)} · ${esc(r.created_at)}
+                        ${r.tag ? ` · <span class="badge sf-badge-honor">${esc(ETIQUETAS_RESENA[r.tag])}</span>` : ''}</small>
+                    ${r.comment ? `<p class="mb-0 mt-2">"${esc(r.comment)}"</p>` : ''}
+                </div>`).join('')
+            : '<p class="text-secondary mb-0">Aún no ha recibido reseñas.</p>';
+    </script>
+</body>
+
+</html>

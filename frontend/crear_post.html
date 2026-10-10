@@ -1,75 +1,370 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Crear búsqueda - SquadFinder LFG</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <link href="css/theme.css" rel="stylesheet">
 </head>
 
-<body class="bg-dark text-light">
+<body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-black">
+    <nav class="navbar navbar-expand-lg sf-navbar sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="index.html">SquadFinder LFG</a>
+            <a class="navbar-brand" href="index.html">Squad<span>Finder</span></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav-principal"
                 aria-controls="nav-principal" aria-expanded="false" aria-label="Abrir menú">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="nav-principal">
                 <div class="navbar-nav ms-auto">
-                    <a class="nav-link" href="crear_post.html">Crear búsqueda</a>
+                    <a class="nav-link" href="index.html">Salas</a>
+                    <a class="nav-link active" aria-current="page" href="crear_post.html">Crear búsqueda</a>
                     <a class="nav-link" href="historial_partidas.html">Historial</a>
-                    <a class="nav-link" href="perfil_config.html">Mi perfil</a>
-                    <a class="btn btn-primary ms-lg-2 mt-2 mt-lg-0" href="login.html">Entrar</a>
+                    <div class="nav-item dropdown ms-lg-2">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="sf-avatar sf-avatar-sm" id="nav-avatar" aria-hidden="true">?</span>
+                            <span id="nav-username">Mi cuenta</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="perfil_config.html">Configurar perfil</a></li>
+                            <li><a class="dropdown-item" id="nav-perfil-publico" href="usuario.html">Ver mi perfil público</a></li>
+                            <li><a class="dropdown-item" href="historial_partidas.html">Historial</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item text-danger" id="btn-logout" type="button">Cerrar sesión</button></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </nav>
 
-    <main class="container py-4" style="max-width: 600px;">
-        <h1>Crear búsqueda de equipo</h1>
-        <form id="form-post" class="mt-4">
-            <div class="mb-3">
-                <label class="form-label">Juego</label>
-                <input type="text" class="form-control" id="game-title" required>
-            </div>
-            <div class="row mb-3">
-                <div class="col">
-                    <label class="form-label">Plataforma</label>
-                    <select class="form-select" id="platform">
-                        <option>PC</option>
-                        <option>PlayStation</option>
-                        <option>Xbox</option>
-                        <option>Switch</option>
-                    </select>
+    <main class="container py-4">
+        <header class="mb-4">
+            <p class="sf-kicker mb-2">Nueva sala LFG</p>
+            <h1 class="mb-1">Crear búsqueda de equipo</h1>
+            <p class="text-secondary mb-0">Completa los 3 pasos; en la vista previa ves cómo verán tu sala los demás jugadores.</p>
+        </header>
+
+        <div class="row g-4">
+            <form id="form-post" class="col-lg-7 d-grid gap-4">
+                <!-- Paso 1: juego -->
+                <section class="sf-card">
+                    <h2 class="h5 mb-1"><span class="sf-paso">1</span>¿A qué van a jugar?</h2>
+                    <p class="text-secondary small">Solo aparecen los juegos de tu perfil.
+                        <a href="perfil_config.html">¿No ves tu juego? Agrégalo aquí.</a></p>
+                    <div class="d-flex flex-wrap gap-2" id="opciones-juego" role="radiogroup" aria-label="Juego"></div>
+                    <div id="error-juego" class="text-danger small mt-2 d-none" role="alert">Elige el juego de la sala.</div>
+                </section>
+
+                <!-- Paso 2: título y descripción -->
+                <section class="sf-card">
+                    <h2 class="h5 mb-3"><span class="sf-paso">2</span>Cuéntales de qué se trata</h2>
+                    <p class="small mb-2">Plantillas rápidas:</p>
+                    <div class="d-flex flex-wrap gap-2 mb-3" id="plantillas"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="titulo">Título</label>
+                        <input type="text" class="form-control" id="titulo" required minlength="3" maxlength="100"
+                            pattern=".*\S.*\S.*\S.*" placeholder="Ej.: Ranked tranqui esta noche">
+                        <div class="invalid-feedback">El título debe tener entre 3 y 100 caracteres.</div>
+                        <div class="form-text text-end"><span id="contador-titulo">0</span>/100</div>
+                    </div>
+                    <div>
+                        <label class="form-label" for="descripcion">Descripción <span class="text-secondary">(opcional)</span></label>
+                        <textarea class="form-control" id="descripcion" rows="3" maxlength="500"
+                            placeholder="¿Qué buscas? Rol, horario, estilo de juego..."></textarea>
+                        <div class="form-text text-end"><span id="contador-descripcion">0</span>/500</div>
+                    </div>
+                </section>
+
+                <!-- Paso 3: requisitos -->
+                <section class="sf-card">
+                    <h2 class="h5 mb-3"><span class="sf-paso">3</span>Requisitos de la sala</h2>
+
+                    <fieldset class="mb-4">
+                        <legend class="form-label fs-6 d-flex flex-wrap align-items-center gap-2">
+                            Plataformas <span id="badge-crossplay"></span>
+                        </legend>
+                        <p class="form-text mt-0" id="ayuda-plataformas">Elige primero el juego.</p>
+                        <div class="d-flex flex-wrap gap-2" id="opciones-plataforma"></div>
+                        <div id="error-plataforma" class="text-danger small mt-2 d-none" role="alert">Elige al menos una plataforma.</div>
+                    </fieldset>
+
+                    <fieldset class="mb-4">
+                        <legend class="form-label fs-6">Tipo de partida</legend>
+                        <div class="d-flex flex-wrap gap-2" id="opciones-modo"></div>
+                    </fieldset>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-sm-6">
+                            <span class="form-label d-block" id="etiqueta-cupos">Jugadores en total</span>
+                            <div class="sf-stepper" role="group" aria-labelledby="etiqueta-cupos">
+                                <button type="button" id="cupos-menos" aria-label="Quitar un cupo">−</button>
+                                <output id="cupos" aria-live="polite">5</output>
+                                <button type="button" id="cupos-mas" aria-label="Agregar un cupo">+</button>
+                            </div>
+                            <div class="form-text">Entre 2 y 10, contándote a ti.</div>
+                        </div>
+                        <div class="col-sm-6 d-none" id="bloque-rango">
+                            <label class="form-label" for="rango">🏆 Rango o nivel mínimo</label>
+                            <input type="text" class="form-control" id="rango" maxlength="50" list="lista-rangos"
+                                placeholder="Ej.: Oro">
+                            <div class="invalid-feedback">En una sala competitiva indica el rango mínimo.</div>
+                            <datalist id="lista-rangos"></datalist>
+                            <div class="d-flex flex-wrap gap-1 mt-2" id="rangos-rapidos"></div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <fieldset class="col-sm-6">
+                            <legend class="form-label fs-6">Idioma de la sala</legend>
+                            <div class="d-flex flex-wrap gap-2" id="opciones-idioma"></div>
+                        </fieldset>
+                        <div class="col-sm-6">
+                            <span class="form-label d-block">Micrófono</span>
+                            <div class="form-check form-switch fs-5">
+                                <input class="form-check-input" type="checkbox" role="switch" id="mic">
+                                <label class="form-check-label fs-6" for="mic" id="texto-mic">Opcional</label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">🚀 Publicar sala</button>
+                    <button type="button" class="btn btn-outline-light btn-lg" id="btn-limpiar">Limpiar</button>
+                    <a href="index.html" class="btn btn-link btn-lg ms-sm-auto">Cancelar</a>
                 </div>
-                <div class="col">
-                    <label class="form-label">Cupos</label>
-                    <input type="number" class="form-control" id="max-players" min="2" max="10" value="5">
+            </form>
+
+            <!-- Vista previa en vivo -->
+            <aside class="col-lg-5">
+                <div class="sf-preview">
+                    <p class="small text-secondary mb-2">👁️ Vista previa: así aparecerá en el feed</p>
+                    <article class="sf-card">
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <span class="badge sf-badge-live" id="prev-juego">Elige un juego</span>
+                            <span class="badge text-bg-success">Abierta</span>
+                        </div>
+                        <h2 class="h4 mb-2" id="prev-titulo">Tu título aparecerá aquí</h2>
+                        <p class="text-secondary small mb-3" id="prev-descripcion">Sin descripción.</p>
+                        <div class="sf-meta mb-3" id="prev-meta"></div>
+                        <div class="d-flex align-items-center gap-2 mb-3" id="prev-anfitrion"></div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="sf-slots" id="prev-slots" aria-hidden="true"></div>
+                            <small class="text-secondary" id="prev-cupos">1/5</small>
+                        </div>
+                    </article>
+                    <div class="sf-card mt-3 small text-secondary">
+                        💡 <strong>Consejos:</strong> un título claro y una descripción con tu rol y horario reciben
+                        más solicitudes. Cuando alguien pida unirse, te avisaremos por Discord.
+                    </div>
                 </div>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Rango requerido</label>
-                <input type="text" class="form-control" id="rank-required" placeholder="Oro, Diamante...">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Idioma requerido</label>
-                <select class="form-select" id="required-language">
-                    <option value="es">Español</option>
-                    <option value="en">English</option>
-                </select>
-            </div>
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="mic-required">
-                <label class="form-check-label" for="mic-required">Se requiere micrófono</label>
-            </div>
-            <button type="submit" class="btn btn-primary">Publicar</button>
-        </form>
+            </aside>
+        </div>
     </main>
 
+    <footer class="sf-footer py-4 mt-5">
+        <div class="container d-flex flex-wrap justify-content-between gap-2">
+            <span>© 2026 SquadFinder LFG · Proyecto Full-Stack COMP2053</span>
+            <span><a href="index.html">Salas</a> · <a href="crear_post.html">Crear búsqueda</a> · <a href="perfil_config.html">Mi perfil</a></span>
+        </div>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/catalogo.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        // Semana 3: los juegos vienen de GET /api/v1/users/me y se publica con POST /api/v1/lfg/posts
+        const misJuegos = USUARIO_DEMO.juegos.map(juegoPorId);
+        const form = document.getElementById('form-post');
+        const $ = (id) => document.getElementById(id);
+        let cupos = 5;
+
+        // Botones grandes de selección: tipo 'radio' (una opción) o 'checkbox' (varias)
+        function opciones(contenedorId, nombre, items, marcados = [], tipo = 'radio') {
+            const marcadosTexto = marcados.map(String);
+            $(contenedorId).innerHTML = items.map(({ valor, icono, texto, detalle, clase = '' }) => `
+                <input type="${tipo}" class="btn-check" name="${nombre}" id="${nombre}-${valor}" value="${esc(valor)}"
+                    ${marcadosTexto.includes(String(valor)) ? 'checked' : ''} autocomplete="off">
+                <label class="sf-option ${clase}" for="${nombre}-${valor}">
+                    ${icono ? `<span class="sf-option-icono" aria-hidden="true">${icono}</span>` : ''}
+                    <span class="fw-semibold">${esc(texto)}</span>
+                    ${detalle ? `<small>${esc(detalle)}</small>` : ''}
+                </label>`).join('');
+        }
+
+        const valorRadio = (nombre) => document.querySelector(`input[name="${nombre}"]:checked`)?.value ?? null;
+        const marcados = (nombre) => [...document.querySelectorAll(`input[name="${nombre}"]:checked`)].map((i) => i.value);
+
+        opciones('opciones-juego', 'juego',
+            misJuegos.map((j) => ({ valor: j.id, texto: j.name, detalle: j.genre, clase: 'sf-option-juego' })),
+            misJuegos.length === 1 ? [misJuegos[0].id] : []);
+        opciones('opciones-modo', 'modo',
+            Object.entries(MODOS_JUEGO).map(([valor, m]) => ({ valor, icono: m.icono, texto: m.texto, detalle: m.detalle })),
+            ['CASUAL']);
+        opciones('opciones-idioma', 'idioma',
+            Object.entries(IDIOMAS_SALA).map(([valor, texto]) => ({ valor, texto, icono: ICONOS_IDIOMA[valor] })),
+            [USUARIO_DEMO.preferred_language_speak]);
+
+        $('plantillas').innerHTML = Object.entries(PLANTILLAS_SALA).map(([clave, p]) =>
+            `<button type="button" class="btn btn-sm btn-outline-light sf-chip" data-plantilla="${clave}">${p.icono} ${esc(p.nombre)}</button>`).join('');
+
+        // Las plataformas dependen del juego: solo las que tiene, y varias solo con crossplay
+        function actualizarPlataformas() {
+            const juego = juegoPorId(valorRadio('juego'));
+            if (!juego) {
+                $('opciones-plataforma').innerHTML = '';
+                $('badge-crossplay').innerHTML = '';
+                $('ayuda-plataformas').textContent = 'Elige primero el juego.';
+                return;
+            }
+            const anteriores = marcados('plataforma').filter((p) => juego.platforms.includes(p));
+            let seleccion = anteriores.length ? anteriores : [juego.platforms[0]];
+            if (!juego.crossplay) seleccion = seleccion.slice(0, 1);
+
+            $('badge-crossplay').innerHTML = juego.crossplay
+                ? '<span class="badge sf-badge-honor">✅ Crossplay</span>'
+                : '<span class="badge text-bg-secondary">Sin crossplay</span>';
+            $('ayuda-plataformas').textContent = juego.crossplay
+                ? `${juego.name} tiene crossplay: marca todas las plataformas desde las que pueden unirse.`
+                : `${juego.name} no tiene crossplay entre plataformas: elige una sola.`;
+            opciones('opciones-plataforma', 'plataforma',
+                juego.platforms.map((p) => ({ valor: p, icono: ICONOS_PLATAFORMA[p], texto: p })),
+                seleccion, juego.crossplay ? 'checkbox' : 'radio');
+        }
+
+        // El rango solo se pide en partidas competitivas
+        function actualizarModo() {
+            const competitivo = valorRadio('modo') === 'COMPETITIVE';
+            $('bloque-rango').classList.toggle('d-none', !competitivo);
+            $('rango').required = competitivo;
+        }
+
+        function actualizarRangos() {
+            const rangos = RANGOS_POR_JUEGO[valorRadio('juego')] ?? [];
+            $('lista-rangos').innerHTML = rangos.map((r) => `<option value="${esc(r)}">`).join('');
+            $('rangos-rapidos').innerHTML = rangos.slice(0, 5).map((r) =>
+                `<button type="button" class="btn btn-sm btn-outline-light py-0" data-rango="${esc(r)}">${esc(r)}</button>`).join('');
+        }
+
+        function actualizarVistaPrevia() {
+            const juego = juegoPorId(valorRadio('juego'));
+            const titulo = $('titulo').value.trim();
+            const descripcion = $('descripcion').value.trim();
+            const plataformas = marcados('plataforma');
+            const idioma = valorRadio('idioma');
+            const competitivo = valorRadio('modo') === 'COMPETITIVE';
+
+            $('contador-titulo').textContent = $('titulo').value.length;
+            $('contador-descripcion').textContent = $('descripcion').value.length;
+            $('cupos').textContent = cupos;
+            $('cupos-menos').disabled = cupos <= 2;
+            $('cupos-mas').disabled = cupos >= 10;
+            $('texto-mic').textContent = $('mic').checked ? 'Obligatorio' : 'Opcional';
+
+            $('prev-juego').textContent = juego?.name ?? 'Elige un juego';
+            $('prev-titulo').textContent = titulo || 'Tu título aparecerá aquí';
+            $('prev-titulo').classList.toggle('text-secondary', !titulo);
+            $('prev-descripcion').textContent = descripcion || 'Sin descripción.';
+            $('prev-meta').innerHTML = badgeModo(valorRadio('modo')) + [
+                plataformas.length ? esc(textoPlataformas(plataformas)) : 'Sin plataforma',
+                `${ICONOS_IDIOMA[idioma]} ${esc(IDIOMAS_SALA[idioma])}`,
+                $('mic').checked ? '🎙️ Micrófono obligatorio' : '🔇 Micrófono opcional',
+                competitivo ? `🏆 ${esc($('rango').value.trim() || 'Rango por definir')}` : null,
+                `🌎 ${esc(REGIONES[USUARIO_DEMO.region])}`,
+            ].filter(Boolean).map((m) => `<span class="badge">${m}</span>`).join('');
+            $('prev-anfitrion').innerHTML = `${avatar(USUARIO_DEMO.username, 'sf-avatar-sm')}
+                <span class="small">Anfitrión: <strong>${esc(USUARIO_DEMO.username)}</strong></span> ${badgeHonor(USUARIO_DEMO.honor_score)}`;
+            $('prev-slots').innerHTML = Array.from({ length: cupos }, (_, i) =>
+                `<span class="sf-slot ${i === 0 ? 'sf-slot-lleno' : ''}"></span>`).join('');
+            $('prev-cupos').textContent = `1/${cupos} jugadores`;
+        }
+
+        form.addEventListener('input', actualizarVistaPrevia);
+        form.addEventListener('change', (e) => {
+            if (e.target.name === 'juego') {
+                $('error-juego').classList.add('d-none');
+                actualizarPlataformas();
+                actualizarRangos();
+            }
+            if (e.target.name === 'plataforma') {
+                $('error-plataforma').classList.toggle('d-none', marcados('plataforma').length > 0);
+            }
+            if (e.target.name === 'modo') actualizarModo();
+            actualizarVistaPrevia();
+        });
+
+        form.addEventListener('click', (e) => {
+            const boton = e.target.closest('button');
+            if (!boton) return;
+            if (boton.id === 'cupos-menos') cupos = Math.max(2, cupos - 1);
+            if (boton.id === 'cupos-mas') cupos = Math.min(10, cupos + 1);
+            if (boton.dataset.rango) $('rango').value = boton.dataset.rango;
+            if (boton.dataset.plantilla) {
+                const p = PLANTILLAS_SALA[boton.dataset.plantilla];
+                $('titulo').value = p.titulo;
+                $('descripcion').value = p.descripcion;
+                $('mic').checked = p.mic;
+                $(`modo-${p.modo}`).checked = true;
+                actualizarModo();
+                mostrarToast(`Plantilla "${p.nombre}" aplicada. Puedes editar el texto.`, 'info');
+            }
+            actualizarVistaPrevia();
+        });
+
+        $('btn-limpiar').addEventListener('click', async () => {
+            if (!await confirmar({ titulo: 'Limpiar formulario', mensaje: 'Se borrará todo lo que escribiste.', textoBoton: 'Limpiar', peligro: false })) return;
+            form.reset();
+            form.classList.remove('was-validated');
+            cupos = 5;
+            actualizarPlataformas();
+            actualizarModo();
+            actualizarRangos();
+            actualizarVistaPrevia();
+        });
+
+        // Juego y plataformas no son campos HTML normales: se revisan en cada intento de envío
+        form.addEventListener('submit', () => {
+            $('error-juego').classList.toggle('d-none', Boolean(valorRadio('juego')));
+            $('error-plataforma').classList.toggle('d-none', !valorRadio('juego') || marcados('plataforma').length > 0);
+        });
+
+        validarFormulario(form, () => {
+            const juego = valorRadio('juego');
+            const plataformas = marcados('plataforma');
+            if (!juego || plataformas.length === 0) {
+                $(juego ? 'opciones-plataforma' : 'opciones-juego').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            const competitivo = valorRadio('modo') === 'COMPETITIVE';
+            const datos = {
+                game_id: Number(juego),
+                title: $('titulo').value.trim(),
+                description: $('descripcion').value.trim() || null,
+                platforms: plataformas,
+                play_mode: valorRadio('modo'),
+                max_players: cupos,
+                rank_required: competitivo ? $('rango').value.trim() : null,
+                mic_required: $('mic').checked,
+                required_language: valorRadio('idioma'),
+            };
+            console.log('Nueva sala (demo):', datos);
+            mostrarToast('¡Sala publicada! Te avisaremos cuando alguien quiera unirse.');
+            setTimeout(() => { location.href = 'index.html'; }, 1500);
+        });
+
+        actualizarPlataformas();
+        actualizarModo();
+        actualizarRangos();
+        actualizarVistaPrevia();
+    </script>
 </body>
 
 </html>

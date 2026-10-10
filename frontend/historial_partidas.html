@@ -1,28 +1,44 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Historial de partidas - SquadFinder LFG</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <link href="css/theme.css" rel="stylesheet">
 </head>
 
-<body class="bg-dark text-light">
+<body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-black">
+    <nav class="navbar navbar-expand-lg sf-navbar sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="index.html">SquadFinder LFG</a>
+            <a class="navbar-brand" href="index.html">Squad<span>Finder</span></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav-principal"
                 aria-controls="nav-principal" aria-expanded="false" aria-label="Abrir menú">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="nav-principal">
                 <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="index.html">Salas</a>
                     <a class="nav-link" href="crear_post.html">Crear búsqueda</a>
-                    <a class="nav-link" href="historial_partidas.html">Historial</a>
-                    <a class="nav-link" href="perfil_config.html">Mi perfil</a>
-                    <a class="btn btn-primary ms-lg-2 mt-2 mt-lg-0" href="login.html">Entrar</a>
+                    <a class="nav-link active" aria-current="page" href="historial_partidas.html">Historial</a>
+                    <div class="nav-item dropdown ms-lg-2">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="sf-avatar sf-avatar-sm" id="nav-avatar" aria-hidden="true">?</span>
+                            <span id="nav-username">Mi cuenta</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="perfil_config.html">Configurar perfil</a></li>
+                            <li><a class="dropdown-item" id="nav-perfil-publico" href="usuario.html">Ver mi perfil público</a></li>
+                            <li><a class="dropdown-item" href="historial_partidas.html">Historial</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item text-danger" id="btn-logout" type="button">Cerrar sesión</button></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -30,29 +46,206 @@
 
     <main class="container py-4">
         <h1>Historial de partidas</h1>
-        <table class="table table-dark table-striped mt-3">
-            <thead>
-                <tr>
-                    <th>Juego</th>
-                    <th>Fecha</th>
-                    <th>Compañeros</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="tabla-historial">
-                <tr>
-                    <td>Valorant</td>
-                    <td>2026-10-06</td>
-                    <td>Jugador1, Jugador2</td>
-                    <td><button class="btn btn-sm btn-warning">Calificar</button>
-                        <button class="btn btn-sm btn-outline-danger">Eliminar</button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <p class="text-secondary">Tus partidas terminadas y los jugadores con los que jugaste. Califícalos para sumar a su Honor Score.</p>
+        <div id="lista-historial" class="d-grid gap-3 mt-3"></div>
     </main>
 
+    <!-- Modal: calificar a un compañero (CREATE / UPDATE user_review) -->
+    <div class="modal fade" id="modal-resena" tabindex="-1" aria-labelledby="titulo-resena" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form class="modal-content sf-modal" id="form-resena" novalidate>
+                <div class="modal-header border-0">
+                    <h2 class="modal-title h5" id="titulo-resena">Calificar</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body pt-0">
+                    <fieldset class="mb-3">
+                        <legend class="form-label fs-6">¿Cómo fue jugar con esta persona?</legend>
+                        <div class="sf-rating" id="estrellas">
+                            <input type="radio" name="rating" id="estrella-5" value="5" required><label for="estrella-5" title="5 - Excelente">★</label>
+                            <input type="radio" name="rating" id="estrella-4" value="4"><label for="estrella-4" title="4 - Muy bien">★</label>
+                            <input type="radio" name="rating" id="estrella-3" value="3"><label for="estrella-3" title="3 - Normal">★</label>
+                            <input type="radio" name="rating" id="estrella-2" value="2"><label for="estrella-2" title="2 - Regular">★</label>
+                            <input type="radio" name="rating" id="estrella-1" value="1"><label for="estrella-1" title="1 - Mala experiencia">★</label>
+                        </div>
+                        <div id="error-rating" class="text-danger small d-none" role="alert">Elige de 1 a 5 estrellas.</div>
+                    </fieldset>
+                    <fieldset class="mb-3">
+                        <legend class="form-label fs-6">Destaca algo (opcional)</legend>
+                        <div class="d-flex flex-wrap gap-2" id="etiquetas"></div>
+                    </fieldset>
+                    <label class="form-label" for="comentario">Comentario (opcional)</label>
+                    <textarea class="form-control" id="comentario" rows="2" maxlength="300"></textarea>
+                    <div class="form-text text-end"><span id="contador-comentario">0</span>/300</div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-danger me-auto d-none" id="btn-borrar-resena">Borrar reseña</button>
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="sf-footer py-4 mt-5">
+        <div class="container d-flex flex-wrap justify-content-between gap-2">
+            <span>© 2026 SquadFinder LFG · Proyecto Full-Stack COMP2053</span>
+            <span><a href="index.html">Salas</a> · <a href="crear_post.html">Crear búsqueda</a> · <a href="perfil_config.html">Mi perfil</a></span>
+        </div>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/catalogo.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        // Filas de v_match_history (semana 3: GET /api/v1/lfg/history)
+        let filas = HISTORIAL_DEMO.map((f) => ({ ...f }));
+        let filaActual = null;
+        const modalResena = new bootstrap.Modal('#modal-resena');
+        const lista = document.getElementById('lista-historial');
+
+        // Etiquetas como chips de selección única
+        document.getElementById('etiquetas').innerHTML = Object.entries(ETIQUETAS_RESENA).map(([valor, texto]) => `
+            <input type="radio" class="btn-check" name="tag" id="tag-${valor}" value="${valor}" autocomplete="off">
+            <label class="btn btn-outline-light sf-chip" for="tag-${valor}">${esc(texto)}</label>`).join('');
+
+        function pintar() {
+            const partidas = new Map();
+            for (const fila of filas) {
+                if (!partidas.has(fila.post_id)) partidas.set(fila.post_id, { ...fila, companeros: [] });
+                partidas.get(fila.post_id).companeros.push(fila);
+            }
+
+            if (partidas.size === 0) {
+                lista.innerHTML = `
+                    <div class="sf-card text-center">
+                        <p class="text-secondary">Aún no tienes partidas terminadas.</p>
+                        <a href="index.html" class="btn btn-primary">Buscar una sala</a>
+                    </div>`;
+                return;
+            }
+
+            lista.innerHTML = [...partidas.values()].map((p) => {
+                const companeros = p.companeros.map((c) => `
+                    <div class="sf-mate">
+                        <div class="d-flex align-items-center gap-2">
+                            ${avatar(c.teammate_username)}
+                            <div>
+                                <div>${enlaceUsuario(c.teammate_id, c.teammate_username)}</div>
+                                <small class="text-secondary">${esc(REGIONES[c.teammate_region] ?? 'Sin región')}</small>
+                            </div>
+                            ${badgeHonor(c.teammate_honor_score)}
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            ${c.already_reviewed
+                                ? `${estrellas(c.my_review.rating)}
+                                   <button class="btn btn-sm btn-outline-light" data-resena="${p.post_id}-${c.teammate_id}">Editar</button>`
+                                : `<button class="btn btn-sm btn-warning" data-resena="${p.post_id}-${c.teammate_id}">⭐ Calificar</button>`}
+                            ${c.already_reported
+                                ? '<span class="badge text-bg-danger" title="Un administrador revisará tu reporte">🚩 Reportado</span>'
+                                : `<button class="btn btn-sm btn-outline-danger" data-reportar="${p.post_id}-${c.teammate_id}"
+                                       title="Reportar comportamiento tóxico">🚩 Reportar</button>`}
+                        </div>
+                    </div>`).join('');
+
+                const pendientes = p.companeros.filter((c) => !c.already_reviewed).length;
+                return `
+                    <article class="sf-card">
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                            <div>
+                                <h2 class="h5 mb-1">${esc(p.game_name)} · ${esc(p.title)}</h2>
+                                <small class="text-secondary">${esc(textoPlataformas(p.platforms))} · ${esc(p.closed_at)} · ${p.companeros.length} compañeros</small>
+                            </div>
+                            ${pendientes ? `<span class="badge text-bg-warning">${pendientes} por calificar</span>` : '<span class="badge sf-badge-honor">Todo calificado ✓</span>'}
+                        </div>
+                        ${companeros}
+                        ${p.host_id === USUARIO_DEMO.id
+                            ? `<div class="text-end mt-2"><button class="btn btn-sm btn-outline-danger" data-borrar-sala="${p.post_id}">Eliminar sala del historial</button></div>`
+                            : ''}
+                    </article>`;
+            }).join('');
+        }
+
+        function abrirResena(fila) {
+            filaActual = fila;
+            const form = document.getElementById('form-resena');
+            form.reset();
+            document.getElementById('error-rating').classList.add('d-none');
+            document.getElementById('titulo-resena').textContent = `Calificar a ${fila.teammate_username}`;
+            const r = fila.my_review;
+            if (r) {
+                document.getElementById(`estrella-${r.rating}`).checked = true;
+                if (r.tag) document.getElementById(`tag-${r.tag}`).checked = true;
+                document.getElementById('comentario').value = r.comment ?? '';
+            }
+            document.getElementById('contador-comentario').textContent = document.getElementById('comentario').value.length;
+            document.getElementById('btn-borrar-resena').classList.toggle('d-none', !r);
+            modalResena.show();
+        }
+
+        lista.addEventListener('click', async (e) => {
+            const boton = e.target.closest('button');
+            if (!boton) return;
+            if (boton.dataset.reportar) {
+                const [post, companero] = boton.dataset.reportar.split('-').map(Number);
+                const fila = filas.find((f) => f.post_id === post && f.teammate_id === companero);
+                abrirReporte({
+                    usuarioId: fila.teammate_id,
+                    username: fila.teammate_username,
+                    postId: fila.post_id,
+                    alEnviar: () => {
+                        fila.already_reported = true;
+                        pintar();
+                    },
+                });
+            }
+            if (boton.dataset.resena) {
+                const [post, companero] = boton.dataset.resena.split('-').map(Number);
+                abrirResena(filas.find((f) => f.post_id === post && f.teammate_id === companero));
+            }
+            if (boton.dataset.borrarSala && await confirmar({ titulo: 'Eliminar sala', mensaje: 'La sala desaparecerá del historial de todos los integrantes, junto con sus reseñas.', textoBoton: 'Eliminar' })) {
+                filas = filas.filter((f) => f.post_id !== Number(boton.dataset.borrarSala)); // DELETE /api/v1/lfg/posts/{id}
+                mostrarToast('Sala eliminada del historial.', 'danger');
+                pintar();
+            }
+        });
+
+        const comentario = document.getElementById('comentario');
+        comentario.addEventListener('input', () => {
+            document.getElementById('contador-comentario').textContent = comentario.value.length;
+        });
+
+        document.getElementById('form-resena').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const rating = document.querySelector('input[name="rating"]:checked');
+            if (!rating) {
+                document.getElementById('error-rating').classList.remove('d-none');
+                return;
+            }
+            const nueva = !filaActual.already_reviewed;
+            filaActual.my_review = {
+                rating: Number(rating.value),
+                tag: document.querySelector('input[name="tag"]:checked')?.value ?? null,
+                comment: comentario.value.trim() || null,
+            };
+            filaActual.already_reviewed = true; // POST o PUT /api/v1/reputation/reviews
+            modalResena.hide();
+            mostrarToast(nueva ? `¡Gracias! Calificaste a ${filaActual.teammate_username}.` : 'Reseña actualizada.');
+            pintar();
+        });
+
+        document.getElementById('btn-borrar-resena').addEventListener('click', async () => {
+            modalResena.hide();
+            if (await confirmar({ titulo: 'Borrar reseña', mensaje: `Se quitará tu calificación a ${filaActual.teammate_username}.`, textoBoton: 'Borrar' })) {
+                filaActual.my_review = null; // DELETE /api/v1/reputation/reviews/{id}
+                filaActual.already_reviewed = false;
+                mostrarToast('Reseña borrada.', 'info');
+                pintar();
+            }
+        });
+
+        pintar();
+    </script>
 </body>
 
 </html>
