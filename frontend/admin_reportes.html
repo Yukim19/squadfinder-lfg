@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Moderación - SquadFinder LFG</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
@@ -44,7 +45,7 @@
         </div>
     </nav>
 
-    <main class="container py-4" style="max-width: 960px;">
+    <main class="container py-4" style="max-width: 980px;">
         <div id="sin-permiso" class="sf-card text-center d-none">
             <h1 class="h3">🔒 Acceso solo para administradores</h1>
             <p class="text-secondary">Tu cuenta no tiene permisos de moderación.</p>
@@ -56,26 +57,141 @@
                 <div>
                     <p class="sf-kicker mb-2">Panel de administrador</p>
                     <h1 class="mb-1">🛡️ Moderación</h1>
-                    <p class="text-secondary mb-0">Revisa los reportes de la comunidad y decide si se sanciona la cuenta.</p>
+                    <p class="text-secondary mb-0">Revisa los reportes de la comunidad y los juegos que sugieren los usuarios.</p>
                 </div>
-                <div class="btn-group" role="group" aria-label="Filtrar reportes">
+                <div class="btn-group flex-wrap" role="group" aria-label="Secciones">
                     <input type="radio" class="btn-check" name="vista" id="vista-pendientes" value="PENDING" checked>
                     <label class="btn btn-outline-light" for="vista-pendientes">Pendientes <span class="badge text-bg-danger" id="total-pendientes">0</span></label>
                     <input type="radio" class="btn-check" name="vista" id="vista-resueltos" value="RESOLVED">
                     <label class="btn btn-outline-light" for="vista-resueltos">Resueltos <span class="badge text-bg-secondary" id="total-resueltos">0</span></label>
+                    <input type="radio" class="btn-check" name="vista" id="vista-juegos" value="GAMES">
+                    <label class="btn btn-outline-light" for="vista-juegos">🎮 Juegos sugeridos <span class="badge text-bg-info" id="total-juegos">0</span></label>
                 </div>
             </header>
 
-            <div class="sf-card small text-secondary mb-4">
-                <strong class="text-light">Sanciones:</strong>
-                <span class="badge text-bg-secondary">Descartar</span> el reporte no procede ·
-                <span class="badge text-bg-info">Suspender 7 días</span> no puede entrar durante una semana ·
-                <span class="badge text-bg-danger">Eliminar cuenta</span> se bloquea para siempre y no puede volver a registrarse con la misma cuenta.
-            </div>
+            <!-- Reglas automáticas (tabla moderation_settings) -->
+            <details class="sf-card mb-4" id="reglas">
+                <summary class="fw-semibold">⚙️ Reglas automáticas: <span id="resumen-reglas" class="text-secondary fw-normal"></span></summary>
+                <form id="form-reglas" class="row g-3 mt-2">
+                    <div class="col-sm-6 col-lg-4">
+                        <label class="form-label" for="regla-limite">Advertencias antes de sancionar</label>
+                        <input type="number" class="form-control" id="regla-limite" min="1" max="10" required>
+                        <div class="invalid-feedback">Entre 1 y 10.</div>
+                    </div>
+                    <div class="col-sm-6 col-lg-4">
+                        <label class="form-label" for="regla-accion">Al llegar al límite</label>
+                        <select class="form-select" id="regla-accion">
+                            <option value="BAN">🚫 Eliminar la cuenta</option>
+                            <option value="SUSPEND">⏸️ Suspender la cuenta</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6 col-lg-4" id="bloque-regla-dias">
+                        <label class="form-label" for="regla-dias">Días de suspensión automática</label>
+                        <input type="number" class="form-control" id="regla-dias" min="1" max="365" required>
+                        <div class="invalid-feedback">Entre 1 y 365.</div>
+                    </div>
+                    <div class="col-sm-6 col-lg-4">
+                        <label class="form-label" for="regla-niveles-advertencia">Niveles que quita una advertencia</label>
+                        <input type="number" class="form-control" id="regla-niveles-advertencia" min="0" max="10" required>
+                        <div class="invalid-feedback">Entre 0 y 10.</div>
+                    </div>
+                    <div class="col-sm-6 col-lg-4">
+                        <label class="form-label" for="regla-niveles-suspension">Niveles que quita una suspensión</label>
+                        <input type="number" class="form-control" id="regla-niveles-suspension" min="0" max="10" required>
+                        <div class="invalid-feedback">Entre 0 y 10.</div>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Guardar reglas</button>
+                    </div>
+                </form>
+            </details>
 
             <div id="lista-reportes" class="d-grid gap-3"></div>
+            <div id="lista-juegos" class="d-grid gap-3 d-none"></div>
         </div>
     </main>
+
+    <!-- Modal: sanción personalizada -->
+    <div class="modal fade" id="modal-sancion" tabindex="-1" aria-labelledby="titulo-sancion" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form class="modal-content sf-modal" id="form-sancion" novalidate>
+                <div class="modal-header border-0">
+                    <h2 class="modal-title h5" id="titulo-sancion">⚙️ Personalizar sanción</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body pt-0">
+                    <fieldset class="mb-3">
+                        <legend class="form-label fs-6">Tipo de sanción</legend>
+                        <div class="d-grid gap-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="tipo-sancion" id="sancion-WARNED" value="WARNED" checked>
+                                <label class="form-check-label" for="sancion-WARNED">⚠️ Advertencia <span class="text-secondary small">(suma al contador de advertencias)</span></label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="tipo-sancion" id="sancion-SUSPENDED" value="SUSPENDED">
+                                <label class="form-check-label" for="sancion-SUSPENDED">⏸️ Suspensión temporal</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="tipo-sancion" id="sancion-BANNED" value="BANNED">
+                                <label class="form-check-label" for="sancion-BANNED">🚫 Eliminar la cuenta</label>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6" id="bloque-dias">
+                            <label class="form-label" for="sancion-dias">Días de suspensión</label>
+                            <input type="number" class="form-control" id="sancion-dias" min="1" max="365" value="7">
+                            <div class="invalid-feedback">Entre 1 y 365.</div>
+                        </div>
+                        <div class="col-6" id="bloque-niveles">
+                            <label class="form-label" for="sancion-niveles">Niveles a quitar</label>
+                            <input type="number" class="form-control" id="sancion-niveles" min="0" max="10" value="1">
+                            <div class="invalid-feedback">Entre 0 y 10.</div>
+                        </div>
+                    </div>
+                    <p class="small mb-3" id="sancion-vista-previa"></p>
+                    <label class="form-label" for="sancion-nota">Nota del administrador</label>
+                    <textarea class="form-control" id="sancion-nota" rows="2" maxlength="500" placeholder="Justifica la sanción"></textarea>
+                    <div class="invalid-feedback">Escribe una nota para justificar la sanción.</div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Aplicar sanción</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: aprobar un juego sugerido -->
+    <div class="modal fade" id="modal-juego" tabindex="-1" aria-labelledby="titulo-juego" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form class="modal-content sf-modal" id="form-juego" novalidate>
+                <div class="modal-header border-0">
+                    <h2 class="modal-title h5" id="titulo-juego">🎮 Agregar juego al catálogo</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body pt-0">
+                    <label class="form-label" for="juego-nombre">Nombre</label>
+                    <input type="text" class="form-control mb-3" id="juego-nombre" maxlength="100" required>
+                    <label class="form-label" for="juego-genero">Género</label>
+                    <select class="form-select mb-3" id="juego-genero"></select>
+                    <fieldset class="mb-3">
+                        <legend class="form-label fs-6">Plataformas</legend>
+                        <div class="d-flex flex-wrap gap-2" id="juego-plataformas"></div>
+                        <div class="text-danger small mt-1 d-none" id="error-juego-plataformas">Elige al menos una plataforma.</div>
+                    </fieldset>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="juego-crossplay">
+                        <label class="form-check-label" for="juego-crossplay">Tiene crossplay entre plataformas</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Aprobar y agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <footer class="sf-footer py-4 mt-5">
         <div class="container d-flex flex-wrap justify-content-between gap-2">
@@ -88,20 +204,131 @@
     <script src="js/catalogo.js"></script>
     <script src="js/ui.js"></script>
     <script>
-        // Semana 3: GET /api/v1/admin/reports y PUT /api/v1/admin/reports/{id}
+        // Semana 3: GET /api/v1/admin/reports, PUT /api/v1/admin/reports/{id} (llama a resolve_report()),
+        // GET/PUT /api/v1/admin/settings y /api/v1/admin/game-requests.
         // El backend responde 403 si el JWT no es de un usuario con role = 'ADMIN'.
         const esAdmin = USUARIO_DEMO.role === 'ADMIN';
         document.getElementById(esAdmin ? 'panel' : 'sin-permiso').classList.remove('d-none');
 
+        const $ = (id) => document.getElementById(id);
+        const reglas = { ...REGLAS_MODERACION_DEMO };
         const reportes = REPORTES_DEMO.map((r) => ({ ...r }));
-        const lista = document.getElementById('lista-reportes');
+        const sugerencias = SUGERENCIAS_DEMO;
         const NIVEL_TOXICIDAD = { MILD: 'Leve', SEVERE: 'Grave' };
+        const modalSancion = new bootstrap.Modal('#modal-sancion');
+        const modalJuego = new bootstrap.Modal('#modal-juego');
+        let reporteActual = null;
+        let sugerenciaActual = null;
 
+        /* -------------------------------------------------------------
+           Reglas automáticas
+           ------------------------------------------------------------- */
+        function pintarReglas() {
+            $('regla-limite').value = reglas.warnings_limit;
+            $('regla-accion').value = reglas.auto_action;
+            $('regla-dias').value = reglas.auto_suspension_days;
+            $('regla-niveles-advertencia').value = reglas.warning_levels_removed;
+            $('regla-niveles-suspension').value = reglas.suspension_levels_removed;
+            $('bloque-regla-dias').classList.toggle('d-none', reglas.auto_action !== 'SUSPEND');
+            $('resumen-reglas').textContent = `con ${reglas.warnings_limit} advertencias la cuenta se `
+                + (reglas.auto_action === 'BAN' ? 'elimina' : `suspende ${reglas.auto_suspension_days} días`)
+                + ` · cada advertencia quita ${reglas.warning_levels_removed} nivel(es)`;
+        }
+
+        $('regla-accion').addEventListener('change', () => {
+            $('bloque-regla-dias').classList.toggle('d-none', $('regla-accion').value !== 'SUSPEND');
+        });
+
+        validarFormulario($('form-reglas'), () => {
+            Object.assign(reglas, {
+                warnings_limit: Number($('regla-limite').value),
+                auto_action: $('regla-accion').value,
+                auto_suspension_days: Number($('regla-dias').value),
+                warning_levels_removed: Number($('regla-niveles-advertencia').value),
+                suspension_levels_removed: Number($('regla-niveles-suspension').value),
+            });
+            pintarReglas();
+            pintar();
+            mostrarToast('Reglas de moderación guardadas.');
+        });
+
+        /* -------------------------------------------------------------
+           Aplicar una decisión (misma lógica que resolve_report() en la BD)
+           ------------------------------------------------------------- */
+        function resolver(r, accion, { dias = null, niveles = null, nota = '' } = {}) {
+            let estado = accion;
+            let quitados = 0;
+            let automatica = false;
+            const afectados = reportes.filter((x) => x.reported_user_id === r.reported_user_id);
+
+            if (accion === 'WARNED') {
+                quitados = niveles ?? reglas.warning_levels_removed;
+                const advertencias = r.reported_warnings + 1;
+                afectados.forEach((x) => { x.reported_warnings = advertencias; });
+                if (advertencias >= reglas.warnings_limit) {
+                    automatica = true;
+                    estado = reglas.auto_action === 'BAN' ? 'BANNED' : 'SUSPENDED';
+                    dias = reglas.auto_suspension_days;
+                    if (estado === 'SUSPENDED') {
+                        quitados += reglas.suspension_levels_removed;
+                        afectados.forEach((x) => { x.reported_warnings = 0; });
+                    }
+                }
+            } else if (accion === 'SUSPENDED') {
+                quitados = niveles ?? reglas.suspension_levels_removed;
+                dias = dias ?? 7;
+            }
+
+            const nivelNuevo = Math.max(0, r.reported_level - quitados);
+            afectados.forEach((x) => {
+                x.reported_level = nivelNuevo;
+                if (estado === 'SUSPENDED') x.reported_account_status = 'SUSPENDED';
+                if (estado === 'BANNED') x.reported_account_status = 'BANNED';
+            });
+            Object.assign(r, {
+                status: estado, suspension_days: estado === 'SUSPENDED' ? dias : null,
+                levels_removed: Math.min(quitados, 10), is_automatic: automatica,
+                admin_notes: nota || null, resolved_at: new Date().toLocaleString('es'),
+            });
+
+            if (automatica) {
+                mostrarToast(`${r.reported_username} llegó a ${reglas.warnings_limit} advertencias: `
+                    + (estado === 'BANNED' ? 'cuenta eliminada automáticamente.' : `suspendido ${dias} días automáticamente.`), 'danger');
+            } else {
+                const avisos = {
+                    DISMISSED: ['Reporte descartado.', 'info'],
+                    WARNED: [`${r.reported_username} recibió una advertencia (−${quitados} nivel).`, 'warning'],
+                    SUSPENDED: [`${r.reported_username} fue suspendido ${dias} días (−${quitados} niveles).`, 'warning'],
+                    BANNED: [`La cuenta de ${r.reported_username} fue eliminada.`, 'danger'],
+                };
+                mostrarToast(...avisos[estado]);
+            }
+            pintar();
+        }
+
+        /* -------------------------------------------------------------
+           Tarjetas de reportes
+           ------------------------------------------------------------- */
         function tarjeta(r) {
             const motivo = MOTIVOS_REPORTE[r.reason];
             const evidencia = evidenciaChat(r.post_id, r.reported_user_id);
             const pendiente = r.status === 'PENDING';
             const cuenta = { ACTIVE: '', SUSPENDED: '<span class="badge text-bg-info">Suspendida</span>', BANNED: '<span class="badge text-bg-danger">Eliminada</span>' };
+            const advertencias = `${r.reported_warnings}/${reglas.warnings_limit} advertencias`;
+
+            let decision = '';
+            if (!pendiente) {
+                const detalles = [
+                    r.suspension_days ? `${r.suspension_days} días` : null,
+                    r.levels_removed ? `−${r.levels_removed} nivel(es)` : null,
+                    r.is_automatic ? '🤖 automática' : null,
+                ].filter(Boolean).join(' · ');
+                decision = `
+                    <div class="small">
+                        <strong>Decisión:</strong> ${esc(ESTADOS_REPORTE[r.status].texto)}${detalles ? ` (${esc(detalles)})` : ''} · ${esc(r.resolved_at)}
+                        ${r.admin_notes ? `<br><strong>Nota:</strong> ${esc(r.admin_notes)}` : ''}
+                    </div>`;
+            }
 
             return `
                 <article class="sf-card">
@@ -110,10 +337,10 @@
                             ${avatar(r.reported_username)}
                             <div>
                                 <div class="d-flex flex-wrap align-items-center gap-2">
-                                    ${enlaceUsuario(r.reported_user_id, r.reported_username)} ${badgeHonor(r.reported_honor_score)}
+                                    ${enlaceUsuario(r.reported_user_id, r.reported_username)} ${badgeNivel(r.reported_level)}
                                     ${cuenta[r.reported_account_status] ?? ''}
                                 </div>
-                                <small class="text-secondary">${r.total_reports} reporte(s) en total</small>
+                                <small class="text-secondary">${r.total_reports} reporte(s) · ⚠️ ${advertencias}</small>
                             </div>
                         </div>
                         <div class="text-end">
@@ -146,43 +373,103 @@
                         <div class="invalid-feedback mb-2">Escribe una nota para justificar la sanción.</div>
                         <div class="d-flex flex-wrap gap-2 mt-2">
                             <button class="btn btn-outline-light" data-accion="DISMISSED" data-id="${r.id}">Descartar</button>
-                            <button class="btn btn-info" data-accion="SUSPENDED" data-id="${r.id}">⏸️ Suspender 7 días</button>
+                            <button class="btn btn-warning" data-accion="WARNED" data-id="${r.id}"
+                                title="Suma 1 al contador; al llegar a ${reglas.warnings_limit} se aplica la regla automática">
+                                ⚠️ Advertir (−${reglas.warning_levels_removed} nivel)</button>
+                            <button class="btn btn-info" data-accion="CUSTOM" data-id="${r.id}">⚙️ Personalizar sanción</button>
                             <button class="btn btn-danger ms-sm-auto" data-accion="BANNED" data-id="${r.id}">🚫 Eliminar cuenta</button>
-                        </div>` : `
-                        <div class="small">
-                            <strong>Decisión:</strong> ${esc(ESTADOS_REPORTE[r.status].texto)} · ${esc(r.resolved_at)}
-                            ${r.admin_notes ? `<br><strong>Nota:</strong> ${esc(r.admin_notes)}` : ''}
-                        </div>`}
+                        </div>` : decision}
                 </article>`;
         }
 
+        /* -------------------------------------------------------------
+           Juegos sugeridos
+           ------------------------------------------------------------- */
+        const ESTADOS_SUGERENCIA = {
+            PENDING: { texto: 'Pendiente', clase: 'text-bg-warning' },
+            APPROVED: { texto: 'Aprobado', clase: 'text-bg-success' },
+            REJECTED: { texto: 'Rechazado', clase: 'text-bg-secondary' },
+        };
+
+        function tarjetaSugerencia(s) {
+            return `
+                <article class="sf-card d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <h2 class="h5 mb-1">🎮 ${esc(s.game_name)}</h2>
+                        <small class="text-secondary">Sugerido por ${enlaceUsuario(s.user_id, s.username)} · ${esc(s.created_at)}
+                            ${s.platforms_note ? ` · Plataformas: ${esc(s.platforms_note)}` : ''}</small>
+                    </div>
+                    ${s.status === 'PENDING'
+                        ? `<div class="d-flex gap-2">
+                               <button class="btn btn-success" data-aprobar="${s.id}">✓ Aprobar</button>
+                               <button class="btn btn-outline-light" data-rechazar="${s.id}">Rechazar</button>
+                           </div>`
+                        : `<span class="badge ${ESTADOS_SUGERENCIA[s.status].clase}">${ESTADOS_SUGERENCIA[s.status].texto}</span>`}
+                </article>`;
+        }
+
+        $('juego-genero').innerHTML = GENEROS.map((g) => `<option>${esc(g)}</option>`).join('');
+        $('juego-plataformas').innerHTML = PLATAFORMAS.map((p) => `
+            <input type="checkbox" class="btn-check" name="juego-plataforma" id="jp-${p}" value="${p}" autocomplete="off">
+            <label class="btn btn-outline-light sf-chip" for="jp-${p}">${ICONOS_PLATAFORMA[p]} ${p}</label>`).join('');
+
+        /* -------------------------------------------------------------
+           Pintar todo
+           ------------------------------------------------------------- */
         function pintar() {
             const vista = document.querySelector('input[name="vista"]:checked').value;
             const pendientes = reportes.filter((r) => r.status === 'PENDING');
             const resueltos = reportes.filter((r) => r.status !== 'PENDING');
-            document.getElementById('total-pendientes').textContent = pendientes.length;
-            document.getElementById('total-resueltos').textContent = resueltos.length;
+            const juegosPendientes = sugerencias.filter((s) => s.status === 'PENDING');
+            $('total-pendientes').textContent = pendientes.length;
+            $('total-resueltos').textContent = resueltos.length;
+            $('total-juegos').textContent = juegosPendientes.length;
 
+            $('lista-reportes').classList.toggle('d-none', vista === 'GAMES');
+            $('lista-juegos').classList.toggle('d-none', vista !== 'GAMES');
+            $('reglas').classList.toggle('d-none', vista === 'GAMES');
+
+            if (vista === 'GAMES') {
+                const orden = [...juegosPendientes, ...sugerencias.filter((s) => s.status !== 'PENDING')];
+                $('lista-juegos').innerHTML = orden.length
+                    ? orden.map(tarjetaSugerencia).join('')
+                    : '<div class="sf-card text-center text-secondary">No hay juegos sugeridos.</div>';
+                return;
+            }
             const visibles = vista === 'PENDING' ? pendientes : resueltos;
-            lista.innerHTML = visibles.length
+            $('lista-reportes').innerHTML = visibles.length
                 ? visibles.map(tarjeta).join('')
                 : `<div class="sf-card text-center text-secondary">${vista === 'PENDING' ? '🎉 No hay reportes pendientes.' : 'Aún no hay reportes resueltos.'}</div>`;
         }
 
         document.querySelectorAll('input[name="vista"]').forEach((i) => i.addEventListener('change', pintar));
 
+        /* -------------------------------------------------------------
+           Botones de los reportes
+           ------------------------------------------------------------- */
         const CONFIRMACIONES = {
             DISMISSED: { titulo: 'Descartar reporte', texto: 'El reporte se cerrará sin sanción.', boton: 'Descartar', peligro: false },
-            SUSPENDED: { titulo: 'Suspender cuenta 7 días', texto: 'La persona no podrá entrar a SquadFinder durante 7 días.', boton: 'Suspender', peligro: true },
-            BANNED: { titulo: 'Eliminar cuenta', texto: 'La cuenta quedará bloqueada para siempre: no podrá entrar ni volver a registrarse con la misma cuenta. Sus salas abiertas se cerrarán.', boton: 'Eliminar cuenta', peligro: true },
+            WARNED: { titulo: 'Advertir', texto: 'Se suma una advertencia y se descuentan niveles.', boton: 'Advertir', peligro: true },
+            BANNED: { titulo: 'Eliminar cuenta', texto: 'La cuenta quedará bloqueada para siempre y sus salas abiertas se cancelarán.', boton: 'Eliminar cuenta', peligro: true },
         };
 
-        lista.addEventListener('click', async (e) => {
+        $('lista-reportes').addEventListener('click', async (e) => {
             const boton = e.target.closest('button[data-accion]');
             if (!boton) return;
             const r = reportes.find((x) => x.id === Number(boton.dataset.id));
             const accion = boton.dataset.accion;
-            const nota = document.getElementById(`nota-${r.id}`);
+            const nota = $(`nota-${r.id}`);
+
+            if (accion === 'CUSTOM') {
+                reporteActual = r;
+                $('titulo-sancion').textContent = `⚙️ Personalizar sanción para ${r.reported_username}`;
+                $('form-sancion').reset();
+                $('sancion-nota').value = nota.value;
+                $('sancion-nota').classList.remove('is-invalid');
+                actualizarModalSancion();
+                modalSancion.show();
+                return;
+            }
 
             // Sancionar exige justificar la decisión
             const faltaNota = accion !== 'DISMISSED' && nota.value.trim().length === 0;
@@ -193,28 +480,97 @@
             }
 
             const c = CONFIRMACIONES[accion];
-            const mensaje = `${c.texto} Usuario: ${r.reported_username}.`;
-            if (!await confirmar({ titulo: c.titulo, mensaje, textoBoton: c.boton, peligro: c.peligro })) return;
-
-            r.status = accion;
-            r.admin_notes = nota.value.trim() || null;
-            r.resolved_at = new Date().toLocaleString('es');
-            if (accion !== 'DISMISSED') {
-                // Se aplica la sanción a todos los reportes de esa persona
-                for (const otro of reportes.filter((x) => x.reported_user_id === r.reported_user_id)) {
-                    otro.reported_account_status = accion === 'BANNED' ? 'BANNED' : 'SUSPENDED';
-                }
+            let mensaje = `${c.texto} Usuario: ${r.reported_username}.`;
+            if (accion === 'WARNED' && r.reported_warnings + 1 >= reglas.warnings_limit) {
+                mensaje += ` ⚠️ Es su advertencia número ${reglas.warnings_limit}: se aplicará la regla automática (`
+                    + (reglas.auto_action === 'BAN' ? 'eliminar la cuenta' : `suspender ${reglas.auto_suspension_days} días`) + ').';
             }
-            const avisos = {
-                DISMISSED: ['Reporte descartado.', 'info'],
-                SUSPENDED: [`${r.reported_username} fue suspendido por 7 días.`, 'warning'],
-                BANNED: [`La cuenta de ${r.reported_username} fue eliminada.`, 'danger'],
+            if (await confirmar({ titulo: c.titulo, mensaje, textoBoton: c.boton, peligro: c.peligro })) {
+                resolver(r, accion, { nota: nota.value.trim() });
+            }
+        });
+
+        // Modal de sanción personalizada
+        function actualizarModalSancion() {
+            const tipo = document.querySelector('input[name="tipo-sancion"]:checked').value;
+            $('bloque-dias').classList.toggle('d-none', tipo !== 'SUSPENDED');
+            $('bloque-niveles').classList.toggle('d-none', tipo === 'BANNED');
+            const niveles = Math.max(0, Math.min(10, Number($('sancion-niveles').value) || 0));
+            const r = reporteActual;
+            $('sancion-vista-previa').innerHTML = tipo === 'BANNED'
+                ? '🚫 La cuenta se bloqueará para siempre.'
+                : `Nivel actual ${badgeNivel(r.reported_level)} → quedaría en ${badgeNivel(Math.max(0, r.reported_level - niveles))}`
+                  + (tipo === 'WARNED' ? ` · advertencias ${r.reported_warnings} → ${r.reported_warnings + 1} de ${reglas.warnings_limit}` : '');
+        }
+        $('form-sancion').addEventListener('input', actualizarModalSancion);
+        $('form-sancion').addEventListener('change', actualizarModalSancion);
+
+        $('form-sancion').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const tipo = document.querySelector('input[name="tipo-sancion"]:checked').value;
+            const dias = Number($('sancion-dias').value);
+            const niveles = Number($('sancion-niveles').value);
+            const nota = $('sancion-nota').value.trim();
+            const diasMal = tipo === 'SUSPENDED' && !(dias >= 1 && dias <= 365);
+            const nivelesMal = tipo !== 'BANNED' && !(niveles >= 0 && niveles <= 10);
+            $('sancion-dias').classList.toggle('is-invalid', diasMal);
+            $('sancion-niveles').classList.toggle('is-invalid', nivelesMal);
+            $('sancion-nota').classList.toggle('is-invalid', !nota);
+            if (diasMal || nivelesMal || !nota) return;
+
+            modalSancion.hide();
+            resolver(reporteActual, tipo, { dias, niveles, nota });
+        });
+
+        /* -------------------------------------------------------------
+           Botones de los juegos sugeridos
+           ------------------------------------------------------------- */
+        $('lista-juegos').addEventListener('click', async (e) => {
+            const boton = e.target.closest('button');
+            if (!boton) return;
+            const id = Number(boton.dataset.aprobar ?? boton.dataset.rechazar);
+            const s = sugerencias.find((x) => x.id === id);
+            if (boton.dataset.aprobar) {
+                sugerenciaActual = s;
+                $('form-juego').reset();
+                $('juego-nombre').value = s.game_name;
+                $('error-juego-plataformas').classList.add('d-none');
+                modalJuego.show();
+            }
+            if (boton.dataset.rechazar && await confirmar({ titulo: 'Rechazar sugerencia', mensaje: `"${s.game_name}" no se agregará al catálogo.`, textoBoton: 'Rechazar', peligro: false })) {
+                s.status = 'REJECTED';
+                guardarLocal(CLAVE_SUGERENCIAS, sugerencias.filter((x) => x.id !== 1));
+                mostrarToast('Sugerencia rechazada.', 'info');
+                pintar();
+            }
+        });
+
+        $('form-juego').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nombre = $('juego-nombre').value.trim();
+            const plataformas = [...document.querySelectorAll('input[name="juego-plataforma"]:checked')].map((i) => i.value);
+            $('juego-nombre').classList.toggle('is-invalid', nombre.length < 2);
+            $('error-juego-plataformas').classList.toggle('d-none', plataformas.length > 0);
+            if (nombre.length < 2 || plataformas.length === 0) return;
+
+            // Demo: se guarda en el navegador para que aparezca en el onboarding y el perfil
+            const nuevo = {
+                id: Math.max(...JUEGOS.map((j) => j.id)) + 1, name: nombre, genre: $('juego-genero').value,
+                crossplay: $('juego-crossplay').checked, platforms: plataformas,
             };
-            mostrarToast(...avisos[accion]);
+            JUEGOS.push(nuevo);
+            guardarLocal(CLAVE_JUEGOS_EXTRA, [...leerLocal(CLAVE_JUEGOS_EXTRA, []), nuevo]);
+            sugerenciaActual.status = 'APPROVED';
+            guardarLocal(CLAVE_SUGERENCIAS, sugerencias.filter((x) => x.id !== 1));
+            modalJuego.hide();
+            mostrarToast(`"${nombre}" ya aparece en la lista de juegos para todos.`);
             pintar();
         });
 
-        if (esAdmin) pintar();
+        if (esAdmin) {
+            pintarReglas();
+            pintar();
+        }
     </script>
 </body>
 

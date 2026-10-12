@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Configurar perfil - SquadFinder LFG</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
@@ -67,27 +68,33 @@
             <fieldset class="sf-fieldset mb-3">
                 <legend>¿En qué juegos buscas compañeros?</legend>
                 <p class="form-text mt-0">Elige al menos uno. Solo podrás crear salas de estos juegos; puedes cambiarlos luego en tu perfil.</p>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <label class="visually-hidden" for="buscar-juego">Buscar juego</label>
+                    <input type="search" class="form-control form-control-sm" id="buscar-juego" placeholder="🔍 Buscar juego..." style="max-width: 14rem;">
+                    <div class="btn-group btn-group-sm sf-filtro-juegos" id="filtro-juegos" role="group" aria-label="Filtrar por plataforma">
+                        <button type="button" class="btn btn-outline-light active" data-filtro-plataforma="">Todos</button>
+                        <button type="button" class="btn btn-outline-light" data-filtro-plataforma="PC">🖥️ PC</button>
+                        <button type="button" class="btn btn-outline-light" data-filtro-plataforma="CONSOLA">🎮 Consola</button>
+                        <button type="button" class="btn btn-outline-light" data-filtro-plataforma="Mobile">📱 Móvil</button>
+                        <button type="button" class="btn btn-outline-light" data-filtro-plataforma="MARCADOS">✓ Elegidos</button>
+                    </div>
+                </div>
                 <div id="juegos" class="d-flex flex-wrap gap-2"></div>
                 <div id="error-juegos" class="text-danger small mt-2 d-none" role="alert">Elige al menos un juego.</div>
+                <button type="button" class="btn btn-link btn-sm px-0 mt-2" id="btn-sugerir-juego">➕ ¿No está tu juego? Sugiérelo al administrador</button>
             </fieldset>
             <fieldset class="sf-fieldset mb-3">
                 <legend>Géneros favoritos</legend>
                 <div id="generos" class="d-flex flex-wrap gap-2"></div>
             </fieldset>
-            <div class="row mb-3">
-                <div class="col">
+            <div class="row g-3 mb-3">
+                <div class="col-sm">
                     <label class="form-label" for="idioma-hablar">Idioma que hablas</label>
-                    <select class="form-select" id="idioma-hablar">
-                        <option value="es">Español</option>
-                        <option value="en">English</option>
-                    </select>
+                    <select class="form-select" id="idioma-hablar"></select>
                 </div>
-                <div class="col">
+                <div class="col-sm">
                     <label class="form-label" for="idioma-escribir">Idioma que escribes</label>
-                    <select class="form-select" id="idioma-escribir">
-                        <option value="es">Español</option>
-                        <option value="en">English</option>
-                    </select>
+                    <select class="form-select" id="idioma-escribir"></select>
                 </div>
             </div>
             <div class="mb-4">
@@ -119,8 +126,13 @@
     <script src="js/ui.js"></script>
     <script>
         llenarRegiones('region');
-        renderChips('juegos', JUEGOS.map((j) => ({ value: j.id, label: j.name })), 'juego');
+        llenarSelect('idioma-hablar', IDIOMAS_USUARIO, 'es');
+        llenarSelect('idioma-escribir', IDIOMAS_USUARIO, 'es');
+        // La lista sale del catálogo: si el administrador aprueba un juego o agrega un género, aparece aquí solo
+        renderChips('juegos', JUEGOS.map((j) => ({ value: j.id, label: j.name, plataformas: j.platforms })), 'juego');
         renderChips('generos', GENEROS.map((g) => ({ value: g, label: g })), 'genero');
+        activarFiltroJuegos({ buscadorId: 'buscar-juego', contenedorId: 'juegos', botonesId: 'filtro-juegos' });
+        document.getElementById('btn-sugerir-juego').addEventListener('click', abrirSugerenciaJuego);
 
         const errorJuegos = document.getElementById('error-juegos');
         document.getElementById('juegos').addEventListener('change', () => {

@@ -625,6 +625,185 @@ body > main {
 }
 
 /* ---------------------------------------------------------------------
+   Niveles de honor y Rookie
+   --------------------------------------------------------------------- */
+.sf-badge-honor.sf-nivel-5, .sf-badge-honor.sf-nivel-6, .sf-badge-honor.sf-nivel-7 {
+    background-color: rgba(34, 211, 238, 0.15);
+    color: var(--sf-accent);
+    border-color: rgba(34, 211, 238, 0.5);
+}
+
+.sf-badge-honor.sf-nivel-8, .sf-badge-honor.sf-nivel-9, .sf-badge-honor.sf-nivel-10 {
+    background-color: rgba(251, 191, 36, 0.15);
+    color: var(--sf-warning);
+    border-color: rgba(251, 191, 36, 0.5);
+}
+
+.sf-badge-rookie {
+    background-color: rgba(244, 63, 94, 0.12);
+    color: #FDA4AF;
+    border: 1px dashed rgba(244, 63, 94, 0.6);
+}
+
+.sf-progress-rookie {
+    --bs-progress-bg: rgba(244, 63, 94, 0.2);
+}
+
+.sf-nivel-grande {
+    font-family: var(--sf-font-display);
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* ---------------------------------------------------------------------
+   Fotos de perfil y avatares prediseñados
+   --------------------------------------------------------------------- */
+img.sf-avatar {
+    object-fit: cover;
+    border: 2px solid var(--sf-primary);
+}
+
+.sf-avatar.sf-avatar-preset {
+    background: linear-gradient(135deg, var(--sf-surface-2), #3B2A63);
+    border: 2px solid var(--sf-primary);
+    font-size: 1.15em;
+}
+
+.sf-avatar.sf-avatar-lg.sf-avatar-preset {
+    font-size: 2.5rem;
+}
+
+.sf-avatar.sf-avatar-xl {
+    width: 7rem;
+    height: 7rem;
+    font-size: 3rem;
+}
+
+.sf-preset {
+    font-size: 1.5rem;
+    width: 3rem;
+    height: 3rem;
+    padding: 0;
+    border-radius: 50%;
+}
+
+/* ---------------------------------------------------------------------
+   Íconos de cuentas vinculadas
+   --------------------------------------------------------------------- */
+.sf-cuenta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.4rem;
+    font-size: 0.85rem;
+    color: #FFFFFF;
+}
+
+.sf-cuenta-discord { background-color: #5865F2; }
+.sf-cuenta-steam { background-color: #1B2838; border: 1px solid #66C0F4; }
+.sf-cuenta-twitch { background-color: #9146FF; }
+.sf-cuenta-kick { background-color: #53FC18; color: #0B0F0C; }
+
+.sf-icono-kick {
+    font-weight: 800;
+    font-family: var(--sf-font-display);
+}
+
+/* Botones de filtro de la lista de juegos */
+.sf-filtro-juegos .btn.active {
+    background-color: rgba(139, 92, 246, 0.25);
+    border-color: var(--sf-primary);
+    color: #FFFFFF;
+}
+
+/* ---------------------------------------------------------------------
+   Mascota de la página 404 (Squaddy)
+   --------------------------------------------------------------------- */
+.sf-mascota-zona {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sf-mascota {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    animation: sf-flotar 3s ease-in-out infinite;
+    filter: drop-shadow(0 12px 24px rgba(139, 92, 246, 0.45));
+}
+
+.sf-mascota:focus-visible {
+    outline: 2px solid var(--sf-accent);
+    outline-offset: 6px;
+    border-radius: 1rem;
+}
+
+.sf-mascota.sf-salto {
+    animation: sf-salto 0.5s ease-out, sf-flotar 3s ease-in-out 0.5s infinite;
+}
+
+.sf-mascota .sf-ojos {
+    transform-origin: 110px 72px;
+    animation: sf-parpadeo 4s infinite;
+}
+
+.sf-mascota .sf-gota {
+    animation: sf-gota 2s ease-in infinite;
+}
+
+.sf-burbuja {
+    position: relative;
+    background-color: var(--sf-surface);
+    border: 1px solid var(--sf-primary);
+    border-radius: 1rem;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+}
+
+.sf-burbuja::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -8px;
+    width: 14px;
+    height: 14px;
+    background-color: var(--sf-surface);
+    border-right: 1px solid var(--sf-primary);
+    border-bottom: 1px solid var(--sf-primary);
+    transform: translateX(-50%) rotate(45deg);
+}
+
+@keyframes sf-flotar {
+    50% { transform: translateY(-12px); }
+}
+
+@keyframes sf-salto {
+    40% { transform: translateY(-40px) rotate(-6deg); }
+    70% { transform: translateY(0) rotate(4deg); }
+}
+
+@keyframes sf-parpadeo {
+    0%, 92%, 100% { transform: scaleY(1); }
+    96% { transform: scaleY(0.1); }
+}
+
+@keyframes sf-gota {
+    0% { opacity: 0; transform: translateY(0); }
+    30% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(18px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sf-mascota, .sf-mascota .sf-ojos, .sf-mascota .sf-gota { animation: none; }
+}
+
+/* ---------------------------------------------------------------------
    Zona de peligro (eliminar cuenta)
    --------------------------------------------------------------------- */
 .sf-danger-zone {

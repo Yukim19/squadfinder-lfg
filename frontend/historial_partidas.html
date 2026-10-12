@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Historial de partidas - SquadFinder LFG</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
@@ -45,10 +46,51 @@
     </nav>
 
     <main class="container py-4">
-        <h1>Historial de partidas</h1>
-        <p class="text-secondary">Tus partidas terminadas y los jugadores con los que jugaste. Califícalos para sumar a su Honor Score.</p>
-        <div id="lista-historial" class="d-grid gap-3 mt-3"></div>
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
+            <div>
+                <h1>Historial de partidas</h1>
+                <p class="text-secondary mb-0">Tus partidas terminadas y los jugadores con los que jugaste. Califícalos para ayudarlos a subir de nivel.</p>
+            </div>
+            <div class="btn-group" role="group" aria-label="Secciones del historial">
+                <input type="radio" class="btn-check" name="seccion" id="seccion-partidas" value="partidas" checked>
+                <label class="btn btn-outline-light" for="seccion-partidas">🎮 Partidas</label>
+                <input type="radio" class="btn-check" name="seccion" id="seccion-lista-negra" value="lista-negra">
+                <label class="btn btn-outline-light" for="seccion-lista-negra">🚫 Lista negra <span class="badge text-bg-secondary" id="total-lista-negra">0</span></label>
+            </div>
+        </div>
+
+        <div id="lista-historial" class="d-grid gap-3 mt-4"></div>
+
+        <section id="panel-lista-negra" class="mt-4 d-none">
+            <div class="sf-card small text-secondary mb-3">
+                🚫 Tu lista negra es <strong>personal</strong>: no castiga a nadie. Solo dejas de ver las salas que creen
+                esas personas hasta que las quites de la lista. Si alguien fue tóxico, mejor usa <strong>🚩 Reportar</strong>.
+            </div>
+            <div id="lista-negra" class="d-grid gap-2"></div>
+        </section>
     </main>
+
+    <!-- Modal: agregar a la lista negra (CREATE user_block) -->
+    <div class="modal fade" id="modal-bloquear" tabindex="-1" aria-labelledby="titulo-bloquear" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form class="modal-content sf-modal" id="form-bloquear">
+                <div class="modal-header border-0">
+                    <h2 class="modal-title h5" id="titulo-bloquear">Agregar a la lista negra</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body pt-0">
+                    <p class="small text-secondary">No verás las salas que cree esta persona. No se le avisa ni recibe ningún castigo.</p>
+                    <label class="form-label" for="motivo-bloqueo">Nota para ti <span class="text-secondary">(opcional)</span></label>
+                    <input type="text" class="form-control" id="motivo-bloqueo" maxlength="200"
+                        placeholder="Ej.: No juega en equipo">
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Agregar a la lista negra</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Modal: calificar a un compañero (CREATE / UPDATE user_review) -->
     <div class="modal fade" id="modal-resena" tabindex="-1" aria-labelledby="titulo-resena" aria-hidden="true">
@@ -134,7 +176,7 @@
                                 <div>${enlaceUsuario(c.teammate_id, c.teammate_username)}</div>
                                 <small class="text-secondary">${esc(REGIONES[c.teammate_region] ?? 'Sin región')}</small>
                             </div>
-                            ${badgeHonor(c.teammate_honor_score)}
+                            ${badgeNivel(c.teammate_level)}
                         </div>
                         <div class="d-flex flex-wrap align-items-center gap-2">
                             ${c.already_reviewed
@@ -145,6 +187,11 @@
                                 ? '<span class="badge text-bg-danger" title="Un administrador revisará tu reporte">🚩 Reportado</span>'
                                 : `<button class="btn btn-sm btn-outline-danger" data-reportar="${p.post_id}-${c.teammate_id}"
                                        title="Reportar comportamiento tóxico">🚩 Reportar</button>`}
+                            ${estaBloqueado(c.teammate_id)
+                                ? `<button class="btn btn-sm btn-outline-light" data-desbloquear="${c.teammate_id}"
+                                       title="Volver a ver sus salas">✓ En lista negra · Quitar</button>`
+                                : `<button class="btn btn-sm btn-outline-light" data-bloquear="${c.teammate_id}"
+                                       title="Dejar de ver sus salas">🚫 Lista negra</button>`}
                         </div>
                     </div>`).join('');
 
@@ -182,6 +229,65 @@
             document.getElementById('btn-borrar-resena').classList.toggle('d-none', !r);
             modalResena.show();
         }
+
+        /* -------------------------------------------------------------
+           Lista negra
+           ------------------------------------------------------------- */
+        const modalBloquear = new bootstrap.Modal('#modal-bloquear');
+        let usuarioABloquear = null;
+
+        function pintarListaNegra() {
+            const bloqueados = listaNegra();
+            document.getElementById('total-lista-negra').textContent = bloqueados.length;
+            document.getElementById('lista-negra').innerHTML = bloqueados.length
+                ? bloqueados.map((b) => `
+                    <div class="sf-card d-flex flex-wrap justify-content-between align-items-center gap-2 py-3">
+                        <div class="d-flex align-items-center gap-2">
+                            ${avatar(b.username)}
+                            <div>
+                                ${enlaceUsuario(b.blocked_id, b.username)}
+                                <div class="small text-secondary">Desde ${esc(b.created_at)}${b.reason ? ` · "${esc(b.reason)}"` : ''}</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-light" data-desbloquear="${b.blocked_id}">Quitar de la lista</button>
+                    </div>`).join('')
+                : '<div class="sf-card text-center text-secondary">Tu lista negra está vacía.</div>';
+        }
+
+        document.querySelectorAll('input[name="seccion"]').forEach((opcion) => {
+            opcion.addEventListener('change', () => {
+                const verLista = opcion.value === 'lista-negra';
+                lista.classList.toggle('d-none', verLista);
+                document.getElementById('panel-lista-negra').classList.toggle('d-none', !verLista);
+            });
+        });
+
+        document.getElementById('form-bloquear').addEventListener('submit', (e) => {
+            e.preventDefault();
+            bloquearUsuario(usuarioABloquear.id, document.getElementById('motivo-bloqueo').value.trim() || null);
+            modalBloquear.hide();
+            mostrarToast(`${usuarioABloquear.username} está en tu lista negra. Ya no verás sus salas.`, 'info');
+            pintar();
+            pintarListaNegra();
+        });
+
+        // Botones de bloquear y quitar, tanto en las partidas como en la lista
+        document.querySelector('main').addEventListener('click', (e) => {
+            const boton = e.target.closest('button');
+            if (boton?.dataset.bloquear) {
+                usuarioABloquear = usuarioPorId(boton.dataset.bloquear);
+                document.getElementById('titulo-bloquear').textContent = `Agregar a ${usuarioABloquear.username} a la lista negra`;
+                document.getElementById('motivo-bloqueo').value = '';
+                modalBloquear.show();
+            }
+            if (boton?.dataset.desbloquear) {
+                const u = usuarioPorId(boton.dataset.desbloquear);
+                desbloquearUsuario(u.id);
+                mostrarToast(`${u.username} salió de tu lista negra.`, 'info');
+                pintar();
+                pintarListaNegra();
+            }
+        });
 
         lista.addEventListener('click', async (e) => {
             const boton = e.target.closest('button');
@@ -245,6 +351,7 @@
         });
 
         pintar();
+        pintarListaNegra();
     </script>
 </body>
 

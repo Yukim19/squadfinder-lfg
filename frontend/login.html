@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Iniciar sesión - SquadFinder LFG</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
@@ -37,19 +38,36 @@
                     </li>
                     <li class="d-flex gap-3">
                         <span class="sf-avatar sf-avatar-sm" aria-hidden="true">3</span>
-                        <span><strong>Honor Score</strong><br><span class="text-secondary">Califica a tus compañeros y gana reputación.</span></span>
+                        <span><strong>Sube de nivel</strong><br><span class="text-secondary">Las buenas reseñas te llevan del nivel 1 al 10.</span></span>
                     </li>
                 </ul>
             </section>
 
             <section class="col-lg-5 offset-lg-1">
                 <div class="sf-card p-4 p-md-5">
-                    <h2 class="h3 mb-2 text-center">Iniciar sesión</h2>
-                    <p class="text-secondary text-center mb-4">Entra o crea tu cuenta gratis.</p>
-                    <div class="d-grid gap-3">
-                        <button class="btn btn-primary btn-lg" id="btn-login" type="button">Continuar con Auth0</button>
-                        <p class="text-secondary small text-center mb-0">Puedes usar tu correo o tu cuenta de Google.</p>
+                    <div class="btn-group w-100 mb-4" role="tablist" aria-label="Elegir acción">
+                        <input type="radio" class="btn-check" name="modo-acceso" id="modo-login" value="login" checked>
+                        <label class="btn btn-outline-light" for="modo-login">Iniciar sesión</label>
+                        <input type="radio" class="btn-check" name="modo-acceso" id="modo-registro" value="signup">
+                        <label class="btn btn-outline-light" for="modo-registro">Crear cuenta</label>
                     </div>
+
+                    <div id="panel-login">
+                        <h2 class="h3 mb-2 text-center">Bienvenido de vuelta</h2>
+                        <p class="text-secondary text-center mb-4">Entra con tu correo o tu cuenta de Google.</p>
+                        <button class="btn btn-primary btn-lg w-100" id="btn-login" type="button">Iniciar sesión</button>
+                    </div>
+
+                    <div id="panel-registro" class="d-none">
+                        <h2 class="h3 mb-2 text-center">Crea tu cuenta gratis</h2>
+                        <p class="text-secondary text-center mb-3">Empiezas en el <strong>nivel 1</strong>; después configuras tus juegos y tu región.</p>
+                        <ul class="small text-secondary mb-4">
+                            <li>Te enviaremos un correo para verificar tu cuenta.</li>
+                            <li>Si usas Google, tu cuenta queda protegida con su verificación en dos pasos.</li>
+                        </ul>
+                        <button class="btn btn-primary btn-lg w-100" id="btn-registro" type="button">Crear cuenta</button>
+                    </div>
+
                     <hr class="my-4">
                     <p class="small text-secondary mb-2">🔒 Tu contraseña la maneja Auth0; nunca se guarda en SquadFinder.</p>
                     <p class="small text-secondary mb-0">🎮 Después podrás vincular Discord, Steam y Twitch desde tu perfil.</p>
@@ -66,9 +84,22 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Semana 2: aquí se llamará a auth0.loginWithRedirect(). Por ahora simula
-        // un usuario nuevo que va al onboarding.
+        // Cambia entre "Iniciar sesión" y "Crear cuenta"
+        document.querySelectorAll('input[name="modo-acceso"]').forEach((opcion) => {
+            opcion.addEventListener('change', () => {
+                const registro = opcion.value === 'signup';
+                document.getElementById('panel-login').classList.toggle('d-none', registro);
+                document.getElementById('panel-registro').classList.toggle('d-none', !registro);
+            });
+        });
+
+        // Semana 2: auth0.loginWithRedirect() para entrar y
+        // auth0.loginWithRedirect({ authorizationParams: { screen_hint: 'signup' } }) para registrarse.
+        // Por ahora simulan: el usuario existente va a las salas y el nuevo al onboarding.
         document.getElementById('btn-login').addEventListener('click', () => {
+            location.href = 'index.html';
+        });
+        document.getElementById('btn-registro').addEventListener('click', () => {
             location.href = 'onboarding.html';
         });
     </script>

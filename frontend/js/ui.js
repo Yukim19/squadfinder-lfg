@@ -75,12 +75,58 @@ function enlaceUsuario(id, username) {
     return `<a class="sf-user-link" href="usuario.html?id=${Number(id)}">${esc(username)}</a>`;
 }
 
-function avatar(username, tamano = '') {
+// Avatar del usuario: su foto, un avatar prediseñado o la inicial del nombre
+function avatar(username, tamano = '', url = usuarioPorNombre(username)?.avatar_url) {
+    if (url?.startsWith('preset:')) {
+        return `<span class="sf-avatar sf-avatar-preset ${tamano}" aria-hidden="true">${esc(url.slice(7))}</span>`;
+    }
+    if (url) {
+        return `<img class="sf-avatar sf-avatar-foto ${tamano}" src="${esc(url)}" alt="" aria-hidden="true">`;
+    }
     return `<span class="sf-avatar ${tamano}" aria-hidden="true">${esc(String(username)[0] ?? '?')}</span>`;
 }
 
-function badgeHonor(score) {
-    return `<span class="badge sf-badge-honor">Honor ${Number(score).toFixed(1)}</span>`;
+// Nivel de honor: "⭐ Nv. 3" o "🐣 Rookie" si está en nivel 0
+function badgeNivel(nivel) {
+    const n = Number(nivel);
+    if (n <= 0) {
+        return '<span class="badge sf-badge-rookie" title="Nivel 0: perdió niveles por sanciones. Sube con buenas reseñas.">🐣 Rookie</span>';
+    }
+    return `<span class="badge sf-badge-honor sf-nivel-${Math.min(n, NIVEL_MAXIMO)}" title="Nivel de honor ${n} de ${NIVEL_MAXIMO}">⭐ Nv. ${n}</span>`;
+}
+
+// Barra de progreso hacia el siguiente nivel
+function barraNivel(xp) {
+    const nivel = nivelDesdeXp(xp);
+    if (nivel === 0) {
+        const falta = -xp;
+        return `<div class="small text-secondary mb-1">Le faltan ${falta} XP para volver al nivel 1</div>
+                <div class="progress sf-progress-rookie" role="progressbar" aria-label="Progreso para salir de Rookie"
+                     aria-valuenow="0"><div class="progress-bar" style="width: 0%"></div></div>`;
+    }
+    if (nivel === NIVEL_MAXIMO) {
+        return `<div class="small text-secondary mb-1">¡Nivel máximo! ${xp} XP</div>
+                <div class="progress" role="progressbar" aria-label="Nivel máximo" aria-valuenow="100">
+                    <div class="progress-bar" style="width: 100%"></div></div>`;
+    }
+    const enNivel = xp % XP_POR_NIVEL;
+    return `<div class="small text-secondary mb-1">${enNivel}/${XP_POR_NIVEL} XP para el nivel ${nivel + 1}</div>
+            <div class="progress" role="progressbar" aria-label="Progreso al siguiente nivel" aria-valuenow="${enNivel}">
+                <div class="progress-bar" style="width: ${enNivel}%"></div></div>`;
+}
+
+// Íconos de las cuentas vinculadas (Discord, Steam, Twitch, Kick)
+const ICONOS_CUENTA = {
+    discord: '<i class="bi bi-discord"></i>',
+    steam: '<i class="bi bi-steam"></i>',
+    twitch: '<i class="bi bi-twitch"></i>',
+    kick: '<span class="sf-icono-kick">K</span>',
+};
+
+function iconosCuentas(cuentas = {}) {
+    return Object.entries(cuentas).map(([clave, usuario]) =>
+        `<span class="sf-cuenta sf-cuenta-${clave}" title="${esc(PROVEEDORES[clave])}: ${esc(usuario)}">
+            ${ICONOS_CUENTA[clave]}<span class="visually-hidden">${esc(PROVEEDORES[clave])}: ${esc(usuario)}</span></span>`).join('');
 }
 
 function estrellas(rating) {
@@ -108,9 +154,97 @@ function badgeModo(modo) {
 function calcularCompatibilidad(sala, usuario = USUARIO_DEMO) {
     let puntos = 0;
     if (usuario.juegos.includes(sala.game_id)) puntos += 40;
-    if (sala.required_language === 'any' || sala.required_language === usuario.preferred_language_speak) puntos += 30;
+    const habla = usuario.preferred_language_speak;
+    if (sala.required_language === 'any' || habla === 'both' || sala.required_language === habla) puntos += 30;
     if (sala.host_region === usuario.region) puntos += 30;
     return puntos;
+}
+
+/* ---------------------------------------------------------------------
+   Buscador y filtro por plataforma para una lista larga de chips de juegos.
+   Requiere un <input type="search"> y botones con data-filtro-plataforma.
+   --------------------------------------------------------------------- */
+function activarFiltroJuegos({ buscadorId, contenedorId, botonesId }) {
+    const buscador = document.getElementById(buscadorId);
+    const contenedor = document.getElementById(contenedorId);
+    const botones = document.getElementById(botonesId);
+    let plataforma = '';
+
+    function aplicar() {
+        const texto = buscador.value.trim().toLowerCase();
+        for (const item of contenedor.querySelectorAll('.sf-chip-item')) {
+            const plataformas = item.dataset.plataformas.split(',');
+            let coincidePlataforma = true;
+            if (plataforma === 'MARCADOS') coincidePlataforma = item.querySelector('input').checked;
+            else if (plataforma === 'CONSOLA') coincidePlataforma = plataformas.some((p) => ['PlayStation', 'Xbox', 'Switch'].includes(p));
+            else if (plataforma) coincidePlataforma = plataformas.includes(plataforma);
+            item.classList.toggle('d-none', !(item.dataset.texto.includes(texto) && coincidePlataforma));
+        }
+    }
+
+    buscador.addEventListener('input', aplicar);
+    botones.addEventListener('click', (e) => {
+        const boton = e.target.closest('[data-filtro-plataforma]');
+        if (!boton) return;
+        plataforma = boton.dataset.filtroPlataforma;
+        botones.querySelectorAll('[data-filtro-plataforma]').forEach((b) => b.classList.toggle('active', b === boton));
+        aplicar();
+    });
+}
+
+/* ---------------------------------------------------------------------
+   Ventana para sugerir un juego que no está en la lista (CREATE game_request)
+   --------------------------------------------------------------------- */
+function abrirSugerenciaJuego() {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.tabIndex = -1;
+    modal.setAttribute('aria-labelledby', 'sf-sugerir-titulo');
+    modal.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered">
+            <form class="modal-content sf-modal" novalidate>
+                <div class="modal-header border-0">
+                    <h2 class="modal-title h5" id="sf-sugerir-titulo">🎮 Sugerir un juego</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body pt-0">
+                    <p class="small text-secondary">Un administrador revisará tu sugerencia. Si la aprueba, el juego aparecerá en la lista para todos.</p>
+                    <label class="form-label" for="sf-sugerir-nombre">Nombre del juego</label>
+                    <input type="text" class="form-control" id="sf-sugerir-nombre" maxlength="100" placeholder="Ej.: Deadlock">
+                    <div class="invalid-feedback" data-error-nombre></div>
+                    <label class="form-label mt-3" for="sf-sugerir-plataformas">¿En qué plataformas se juega? <span class="text-secondary">(opcional)</span></label>
+                    <input type="text" class="form-control" id="sf-sugerir-plataformas" maxlength="100" placeholder="Ej.: PC y PlayStation">
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Enviar sugerencia</button>
+                </div>
+            </form>
+        </div>`;
+    document.body.appendChild(modal);
+    const instancia = new bootstrap.Modal(modal);
+    const nombre = modal.querySelector('#sf-sugerir-nombre');
+    const error = modal.querySelector('[data-error-nombre]');
+
+    modal.querySelector('form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const texto = nombre.value.trim();
+        const yaExiste = JUEGOS.some((j) => j.name.toLowerCase() === texto.toLowerCase());
+        const repetida = SUGERENCIAS_DEMO.some((s) => s.status === 'PENDING' && s.user_id === USUARIO_DEMO.id
+            && s.game_name.toLowerCase() === texto.toLowerCase());
+        error.textContent = texto.length < 2 ? 'Escribe el nombre del juego.'
+            : yaExiste ? 'Ese juego ya está en la lista. Búscalo con el buscador.'
+            : repetida ? 'Ya sugeriste ese juego; está pendiente de revisión.' : '';
+        nombre.classList.toggle('is-invalid', Boolean(error.textContent));
+        if (error.textContent) return;
+
+        sugerirJuego(texto, modal.querySelector('#sf-sugerir-plataformas').value.trim());
+        instancia.hide();
+        mostrarToast(`¡Gracias! Un administrador revisará "${texto}".`);
+    });
+
+    modal.addEventListener('hidden.bs.modal', () => modal.remove());
+    instancia.show();
 }
 
 /* ---------------------------------------------------------------------
@@ -210,11 +344,22 @@ function validarFormulario(form, alEnviar) {
 /* ---------------------------------------------------------------------
    Barra de navegación: datos del usuario y cerrar sesión
    --------------------------------------------------------------------- */
+// Pone la foto (o el avatar) del usuario en el menú superior
+function pintarAvatarNavbar() {
+    const actual = document.getElementById('nav-avatar');
+    if (!actual) return;
+    const plantilla = document.createElement('template');
+    plantilla.innerHTML = avatar(USUARIO_DEMO.username, 'sf-avatar-sm', USUARIO_DEMO.avatar_url);
+    const nuevo = plantilla.content.firstElementChild;
+    nuevo.id = 'nav-avatar';
+    actual.replaceWith(nuevo);
+}
+
 function iniciarNavbar() {
     const nombre = document.getElementById('nav-username');
     if (!nombre) return;
     nombre.textContent = USUARIO_DEMO.username;
-    document.getElementById('nav-avatar').textContent = USUARIO_DEMO.username[0];
+    pintarAvatarNavbar();
     document.getElementById('nav-perfil-publico').href = `usuario.html?id=${USUARIO_DEMO.id}`;
 
     // Solo los administradores ven el panel de moderación

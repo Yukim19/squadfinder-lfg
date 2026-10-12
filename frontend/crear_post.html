@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Crear búsqueda - SquadFinder LFG</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
@@ -211,7 +212,8 @@
             ['CASUAL']);
         opciones('opciones-idioma', 'idioma',
             Object.entries(IDIOMAS_SALA).map(([valor, texto]) => ({ valor, texto, icono: ICONOS_IDIOMA[valor] })),
-            [USUARIO_DEMO.preferred_language_speak]);
+            // Si el usuario habla ambos idiomas, la sala empieza abierta a todos
+            [USUARIO_DEMO.preferred_language_speak === 'both' ? 'any' : USUARIO_DEMO.preferred_language_speak]);
 
         $('plantillas').innerHTML = Object.entries(PLANTILLAS_SALA).map(([clave, p]) =>
             `<button type="button" class="btn btn-sm btn-outline-light sf-chip" data-plantilla="${clave}">${p.icono} ${esc(p.nombre)}</button>`).join('');
@@ -281,7 +283,7 @@
                 `🌎 ${esc(REGIONES[USUARIO_DEMO.region])}`,
             ].filter(Boolean).map((m) => `<span class="badge">${m}</span>`).join('');
             $('prev-anfitrion').innerHTML = `${avatar(USUARIO_DEMO.username, 'sf-avatar-sm')}
-                <span class="small">Anfitrión: <strong>${esc(USUARIO_DEMO.username)}</strong></span> ${badgeHonor(USUARIO_DEMO.honor_score)}`;
+                <span class="small">Anfitrión: <strong>${esc(USUARIO_DEMO.username)}</strong></span> ${badgeNivel(USUARIO_DEMO.level)}`;
             $('prev-slots').innerHTML = Array.from({ length: cupos }, (_, i) =>
                 `<span class="sf-slot ${i === 0 ? 'sf-slot-lleno' : ''}"></span>`).join('');
             $('prev-cupos').textContent = `1/${cupos} jugadores`;

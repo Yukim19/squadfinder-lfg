@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Página no encontrada - SquadFinder LFG</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
@@ -22,6 +23,43 @@
     </nav>
 
     <main class="container py-5 text-center d-flex flex-column justify-content-center">
+        <!-- Squaddy, la mascota: flota, parpadea, sigue el cursor con los ojos y habla al hacerle clic -->
+        <div class="sf-mascota-zona mb-3">
+            <div class="sf-burbuja" id="burbuja" aria-live="polite">¿Respawn? 🤔</div>
+            <button type="button" class="sf-mascota" id="mascota" aria-label="Squaddy, la mascota de SquadFinder. Haz clic para que hable.">
+                <svg viewBox="0 0 220 160" width="220" height="160" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="cuerpo" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0" stop-color="#8B5CF6" />
+                            <stop offset="1" stop-color="#5B21B6" />
+                        </linearGradient>
+                    </defs>
+                    <!-- Cuerpo del control -->
+                    <path d="M40 40 Q20 40 14 70 L6 120 Q2 148 28 148 Q44 148 54 126 L64 108 H156 L166 126 Q176 148 192 148 Q218 148 214 120 L206 70 Q200 40 180 40 Z"
+                        fill="url(#cuerpo)" stroke="#A78BFA" stroke-width="3" />
+                    <!-- Cruceta -->
+                    <rect x="44" y="64" width="10" height="30" rx="3" fill="#1A1625" />
+                    <rect x="34" y="74" width="30" height="10" rx="3" fill="#1A1625" />
+                    <!-- Botones -->
+                    <circle cx="170" cy="66" r="6" fill="#22D3EE" />
+                    <circle cx="182" cy="78" r="6" fill="#F43F5E" />
+                    <circle cx="158" cy="78" r="6" fill="#FBBF24" />
+                    <circle cx="170" cy="90" r="6" fill="#22C55E" />
+                    <!-- Ojos -->
+                    <g class="sf-ojos">
+                        <ellipse cx="94" cy="72" rx="13" ry="15" fill="#FFFFFF" />
+                        <ellipse cx="126" cy="72" rx="13" ry="15" fill="#FFFFFF" />
+                        <circle class="sf-pupila" cx="94" cy="74" r="6" fill="#0E0B16" />
+                        <circle class="sf-pupila" cx="126" cy="74" r="6" fill="#0E0B16" />
+                    </g>
+                    <!-- Boca confundida -->
+                    <path d="M98 98 Q110 92 122 98" stroke="#0E0B16" stroke-width="3" fill="none" stroke-linecap="round" />
+                    <!-- Gota de sudor -->
+                    <path class="sf-gota" d="M150 30 Q156 40 150 46 Q144 40 150 30 Z" fill="#22D3EE" />
+                </svg>
+            </button>
+        </div>
+
         <p class="sf-kicker mb-2">Error 404</p>
         <h1 class="display-3 mb-3">GG… esta sala no existe</h1>
         <p class="text-secondary fs-5 mb-4">La página o sala que buscas fue eliminada o la dirección está mal escrita.</p>
@@ -36,6 +74,45 @@
             <span>© 2026 SquadFinder LFG · Proyecto Full-Stack COMP2053</span>
         </div>
     </footer>
+
+    <script>
+        const mascota = document.getElementById('mascota');
+        const burbuja = document.getElementById('burbuja');
+        const pupilas = mascota.querySelectorAll('.sf-pupila');
+        const centros = [...pupilas].map((p) => ({ x: Number(p.getAttribute('cx')), y: Number(p.getAttribute('cy')) }));
+        const FRASES = [
+            '¿Respawn? 🤔',
+            'Esta sala se fue AFK 💤',
+            'Error 404: squad no encontrado',
+            'Creo que tomaste la ruta equivocada 🗺️',
+            'GG, pero no hay nada aquí',
+            '¡Lag! Intenta volver a las salas',
+            'Yo también me perdí en el mapa 😅',
+        ];
+        let frase = 0;
+
+        // Los ojos siguen al cursor (máximo 4 px desde el centro)
+        document.addEventListener('pointermove', (e) => {
+            const caja = mascota.getBoundingClientRect();
+            const escala = caja.width / 220;
+            pupilas.forEach((pupila, i) => {
+                const ojoX = caja.left + centros[i].x * escala;
+                const ojoY = caja.top + centros[i].y * escala;
+                const angulo = Math.atan2(e.clientY - ojoY, e.clientX - ojoX);
+                pupila.setAttribute('cx', centros[i].x + Math.cos(angulo) * 4);
+                pupila.setAttribute('cy', centros[i].y + Math.sin(angulo) * 4);
+            });
+        });
+
+        // Al hacerle clic salta y dice otra frase
+        mascota.addEventListener('click', () => {
+            frase = (frase + 1) % FRASES.length;
+            burbuja.textContent = FRASES[frase];
+            mascota.classList.remove('sf-salto');
+            void mascota.offsetWidth; // reinicia la animación
+            mascota.classList.add('sf-salto');
+        });
+    </script>
 </body>
 
 </html>
