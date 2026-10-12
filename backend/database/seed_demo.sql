@@ -6,12 +6,13 @@
 
 -- ana_gg es ADMIN para poder probar el panel de moderación
 INSERT INTO users (auth0_id, username, ui_language, preferred_language_speak,
-                   preferred_language_write, toxicity_filter_level, region, is_onboarding_completed, role)
+                   preferred_language_write, toxicity_filter_level, region, avatar_url,
+                   is_onboarding_completed, role)
 VALUES
-    ('demo|ana',    'ana_gg',      'es', 'es', 'es', 'STRICT', 'NA_EAST',     TRUE, 'ADMIN'),
-    ('demo|bruno',  'bruno_tank',  'es', 'es', 'en', 'MEDIUM', 'LATAM_NORTH', TRUE, 'USER'),
-    ('demo|carla',  'carla_heals', 'en', 'en', 'en', 'OFF',    'NA_WEST',     TRUE, 'USER'),
-    ('demo|diego',  'diego_entry', 'es', 'es', 'es', 'MEDIUM', 'LATAM_SOUTH', TRUE, 'USER');
+    ('demo|ana',    'ana_gg',      'es', 'both', 'es',   'STRICT', 'NA_EAST',     'preset:🦊', TRUE, 'ADMIN'),
+    ('demo|bruno',  'bruno_tank',  'es', 'es',   'both', 'MEDIUM', 'LATAM_NORTH', NULL,        TRUE, 'USER'),
+    ('demo|carla',  'carla_heals', 'en', 'en',   'en',   'OFF',    'NA_WEST',     'preset:🦄', TRUE, 'USER'),
+    ('demo|diego',  'diego_entry', 'es', 'es',   'es',   'MEDIUM', 'LATAM_SOUTH', NULL,        TRUE, 'USER');
 
 INSERT INTO linked_accounts (user_id, provider, external_username) VALUES
     ((SELECT id FROM users WHERE username = 'ana_gg'),     'discord', 'ana_gg'),
@@ -29,8 +30,8 @@ INSERT INTO user_games (user_id, game_id)
 SELECT u.id, g.id FROM users u JOIN games g ON
     (u.username = 'ana_gg'      AND g.name IN ('Valorant', 'Fortnite')) OR
     (u.username = 'bruno_tank'  AND g.name IN ('Valorant', 'League of Legends')) OR
-    (u.username = 'carla_heals' AND g.name IN ('League of Legends', 'Diablo IV')) OR
-    (u.username = 'diego_entry' AND g.name IN ('Valorant', 'Counter-Strike 2', 'Fortnite'));
+    (u.username = 'carla_heals' AND g.name IN ('League of Legends', 'Diablo IV', 'Pokémon Unite')) OR
+    (u.username = 'diego_entry' AND g.name IN ('Valorant', 'Counter-Strike 2', 'Fortnite', 'Free Fire'));
 
 INSERT INTO lfg_posts (host_id, game_id, title, description, max_players, play_mode,
                        rank_required, mic_required, required_language, status)
@@ -98,18 +99,29 @@ INSERT INTO chat_messages (post_id, sender_id, message, toxicity_level) VALUES
     ((SELECT id FROM lfg_posts WHERE title = 'Partida de ayer'),
      (SELECT id FROM users WHERE username = 'bruno_tank'), 'Diego eres un inútil, nos hiciste perder', 'SEVERE');
 
--- Reportes de moderación: uno pendiente y uno ya resuelto (descartado)
+-- Reportes de moderación: uno pendiente y otro resuelto con una advertencia
 INSERT INTO user_reports (reporter_id, reported_user_id, post_id, reason, comment) VALUES
     ((SELECT id FROM users WHERE username = 'diego_entry'),
      (SELECT id FROM users WHERE username = 'bruno_tank'),
      (SELECT id FROM lfg_posts WHERE title = 'Partida de ayer'),
-     'TOXIC_CHAT', 'Me insultó en el chat cuando perdimos la ronda y siguió burlándose.');
-
-INSERT INTO user_reports (reporter_id, reported_user_id, post_id, reason, comment,
-                          status, resolved_by, admin_notes, resolved_at) VALUES
+     'TOXIC_CHAT', 'Me insultó en el chat cuando perdimos la ronda y siguió burlándose.'),
     ((SELECT id FROM users WHERE username = 'bruno_tank'),
      (SELECT id FROM users WHERE username = 'diego_entry'),
      (SELECT id FROM lfg_posts WHERE title = 'Partida de ayer'),
-     'AFK_GRIEFING', 'Se quedó quieto dos rondas sin jugar.',
-     'DISMISSED', (SELECT id FROM users WHERE username = 'ana_gg'),
-     'Tuvo problemas de conexión; no fue intencional.', NOW() - INTERVAL '12 hours');
+     'AFK_GRIEFING', 'Se quedó quieto dos rondas sin jugar.');
+
+-- ana_gg (ADMIN) advierte a diego_entry: pierde 1 nivel y queda en 0 (Rookie)
+SELECT resolve_report(
+    (SELECT id FROM user_reports WHERE reason = 'AFK_GRIEFING'),
+    (SELECT id FROM users WHERE username = 'ana_gg'),
+    'WARNED', NULL, NULL, 'Primera advertencia: abandonar la partida perjudica al equipo.');
+
+-- Lista negra: diego_entry ya no verá las salas de bruno_tank
+INSERT INTO user_blocks (blocker_id, blocked_id, reason) VALUES
+    ((SELECT id FROM users WHERE username = 'diego_entry'),
+     (SELECT id FROM users WHERE username = 'bruno_tank'),
+     'Me insultó en una partida.');
+
+-- Juego sugerido por un usuario, pendiente de revisión
+INSERT INTO game_requests (user_id, game_name, platforms_note) VALUES
+    ((SELECT id FROM users WHERE username = 'carla_heals'), 'Deadlock', 'PC');

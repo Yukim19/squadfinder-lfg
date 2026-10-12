@@ -49,19 +49,27 @@ CREATE TABLE users (
                                 CHECK (username ~ '^[A-Za-z0-9_]{3,30}$'),
     ui_language                 CHAR(2)      NOT NULL DEFAULT 'es'
                                 CHECK (ui_language IN ('es', 'en')),
-    preferred_language_speak    CHAR(2)      NOT NULL DEFAULT 'es'
-                                CHECK (preferred_language_speak IN ('es', 'en')),
-    preferred_language_write    CHAR(2)      NOT NULL DEFAULT 'es'
-                                CHECK (preferred_language_write IN ('es', 'en')),
+    -- 'both' = habla (o escribe) español e inglés
+    preferred_language_speak    VARCHAR(4)   NOT NULL DEFAULT 'es'
+                                CHECK (preferred_language_speak IN ('es', 'en', 'both')),
+    preferred_language_write    VARCHAR(4)   NOT NULL DEFAULT 'es'
+                                CHECK (preferred_language_write IN ('es', 'en', 'both')),
+    -- Foto de perfil: URL de la imagen subida o 'preset:<emoji>' para un avatar prediseñado
+    avatar_url                  VARCHAR(500),
     toxicity_filter_level       VARCHAR(6)   NOT NULL DEFAULT 'MEDIUM'
                                 CHECK (toxicity_filter_level IN ('OFF', 'MEDIUM', 'STRICT')),
     -- Región de juego; se pide en el onboarding (NULL hasta completarlo)
     region                      VARCHAR(11)
                                 CHECK (region IN ('NA_EAST', 'NA_WEST', 'LATAM_NORTH', 'LATAM_SOUTH',
                                                   'BRAZIL', 'EUROPE', 'ASIA', 'OCEANIA')),
-    -- Promedio de user_reviews.rating; lo mantiene el trigger trg_reviews_honor
-    honor_score                 NUMERIC(3,2) NOT NULL DEFAULT 0
-                                CHECK (honor_score BETWEEN 0 AND 5),
+    -- Sistema de niveles de honor (1 a 10; 0 = Rookie). Ver level_from_xp().
+    -- xp = XP ganada por reseñas - penalty_xp. level y xp los mantienen los triggers.
+    xp                          INTEGER      NOT NULL DEFAULT 0,
+    level                       SMALLINT     NOT NULL DEFAULT 1 CHECK (level BETWEEN 0 AND 10),
+    -- XP descontada por sanciones (100 XP = 1 nivel)
+    penalty_xp                  INTEGER      NOT NULL DEFAULT 0 CHECK (penalty_xp >= 0),
+    -- Advertencias acumuladas; al llegar al límite de moderation_settings se sanciona sola
+    warnings_count              SMALLINT     NOT NULL DEFAULT 0 CHECK (warnings_count >= 0),
     is_onboarding_completed     BOOLEAN      NOT NULL DEFAULT FALSE,
     -- USER = jugador normal; ADMIN = puede revisar reportes y sancionar cuentas
     role                        VARCHAR(5)   NOT NULL DEFAULT 'USER'
@@ -223,8 +231,34 @@ CREATE TRIGGER trg_user_reviews_updated_at
     BEFORE UPDATE ON user_reviews
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
--- Recalcula users.honor_score cada vez que cambia una reseña
-CREATE OR REPLACE FUNCTION refresh_honor_score()
+-- ---------------------------------------------------------------------
+-- Sistema de niveles de honor
+--   * Todas las cuentas empiezan en nivel 1 con 0 XP.
+--   * Cada reseña recibida da XP: 5★ = 30, 4★ = 20, 3★ = 10, 1-2★ = 0.
+--   * Anti-abuso: de un mismo compañero solo cuentan sus primeras 3 reseñas.
+--   * Cada 100 XP se sube un nivel, hasta el 10 (900 XP).
+--   * Las sanciones suman penalty_xp (100 XP por nivel quitado).
+--   * Si la XP neta queda negativa, el nivel es 0: la cuenta es "Rookie".
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION level_from_xp(p_xp INTEGER)
+RETURNS SMALLINT AS $$
+    SELECT CASE WHEN p_xp < 0 THEN 0 ELSE LEAST(10, 1 + p_xp / 100) END::SMALLINT;
+$$ LANGUAGE sql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION review_xp(p_user INTEGER)
+RETURNS INTEGER AS $$
+    SELECT COALESCE(SUM(puntos), 0)::INTEGER
+    FROM (
+        SELECT CASE rating WHEN 5 THEN 30 WHEN 4 THEN 20 WHEN 3 THEN 10 ELSE 0 END AS puntos,
+               ROW_NUMBER() OVER (PARTITION BY reviewer_id ORDER BY created_at, id) AS n
+        FROM user_reviews
+        WHERE target_user_id = p_user
+    ) r
+    WHERE n <= 3;
+$$ LANGUAGE sql STABLE;
+
+-- Recalcula xp y level de los usuarios afectados cuando cambia una reseña
+CREATE OR REPLACE FUNCTION refresh_level_from_reviews()
 RETURNS TRIGGER AS $$
 DECLARE
     target INTEGER;
@@ -237,17 +271,31 @@ BEGIN
         WHERE t IS NOT NULL
     LOOP
         UPDATE users
-           SET honor_score = COALESCE(
-                   (SELECT ROUND(AVG(rating), 2) FROM user_reviews WHERE target_user_id = target), 0)
+           SET xp    = review_xp(id) - penalty_xp,
+               level = level_from_xp(review_xp(id) - penalty_xp)
          WHERE id = target;
     END LOOP;
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_reviews_honor
+CREATE TRIGGER trg_reviews_level
     AFTER INSERT OR UPDATE OR DELETE ON user_reviews
-    FOR EACH ROW EXECUTE FUNCTION refresh_honor_score();
+    FOR EACH ROW EXECUTE FUNCTION refresh_level_from_reviews();
+
+-- Recalcula xp y level cuando un administrador aplica una sanción (penalty_xp)
+CREATE OR REPLACE FUNCTION refresh_level_from_penalty()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.xp    := review_xp(NEW.id) - NEW.penalty_xp;
+    NEW.level := level_from_xp(NEW.xp);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_users_penalty
+    BEFORE UPDATE OF penalty_xp ON users
+    FOR EACH ROW EXECUTE FUNCTION refresh_level_from_penalty();
 
 -- ---------------------------------------------------------------------
 -- Chat
@@ -269,7 +317,8 @@ CREATE INDEX idx_chat_messages_post_sent ON chat_messages (post_id, sent_at);
 -- ---------------------------------------------------------------------
 -- Moderación: reportes de jugadores tóxicos
 -- Un jugador reporta a un compañero de partida; un ADMIN lo revisa y decide:
--- descartarlo, suspender la cuenta unos días o eliminarla (BANNED).
+-- descartarlo, advertir, suspender (días a elección), eliminar la cuenta
+-- (BANNED) y cuántos niveles descontar.
 -- ---------------------------------------------------------------------
 CREATE TABLE user_reports (
     id                  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -281,20 +330,81 @@ CREATE TABLE user_reports (
                         CHECK (reason IN ('TOXIC_CHAT', 'HARASSMENT', 'AFK_GRIEFING', 'CHEATING', 'OTHER')),
     comment             VARCHAR(500) NOT NULL CHECK (char_length(trim(comment)) >= 10),
     status              VARCHAR(9)   NOT NULL DEFAULT 'PENDING'
-                        CHECK (status IN ('PENDING', 'DISMISSED', 'SUSPENDED', 'BANNED')),
+                        CHECK (status IN ('PENDING', 'DISMISSED', 'WARNED', 'SUSPENDED', 'BANNED')),
+    -- Sanción aplicada (la decide el administrador o la regla automática)
+    suspension_days     SMALLINT     CHECK (suspension_days BETWEEN 1 AND 365),
+    levels_removed      SMALLINT     NOT NULL DEFAULT 0 CHECK (levels_removed BETWEEN 0 AND 10),
+    -- TRUE si la sanción la aplicó la regla de "N advertencias"
+    is_automatic        BOOLEAN      NOT NULL DEFAULT FALSE,
     -- Administrador que resolvió el reporte y su nota
     resolved_by         INTEGER      REFERENCES users(id) ON DELETE SET NULL,
     admin_notes         VARCHAR(500),
     resolved_at         TIMESTAMPTZ,
     created_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     CHECK (reporter_id <> reported_user_id),
-    CHECK ((status = 'PENDING') = (resolved_at IS NULL))
+    CHECK ((status = 'PENDING') = (resolved_at IS NULL)),
+    CHECK ((status = 'SUSPENDED') = (suspension_days IS NOT NULL))
 );
 
 -- Un jugador no puede reportar dos veces a la misma persona por la misma partida
 CREATE UNIQUE INDEX uq_user_reports_once ON user_reports (reporter_id, reported_user_id, post_id);
 CREATE INDEX idx_user_reports_status ON user_reports (status, created_at);
 CREATE INDEX idx_user_reports_reported ON user_reports (reported_user_id);
+
+-- Reglas de moderación configurables por el administrador (una sola fila)
+CREATE TABLE moderation_settings (
+    id                          SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+    -- Al llegar a este número de advertencias se aplica auto_action
+    warnings_limit              SMALLINT    NOT NULL DEFAULT 3 CHECK (warnings_limit BETWEEN 1 AND 10),
+    auto_action                 VARCHAR(7)  NOT NULL DEFAULT 'BAN' CHECK (auto_action IN ('SUSPEND', 'BAN')),
+    auto_suspension_days        SMALLINT    NOT NULL DEFAULT 30 CHECK (auto_suspension_days BETWEEN 1 AND 365),
+    -- Niveles que se descuentan por defecto en cada tipo de sanción
+    warning_levels_removed      SMALLINT    NOT NULL DEFAULT 1 CHECK (warning_levels_removed BETWEEN 0 AND 10),
+    suspension_levels_removed   SMALLINT    NOT NULL DEFAULT 2 CHECK (suspension_levels_removed BETWEEN 0 AND 10),
+    updated_by                  INTEGER     REFERENCES users(id) ON DELETE SET NULL,
+    updated_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO moderation_settings DEFAULT VALUES;
+
+CREATE TRIGGER trg_moderation_settings_updated_at
+    BEFORE UPDATE ON moderation_settings
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ---------------------------------------------------------------------
+-- Lista negra personal: el usuario deja de ver las salas de quien bloquea.
+-- No es una sanción: solo afecta lo que ve quien creó la lista.
+-- ---------------------------------------------------------------------
+CREATE TABLE user_blocks (
+    blocker_id  INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    blocked_id  INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reason      VARCHAR(200),
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (blocker_id, blocked_id),
+    CHECK (blocker_id <> blocked_id)
+);
+
+-- ---------------------------------------------------------------------
+-- Juegos sugeridos por los usuarios (desde el onboarding o el perfil).
+-- Si el administrador lo aprueba, se crea en games y aparece para todos.
+-- ---------------------------------------------------------------------
+CREATE TABLE game_requests (
+    id              INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id         INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    game_name       VARCHAR(100) NOT NULL CHECK (char_length(trim(game_name)) >= 2),
+    platforms_note  VARCHAR(100),
+    status          VARCHAR(8)   NOT NULL DEFAULT 'PENDING'
+                    CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+    -- Juego creado al aprobar la sugerencia
+    game_id         INTEGER      REFERENCES games(id) ON DELETE SET NULL,
+    reviewed_by     INTEGER      REFERENCES users(id) ON DELETE SET NULL,
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    CHECK (status <> 'APPROVED' OR game_id IS NOT NULL)
+);
+
+-- La misma persona no puede sugerir dos veces el mismo juego mientras esté pendiente
+CREATE UNIQUE INDEX uq_game_requests_pending
+    ON game_requests (user_id, LOWER(game_name)) WHERE status = 'PENDING';
 
 -- ---------------------------------------------------------------------
 -- Vista: salas con plataformas y número actual de jugadores
@@ -306,7 +416,8 @@ SELECT p.*,
        g.name        AS game_name,
        g.crossplay   AS game_crossplay,
        u.username    AS host_username,
-       u.honor_score AS host_honor_score,
+       u.level       AS host_level,
+       u.avatar_url  AS host_avatar_url,
        u.region      AS host_region,
        (SELECT ARRAY_AGG(pp.platform ORDER BY pp.platform)
           FROM post_platforms pp WHERE pp.post_id = p.id) AS platforms,
@@ -321,12 +432,12 @@ JOIN users u ON u.id = p.host_id;
 -- Se usa en detalle_post (integrantes) y en historial_partidas (compañeros).
 -- ---------------------------------------------------------------------
 CREATE VIEW v_post_members AS
-SELECT p.id AS post_id, u.id AS user_id, u.username, u.region, u.honor_score,
+SELECT p.id AS post_id, u.id AS user_id, u.username, u.region, u.level, u.avatar_url,
        'HOST' AS role, p.created_at AS joined_at
 FROM lfg_posts p
 JOIN users u ON u.id = p.host_id
 UNION ALL
-SELECT a.post_id, u.id, u.username, u.region, u.honor_score,
+SELECT a.post_id, u.id, u.username, u.region, u.level, u.avatar_url,
        'MEMBER', a.created_at
 FROM applications a
 JOIN users u ON u.id = a.applicant_id
@@ -349,7 +460,10 @@ SELECT me.user_id,
        mate.user_id  AS teammate_id,
        mate.username AS teammate_username,
        mate.region   AS teammate_region,
-       mate.honor_score AS teammate_honor_score,
+       mate.level    AS teammate_level,
+       EXISTS (SELECT 1 FROM user_blocks b
+               WHERE b.blocker_id = me.user_id
+                 AND b.blocked_id = mate.user_id) AS is_blocked,
        EXISTS (SELECT 1 FROM user_reviews r
                WHERE r.post_id = p.id
                  AND r.reviewer_id = me.user_id
@@ -373,7 +487,8 @@ CREATE VIEW v_reports_admin AS
 SELECT r.*,
        rep.username        AS reporter_username,
        tgt.username        AS reported_username,
-       tgt.honor_score     AS reported_honor_score,
+       tgt.level           AS reported_level,
+       tgt.warnings_count  AS reported_warnings,
        tgt.account_status  AS reported_account_status,
        p.title             AS post_title,
        (SELECT COUNT(*) FROM user_reports x
@@ -386,3 +501,104 @@ FROM user_reports r
 JOIN users rep ON rep.id = r.reporter_id
 JOIN users tgt ON tgt.id = r.reported_user_id
 LEFT JOIN lfg_posts p ON p.id = r.post_id;
+
+-- ---------------------------------------------------------------------
+-- Resuelve un reporte aplicando la decisión del administrador.
+--   p_action: DISMISSED | WARNED | SUSPENDED | BANNED
+--   p_days / p_levels: NULL = usar los valores de moderation_settings
+-- Regla automática: si con una advertencia el usuario llega a
+-- warnings_limit, se aplica auto_action (suspensión o eliminación).
+-- Devuelve el estado final del reporte.
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION resolve_report(
+    p_report INTEGER, p_admin INTEGER, p_action VARCHAR,
+    p_days SMALLINT DEFAULT NULL, p_levels SMALLINT DEFAULT NULL, p_notes VARCHAR DEFAULT NULL)
+RETURNS VARCHAR AS $$
+DECLARE
+    s           moderation_settings%ROWTYPE;
+    r           user_reports%ROWTYPE;
+    v_status    VARCHAR := p_action;
+    v_days      SMALLINT;
+    v_levels    SMALLINT := 0;
+    v_auto      BOOLEAN := FALSE;
+    v_warnings  SMALLINT;
+BEGIN
+    SELECT * INTO s FROM moderation_settings WHERE id = 1;
+    SELECT * INTO r FROM user_reports WHERE id = p_report FOR UPDATE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'El reporte % no existe', p_report;
+    END IF;
+    IF r.status <> 'PENDING' THEN
+        RAISE EXCEPTION 'El reporte % ya fue resuelto', p_report;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM users WHERE id = p_admin AND role = 'ADMIN') THEN
+        RAISE EXCEPTION 'Solo un administrador puede resolver reportes';
+    END IF;
+
+    IF p_action = 'WARNED' THEN
+        v_levels := COALESCE(p_levels, s.warning_levels_removed);
+        UPDATE users
+           SET warnings_count = warnings_count + 1,
+               penalty_xp = penalty_xp + v_levels * 100
+         WHERE id = r.reported_user_id
+        RETURNING warnings_count INTO v_warnings;
+
+        IF v_warnings >= s.warnings_limit THEN
+            v_auto := TRUE;
+            v_status := CASE s.auto_action WHEN 'BAN' THEN 'BANNED' ELSE 'SUSPENDED' END;
+            p_days := s.auto_suspension_days;
+        END IF;
+    END IF;
+
+    IF v_status = 'SUSPENDED' THEN
+        v_days := COALESCE(p_days, 7);
+        IF p_action = 'SUSPENDED' THEN
+            v_levels := COALESCE(p_levels, s.suspension_levels_removed);
+        END IF;
+        UPDATE users
+           SET account_status = 'SUSPENDED',
+               suspended_until = NOW() + make_interval(days => v_days),
+               penalty_xp = penalty_xp + CASE WHEN v_auto THEN s.suspension_levels_removed ELSE v_levels END * 100,
+               -- Tras una suspensión automática el contador vuelve a empezar
+               warnings_count = CASE WHEN v_auto THEN 0 ELSE warnings_count END
+         WHERE id = r.reported_user_id;
+        IF v_auto THEN
+            v_levels := v_levels + s.suspension_levels_removed;
+        END IF;
+    ELSIF v_status = 'BANNED' THEN
+        UPDATE users SET account_status = 'BANNED' WHERE id = r.reported_user_id;
+        -- Sus salas abiertas se cancelan
+        UPDATE lfg_posts SET status = 'CANCELLED'
+         WHERE host_id = r.reported_user_id AND status IN ('OPEN', 'FULL', 'IN_PROGRESS');
+    END IF;
+
+    UPDATE user_reports
+       SET status = v_status,
+           suspension_days = CASE WHEN v_status = 'SUSPENDED' THEN v_days END,
+           levels_removed = LEAST(v_levels, 10),
+           is_automatic = v_auto,
+           resolved_by = p_admin,
+           admin_notes = p_notes,
+           resolved_at = NOW()
+     WHERE id = p_report;
+
+    RETURN v_status;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ---------------------------------------------------------------------
+-- Feed de salas para un usuario: salas abiertas, sin las de anfitriones
+-- que el usuario tiene en su lista negra (ni las de cuentas sancionadas).
+-- Uso: SELECT * FROM feed_for_user(:yo) WHERE game_id = ...;
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION feed_for_user(p_user INTEGER)
+RETURNS SETOF v_lfg_posts AS $$
+    SELECT v.*
+    FROM v_lfg_posts v
+    JOIN users h ON h.id = v.host_id
+    WHERE v.status IN ('OPEN', 'FULL')
+      AND h.account_status = 'ACTIVE'
+      AND NOT EXISTS (SELECT 1 FROM user_blocks b
+                      WHERE b.blocker_id = p_user AND b.blocked_id = v.host_id)
+    ORDER BY v.created_at DESC;
+$$ LANGUAGE sql STABLE;
