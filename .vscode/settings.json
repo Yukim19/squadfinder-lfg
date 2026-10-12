@@ -1,4 +1,15 @@
 {
   "liveServer.settings.root": "/frontend",
-  "liveServer.settings.port": 5500
+  "liveServer.settings.port": 5500,
+
+  // Entorno virtual de Python fuera de OneDrive (OneDrive se vuelve lento con miles de archivos)
+  "python.defaultInterpreterPath": "${env:USERPROFILE}\\.venvs\\squadfinder-api\\Scripts\\python.exe",
+  "python.testing.pytestEnabled": true,
+  "python.testing.cwd": "${workspaceFolder}/backend/api-service",
+  "python.testing.pytestArgs": ["backend/api-service/tests"],
+
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true
+  }
 }

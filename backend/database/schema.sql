@@ -83,6 +83,9 @@ CREATE TABLE users (
     CHECK (account_status <> 'SUSPENDED' OR suspended_until IS NOT NULL)
 );
 
+-- "Ana_GG" y "ana_gg" se consideran el mismo nombre de usuario
+CREATE UNIQUE INDEX uq_users_username_lower ON users (LOWER(username));
+
 CREATE TRIGGER trg_users_updated_at
     BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();

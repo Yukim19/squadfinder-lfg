@@ -64,7 +64,7 @@ Los jugadores de juegos multijugador tienen problemas para encontrar compañeros
 | Frontend | i18next | Traducción en tiempo real ES/EN |
 | Backend | Python 3 y FastAPI | API REST y WebSockets |
 | Backend | Pydantic | Validación de datos de entrada y salida |
-| Backend | SQLAlchemy y psycopg | Conexión con PostgreSQL |
+| Backend | psycopg 3 (SQL directo con pool de conexiones) | Conexión con PostgreSQL; aprovecha las vistas, funciones y triggers de la base de datos |
 | Backend | NLTK y listas de palabras ES/EN | Filtro anti-toxicidad (PNL) |
 | Base de datos | PostgreSQL (Neon) | Base de datos relacional principal, conexión con `sslmode=require` |
 | Caché | Redis (Upstash) | Caché de compatibilidad y estado de Twitch, límite de mensajes |

@@ -1,0 +1,11 @@
+# api-service: API REST principal de SquadFinder (FastAPI + PostgreSQL)
+fastapi==0.143.0
+uvicorn[standard]==0.54.0
+psycopg[binary]==3.3.6
+psycopg-pool==3.3.3
+pydantic-settings==2.15.0
+pyjwt[crypto]==2.15.1
+
+# Pruebas
+httpx==0.28.1
+pytest==9.1.1
