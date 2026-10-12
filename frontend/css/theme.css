@@ -135,11 +135,13 @@ h1, h2, h3, h4, h5, .navbar-brand, .sf-display {
     --bs-btn-active-border-color: var(--sf-primary);
 }
 
+/* Verde más oscuro para que el texto blanco tenga contraste 4.5:1 (WCAG AA) */
 .btn-success {
-    --bs-btn-bg: #16A34A;
-    --bs-btn-border-color: #16A34A;
-    --bs-btn-hover-bg: #15803D;
-    --bs-btn-hover-border-color: #15803D;
+    --bs-btn-bg: #15803D;
+    --bs-btn-border-color: #15803D;
+    --bs-btn-hover-bg: #166534;
+    --bs-btn-hover-border-color: #166534;
+    --bs-btn-active-bg: #166534;
 }
 
 .btn-danger {
@@ -180,7 +182,7 @@ h1, h2, h3, h4, h5, .navbar-brand, .sf-display {
 }
 
 .form-control::placeholder {
-    color: #6F6987;
+    color: #8A84A3; /* contraste 5.4:1 sobre el fondo */
 }
 
 .form-check-input:checked {
@@ -801,6 +803,115 @@ img.sf-avatar {
 
 @media (prefers-reduced-motion: reduce) {
     .sf-mascota, .sf-mascota .sf-ojos, .sf-mascota .sf-gota { animation: none; }
+}
+
+/* ---------------------------------------------------------------------
+   Accesibilidad (WCAG 2.2 AA)
+   --------------------------------------------------------------------- */
+
+/* Etiquetas de Bootstrap con contraste mínimo de 4.5:1 sobre nuestra paleta */
+.text-bg-success {
+    color: #052E16 !important;
+    background-color: #22C55E !important;
+}
+
+.text-bg-danger {
+    color: #FFFFFF !important;
+    background-color: #BE123C !important;
+}
+
+.text-bg-secondary {
+    color: #FFFFFF !important;
+    background-color: #4A4360 !important;
+}
+
+/* Enlace "Saltar al contenido": invisible hasta que se navega con el teclado */
+.sf-skip:focus {
+    position: fixed;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 2000;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    background-color: var(--sf-primary-strong);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+/* Foco visible y claro en todo lo que se puede usar con el teclado */
+a:focus-visible,
+.btn:focus-visible,
+.btn-check:focus-visible + .btn,
+.form-check-input:focus-visible,
+summary:focus-visible {
+    outline: 3px solid var(--sf-accent);
+    outline-offset: 2px;
+}
+
+summary {
+    cursor: pointer;
+}
+
+/* El contenido recibe el foco al usar "Saltar al contenido", sin marco visible */
+main:focus {
+    outline: none;
+}
+
+/* ---------------------------------------------------------------------
+   Móvil
+   --------------------------------------------------------------------- */
+/* Etiquetas legibles: nunca menos de 12 px aunque estén dentro de texto pequeño */
+.badge {
+    font-size: max(0.75em, 0.75rem);
+}
+
+@media (max-width: 767.98px) {
+    /* iPhone hace zoom automático en campos con letra menor a 16 px */
+    .form-control,
+    .form-select,
+    .form-control-sm,
+    .input-group-sm > .form-control,
+    .input-group-sm > .form-select {
+        font-size: 16px;
+    }
+
+    /* Interruptores con área táctil de al menos 24 px de alto */
+    .form-switch .form-check-input {
+        width: 2.75rem;
+        height: 1.5rem;
+        margin: 0;
+        float: none;
+        flex-shrink: 0;
+    }
+
+    .form-switch {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-left: 0;
+    }
+
+    /* Botones pequeños con área táctil de al menos 24x24 px (WCAG 2.5.8) */
+    .btn-sm {
+        min-height: 2rem;
+    }
+
+    /* Modales a pantalla casi completa en celular */
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+}
+
+/* Respeta "Reducir movimiento" del sistema en todas las animaciones */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
 
 /* ---------------------------------------------------------------------

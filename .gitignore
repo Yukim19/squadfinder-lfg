@@ -26,6 +26,9 @@ node_modules/
 !.vscode/launch.json
 !.vscode/tasks.json
 
+# Configuración local de Claude Code (servidor de pruebas)
+.claude/
+
 # Sistema operativo / OneDrive
 desktop.ini
 Thumbs.db

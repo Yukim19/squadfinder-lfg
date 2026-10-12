@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Ícono de SquadFinder: control de videojuego en los colores del tema -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#5B21B6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#0E0B16"/>
+  <path d="M16 20 Q9 20 7 31 L5 44 Q4 52 11 52 Q16 52 19 46 L22 40 H42 L45 46 Q48 52 53 52 Q60 52 59 44 L57 31 Q55 20 48 20 Z" fill="url(#g)"/>
+  <rect x="15" y="27" width="4" height="12" rx="1" fill="#0E0B16"/>
+  <rect x="11" y="31" width="12" height="4" rx="1" fill="#0E0B16"/>
+  <circle cx="46" cy="28" r="3" fill="#22D3EE"/>
+  <circle cx="51" cy="33" r="3" fill="#F43F5E"/>
+  <circle cx="41" cy="33" r="3" fill="#FBBF24"/>
+  <circle cx="46" cy="38" r="3" fill="#22C55E"/>
+</svg>
