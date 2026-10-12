@@ -10,6 +10,22 @@
       "cwd": "${workspaceFolder}/backend/api-service",
       "python": "${env:USERPROFILE}\\.venvs\\squadfinder-api\\Scripts\\python.exe",
       "justMyCode": true
+    },
+    {
+      "name": "realtime-service (puerto 8002)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["app.main:app", "--reload", "--port", "8002"],
+      "cwd": "${workspaceFolder}/backend/realtime-service",
+      "python": "${env:USERPROFILE}\\.venvs\\squadfinder-api\\Scripts\\python.exe",
+      "justMyCode": true
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Backend completo (api + chat)",
+      "configurations": ["api-service (puerto 8001)", "realtime-service (puerto 8002)"]
     }
   ]
 }
