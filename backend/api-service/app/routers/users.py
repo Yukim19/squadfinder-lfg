@@ -196,7 +196,7 @@ def perfil_publico(user_id: int, usuario: Usuario, db: Db) -> dict:
 
     resenas = db.execute(
         """
-        SELECT COUNT(*) AS total, ROUND(AVG(rating), 2) AS average
+        SELECT COUNT(*) AS total, ROUND(AVG(rating), 2)::float8 AS average
         FROM user_reviews WHERE target_user_id = %s
         """,
         (user_id,),
