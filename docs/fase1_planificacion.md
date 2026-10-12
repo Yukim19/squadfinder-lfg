@@ -9,11 +9,11 @@
 
 ## 1. Descripción del proyecto
 
-SquadFinder LFG ("Looking For Group") es una plataforma web donde jugadores de videojuegos publican y buscan salas para formar equipos. Cada sala indica el juego, la plataforma, los cupos, el rango, el idioma y si se requiere micrófono. Los jugadores solicitan unirse, el anfitrión acepta o rechaza, y los miembros conversan en un chat en tiempo real con un filtro anti-toxicidad que cada usuario ajusta a su gusto. Al terminar la partida, los compañeros se califican entre sí y generan un puntaje de reputación (Honor Score).
+SquadFinder LFG ("Looking For Group") es una plataforma web donde jugadores de videojuegos publican y buscan salas para formar equipos. Cada sala indica el juego, la plataforma, los cupos, el rango, el idioma y si se requiere micrófono. Los jugadores solicitan unirse, el anfitrión acepta o rechaza, y los miembros conversan en un chat en tiempo real con un filtro anti-toxicidad que cada usuario ajusta a su gusto. Al terminar la partida, los compañeros se califican entre sí: las buenas reseñas dan XP para subir del **nivel de honor 1 al 10**, y las sanciones de un administrador bajan niveles (en el nivel 0 la cuenta queda marcada como **Rookie**).
 
 ## 2. Objetivo general
 
-Desarrollar una aplicación web Full-Stack de 8 páginas, con un backend en microservicios, que permita a los jugadores crear, buscar, gestionar y unirse a publicaciones LFG. Incluye autenticación con JWT, reputación comunitaria, chat moderado en tiempo real, soporte en español e inglés, notificaciones por Discord e integración con Twitch.
+Desarrollar una aplicación web Full-Stack de 11 páginas, con un backend en microservicios, que permita a los jugadores crear, buscar, gestionar y unirse a publicaciones LFG. Incluye autenticación con JWT, reputación comunitaria, chat moderado en tiempo real, soporte en español e inglés, notificaciones por Discord e integración con Twitch.
 
 ## 3. Justificación
 
@@ -30,14 +30,16 @@ Los jugadores de juegos multijugador tienen problemas para encontrar compañeros
 
 | Módulo | Funciones |
 |---|---|
-| Autenticación | Inicio de sesión con Auth0 (correo o Google), tokens JWT, protección de rutas en el frontend y en el backend |
-| Perfil | Onboarding inicial donde el usuario elige su región y **los juegos en los que busca compañeros**; edición posterior de esas preferencias (juegos, géneros, región, idiomas, nivel del filtro); vinculación y desvinculación de Discord, Steam, Twitch y Kick; eliminación de la cuenta |
+| Autenticación | Pantallas separadas para **iniciar sesión** y **crear cuenta** (Auth0 con correo o Google), verificación de correo, tokens JWT, protección de rutas en el frontend y en el backend |
+| Perfil | Onboarding inicial donde el usuario elige su región y **los juegos en los que busca compañeros** (35 juegos de PC, consola y **móvil**, con buscador y filtro por plataforma), géneros (16) e idiomas (español, inglés o **ambos**); botón para **sugerir un juego** que no está en la lista; edición posterior de todo en el perfil; **foto de perfil** subida o avatar prediseñado; vinculación y desvinculación de Discord, Steam, Twitch y Kick; eliminación de la cuenta |
 | Salas LFG | CRUD completo de publicaciones (solo de los juegos elegidos en el perfil), con tipo de partida (casual o competitiva con rango mínimo), una o varias plataformas según el crossplay del juego, e idioma español, inglés o todos; feed con la región del anfitrión, búsqueda con filtros y % de compatibilidad |
-| Historial | Partidas terminadas con la lista de compañeros (usuario, región, Honor Score) y las opciones de calificar o **reportar** a cada uno |
-| Moderación | Reportes de jugadores tóxicos con motivo y comentario; evidencia automática con los mensajes que marcó el filtro; panel de administrador para descartar el reporte, suspender la cuenta 7 días o eliminarla |
+| Historial | Partidas terminadas con la lista de compañeros (usuario, región, nivel) y las opciones de calificar, **reportar** o agregar a la **lista negra** a cada uno |
+| Lista negra | Lista personal de jugadores bloqueados: sus salas no aparecen en el feed hasta quitarlos de la lista. No es una sanción |
+| Moderación | Reportes de jugadores tóxicos con motivo y comentario; evidencia automática con los mensajes que marcó el filtro; panel de administrador para descartar, **advertir**, **personalizar la sanción** (días de suspensión y niveles a quitar) o eliminar la cuenta; **regla automática configurable** (por defecto, 3 advertencias eliminan la cuenta); aprobación de **juegos sugeridos** |
 | Solicitudes | CRUD completo: solicitar unirse, ver solicitudes, aceptar o rechazar, retirar la solicitud |
-| Reputación | Reseñas post-partida (crear, ver, editar, eliminar) y Honor Score promedio |
-| Chat | Mensajes en tiempo real por WebSocket con filtro anti-toxicidad (OFF, MEDIUM, STRICT) e historial |
+| Reputación | Reseñas post-partida (crear, ver, editar, eliminar) que dan XP: **niveles de honor del 1 al 10**; las sanciones restan niveles y el nivel 0 marca la cuenta como **Rookie** 🐣 |
+| Chat | Mensajes en tiempo real por WebSocket con filtro anti-toxicidad (OFF, MEDIUM, STRICT) e historial; lista de integrantes con su nivel y los **íconos de sus cuentas vinculadas** |
+| Página 404 | Mascota animada (Squaddy) que flota, parpadea, sigue el cursor con los ojos y dice frases al hacerle clic |
 | Notificaciones | Mensaje directo por el bot de Discord al solicitar unirse o ser aceptado |
 | Streaming | Badge "EN VIVO" para usuarios con su canal de Twitch vinculado |
 | Idiomas | Interfaz completa en español e inglés (i18next) |
@@ -45,6 +47,7 @@ Los jugadores de juegos multijugador tienen problemas para encontrar compañeros
 ### No incluye (trabajo futuro)
 
 - Inicio de sesión directo con Steam o Discord (se vinculan desde el perfil).
+- Verificación en dos pasos (2FA) propia: en Auth0 es una función de pago. Quien entra con Google queda protegido por la 2FA de Google.
 - Aplicación móvil nativa (la web es responsiva).
 - Chat de voz.
 - Pagos o suscripciones.
@@ -54,7 +57,9 @@ Los jugadores de juegos multijugador tienen problemas para encontrar compañeros
 
 | Capa | Tecnología | Uso |
 |---|---|---|
-| Frontend | HTML5, CSS3, JavaScript | 8 páginas independientes |
+| Frontend | HTML5, CSS3, JavaScript | 11 páginas independientes |
+| Frontend | Bootstrap Icons | Íconos de Discord, Steam y Twitch |
+| Almacenamiento | Cloudinary (plan gratis) | Fotos de perfil subidas por los usuarios |
 | Frontend | Bootstrap 5.3 | Diseño responsivo y componentes |
 | Frontend | i18next | Traducción en tiempo real ES/EN |
 | Backend | Python 3 y FastAPI | API REST y WebSockets |
@@ -170,7 +175,7 @@ Además de las 8 páginas de la propuesta, se agregaron 3:
 
 | Página | Motivo |
 |---|---|
-| `usuario.html` | Perfil público de cada jugador: Honor Score, reseñas recibidas, etiquetas destacadas, juegos y cuentas vinculadas. Permite decidir con quién jugar antes de aceptar una solicitud. Usa `GET /api/v1/users/{id}` y `GET /api/v1/reputation/users/{id}` |
+| `usuario.html` | Perfil público de cada jugador: nivel de honor con su barra de XP, foto, reseñas recibidas, etiquetas destacadas, juegos y cuentas vinculadas; botones para reportar o agregar a la lista negra. Permite decidir con quién jugar antes de aceptar una solicitud. Usa `GET /api/v1/users/{id}` y `GET /api/v1/reputation/users/{id}` |
 | `404.html` | Página de error para salas eliminadas o direcciones mal escritas. Netlify la muestra automáticamente |
 | `admin_reportes.html` | Panel de moderación: reportes pendientes y resueltos, evidencia del chat marcada por el filtro y acciones de sanción. Usa `GET /api/v1/admin/reports` y `PUT /api/v1/admin/reports/{id}` |
 
@@ -178,12 +183,12 @@ Además de las 8 páginas de la propuesta, se agregaron 3:
 
 | Página | Create | Read | Update | Delete |
 |---|---|---|---|---|
-| onboarding.html | Perfil inicial | — | — | — |
-| perfil_config.html | Vincular cuenta | Mis datos | Preferencias, juegos, región | Desvincular cuenta, eliminar cuenta |
+| onboarding.html | Perfil inicial, sugerencia de juego | Catálogo de juegos y géneros | — | — |
+| perfil_config.html | Vincular cuenta, sugerencia de juego | Mis datos y nivel | Preferencias, juegos, región, foto de perfil | Desvincular cuenta, quitar foto, eliminar cuenta |
 | crear_post.html | Sala | Mis juegos | — | — |
 | index.html | — | Salas activas con filtros | — | — |
 | detalle_post.html | Solicitud para unirse | Sala, integrantes, solicitudes | Editar sala, aceptar o rechazar solicitud, terminar partida | Eliminar sala, retirar solicitud, salir de la sala |
 | chat_sala.html | Mensaje | Historial del chat | — | — |
-| historial_partidas.html | Reseña, reporte | Partidas y compañeros | Editar reseña | Borrar reseña, eliminar sala |
-| usuario.html | Reporte | Perfil público y reseñas | — | — |
-| admin_reportes.html | — | Reportes y evidencia | Resolver reporte: descartar, suspender o eliminar la cuenta | — |
+| historial_partidas.html | Reseña, reporte, bloqueo (lista negra) | Partidas, compañeros y lista negra | Editar reseña | Borrar reseña, quitar de la lista negra, eliminar sala |
+| usuario.html | Reporte, bloqueo | Perfil público, nivel y reseñas | — | Quitar de la lista negra |
+| admin_reportes.html | Juego aprobado (en el catálogo) | Reportes, evidencia y juegos sugeridos | Resolver reporte (descartar, advertir, sanción personalizada, eliminar cuenta), reglas automáticas, aprobar o rechazar sugerencias | — |
