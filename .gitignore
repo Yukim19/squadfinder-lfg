@@ -16,6 +16,9 @@ htmlcov/
 # Node (por si se usan herramientas de frontend)
 node_modules/
 
+# Despliegue (Netlify crea esta carpeta local al conectar el proyecto)
+.netlify/
+
 # Editor
 .vscode/*
 !.vscode/settings.json
