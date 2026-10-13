@@ -187,8 +187,10 @@
     <script src="js/catalogo.js"></script>
     <script src="js/ui.js"></script>
     <script>
-        // Semana 3: los juegos vienen de GET /api/v1/users/me y se publica con POST /api/v1/lfg/posts
-        const misJuegos = USUARIO_DEMO.juegos.map(juegoPorId);
+        // Los juegos del usuario salen de GET /users/me; la sala se publica con POST /lfg/posts
+        let yo = null;          // usuario con sesión
+        let misJuegos = [];     // juegos del catálogo que están en su perfil
+        const juegoPorIdApi = (id) => misJuegos.find((j) => j.id === Number(id));
         const form = document.getElementById('form-post');
         const $ = (id) => document.getElementById(id);
         let cupos = 5;
@@ -209,23 +211,12 @@
         const valorRadio = (nombre) => document.querySelector(`input[name="${nombre}"]:checked`)?.value ?? null;
         const marcados = (nombre) => [...document.querySelectorAll(`input[name="${nombre}"]:checked`)].map((i) => i.value);
 
-        opciones('opciones-juego', 'juego',
-            misJuegos.map((j) => ({ valor: j.id, texto: j.name, detalle: j.genre, clase: 'sf-option-juego' })),
-            misJuegos.length === 1 ? [misJuegos[0].id] : []);
-        opciones('opciones-modo', 'modo',
-            Object.entries(MODOS_JUEGO).map(([valor, m]) => ({ valor, icono: m.icono, texto: m.texto, detalle: m.detalle })),
-            ['CASUAL']);
-        opciones('opciones-idioma', 'idioma',
-            Object.entries(IDIOMAS_SALA).map(([valor, texto]) => ({ valor, texto, icono: ICONOS_IDIOMA[valor] })),
-            // Si el usuario habla ambos idiomas, la sala empieza abierta a todos
-            [USUARIO_DEMO.preferred_language_speak === 'both' ? 'any' : USUARIO_DEMO.preferred_language_speak]);
-
         $('plantillas').innerHTML = Object.entries(PLANTILLAS_SALA).map(([clave, p]) =>
             `<button type="button" class="btn btn-sm btn-outline-light sf-chip" data-plantilla="${clave}">${p.icono} ${esc(p.nombre)}</button>`).join('');
 
         // Las plataformas dependen del juego: solo las que tiene, y varias solo con crossplay
         function actualizarPlataformas() {
-            const juego = juegoPorId(valorRadio('juego'));
+            const juego = juegoPorIdApi(valorRadio('juego'));
             if (!juego) {
                 $('opciones-plataforma').innerHTML = '';
                 $('badge-crossplay').innerHTML = '';
@@ -262,7 +253,7 @@
         }
 
         function actualizarVistaPrevia() {
-            const juego = juegoPorId(valorRadio('juego'));
+            const juego = juegoPorIdApi(valorRadio('juego'));
             const titulo = $('titulo').value.trim();
             const descripcion = $('descripcion').value.trim();
             const plataformas = marcados('plataforma');
@@ -285,10 +276,10 @@
                 `${ICONOS_IDIOMA[idioma]} ${esc(IDIOMAS_SALA[idioma])}`,
                 $('mic').checked ? '🎙️ Micrófono obligatorio' : '🔇 Micrófono opcional',
                 competitivo ? `🏆 ${esc($('rango').value.trim() || 'Rango por definir')}` : null,
-                `🌎 ${esc(REGIONES[USUARIO_DEMO.region])}`,
+                `🌎 ${esc(REGIONES[yo.region])}`,
             ].filter(Boolean).map((m) => `<span class="badge">${m}</span>`).join('');
-            $('prev-anfitrion').innerHTML = `${avatar(USUARIO_DEMO.username, 'sf-avatar-sm')}
-                <span class="small">Anfitrión: <strong>${esc(USUARIO_DEMO.username)}</strong></span> ${badgeNivel(USUARIO_DEMO.level)}`;
+            $('prev-anfitrion').innerHTML = `${avatar(yo.username, 'sf-avatar-sm', yo.avatar_url)}
+                <span class="small">Anfitrión: <strong>${esc(yo.username)}</strong></span> ${badgeNivel(yo.level)}`;
             $('prev-slots').innerHTML = Array.from({ length: cupos }, (_, i) =>
                 `<span class="sf-slot ${i === 0 ? 'sf-slot-lleno' : ''}"></span>`).join('');
             $('prev-cupos').textContent = `1/${cupos} jugadores`;
@@ -343,7 +334,7 @@
             $('error-plataforma').classList.toggle('d-none', !valorRadio('juego') || marcados('plataforma').length > 0);
         });
 
-        validarFormulario(form, () => {
+        validarFormulario(form, async () => {
             const juego = valorRadio('juego');
             const plataformas = marcados('plataforma');
             if (!juego || plataformas.length === 0) {
@@ -362,15 +353,47 @@
                 mic_required: $('mic').checked,
                 required_language: valorRadio('idioma'),
             };
-            console.log('Nueva sala (demo):', datos);
-            mostrarToast('¡Sala publicada! Te avisaremos cuando alguien quiera unirse.');
-            setTimeout(() => { location.href = 'index.html'; }, 1500);
+            const boton = form.querySelector('button[type="submit"]');
+            boton.disabled = true; // evita publicar dos veces con doble clic
+            try {
+                const sala = await api('/lfg/posts', { method: 'POST', body: datos });
+                mostrarToast('¡Sala publicada! Te llevamos a tu sala.');
+                setTimeout(() => { location.href = `detalle_post.html?id=${sala.id}`; }, 900);
+            } catch (e) {
+                boton.disabled = false;
+                if (e.code === 'GAME_NOT_IN_PROFILE') {
+                    return mostrarToast('Ese juego no está en tu perfil. Agrégalo en "Configurar perfil".', 'danger');
+                }
+                avisarError(e, 'No se pudo publicar la sala.');
+            }
         });
 
-        actualizarPlataformas();
-        actualizarModo();
-        actualizarRangos();
-        actualizarVistaPrevia();
+        async function iniciar() {
+            try {
+                yo = await iniciarPagina();
+                const { juegos } = await catalogo();
+                misJuegos = juegos.filter((j) => yo.games.includes(j.id));
+            } catch (e) {
+                return mostrarErrorPagina(e.message);
+            }
+            opciones('opciones-juego', 'juego',
+                misJuegos.map((j) => ({ valor: j.id, texto: j.name, detalle: j.genre, clase: 'sf-option-juego' })),
+                misJuegos.length === 1 ? [misJuegos[0].id] : []);
+            opciones('opciones-modo', 'modo',
+                Object.entries(MODOS_JUEGO).map(([valor, m]) => ({ valor, icono: m.icono, texto: m.texto, detalle: m.detalle })),
+                ['CASUAL']);
+            opciones('opciones-idioma', 'idioma',
+                Object.entries(IDIOMAS_SALA).map(([valor, texto]) => ({ valor, texto, icono: ICONOS_IDIOMA[valor] })),
+                // Si el usuario habla ambos idiomas, la sala empieza abierta a todos
+                [yo.preferred_language_speak === 'both' ? 'any' : yo.preferred_language_speak]);
+
+            actualizarPlataformas();
+            actualizarModo();
+            actualizarRangos();
+            actualizarVistaPrevia();
+        }
+
+        iniciar();
     </script>
 </body>
 

@@ -138,24 +138,16 @@
                         <textarea class="form-control" id="editar-descripcion" rows="3" maxlength="500"></textarea>
                     </div>
                     <div class="row g-3">
-                        <div class="col-sm-4">
+                        <div class="col-sm-6">
                             <label class="form-label" for="editar-cupos">Cupos</label>
                             <input type="number" class="form-control" id="editar-cupos" required min="2" max="10">
                             <div class="invalid-feedback">Entre los jugadores actuales y 10.</div>
                         </div>
-                        <div class="col-sm-4">
+                        <div class="col-sm-6">
                             <label class="form-label" for="editar-modo">Tipo de partida</label>
                             <select class="form-select" id="editar-modo">
                                 <option value="CASUAL">😎 Casual</option>
                                 <option value="COMPETITIVE">🏆 Competitivo</option>
-                            </select>
-                        </div>
-                        <div class="col-sm-4">
-                            <label class="form-label" for="editar-estado">Estado</label>
-                            <select class="form-select" id="editar-estado">
-                                <option value="OPEN">Abierta</option>
-                                <option value="FULL">Llena</option>
-                                <option value="IN_PROGRESS">En partida</option>
                             </select>
                         </div>
                         <div class="col-12" id="bloque-editar-rango">
@@ -190,31 +182,50 @@
     <script src="js/catalogo.js"></script>
     <script src="js/ui.js"></script>
     <script>
-        // Semana 3: GET /api/v1/lfg/posts/{id}, miembros y solicitudes desde la API
-        const sala = SALAS_DEMO.find((s) => s.id === idDeUrl(1));
-        if (!sala) {
-            location.replace('404.html');
-            throw new Error('Sala no encontrada');
-        }
+        // Todo sale de la API: GET /lfg/posts/{id} trae la sala, sus integrantes y mi solicitud.
+        // Cada acción (unirse, aceptar, editar...) llama a la API y luego vuelve a cargar la sala,
+        // así lo que ves siempre es lo que hay en la base de datos.
+        const idSala = idDeUrl();
+        let yo = null;
+        let sala = null;
+        let miembros = [];
+        let solicitudes = [];
+        let anfitrionBloqueado = false;
 
-        // Se puede llegar a una sala bloqueada por un enlace directo: se avisa
-        const avisoBloqueado = document.getElementById('aviso-bloqueado');
-        avisoBloqueado.classList.toggle('d-none', !estaBloqueado(sala.host_id));
-        document.getElementById('btn-desbloquear-anfitrion').addEventListener('click', () => {
-            desbloquearUsuario(sala.host_id);
-            avisoBloqueado.classList.add('d-none');
-            mostrarToast(`${sala.host_username} salió de tu lista negra.`, 'info');
-        });
-
-        let miembros = [...(MIEMBROS_DEMO[sala.id] ?? [])];
-        let solicitudes = [...(SOLICITUDES_DEMO[sala.id] ?? [])];
-        let solicitudEnviada = false;
-        const soyAnfitrion = sala.host_id === USUARIO_DEMO.id;
-        const soyMiembro = () => miembros.some((m) => m.user_id === USUARIO_DEMO.id);
+        const soyAnfitrion = () => sala.is_host;
+        const soyMiembro = () => miembros.some((m) => m.user_id === yo.id);
+        const solicitudEnviada = () => sala.my_application?.status === 'PENDING';
         const salaActiva = () => ['OPEN', 'FULL', 'IN_PROGRESS'].includes(sala.status);
 
         const modalSolicitar = new bootstrap.Modal('#modal-solicitar');
         const modalEditar = new bootstrap.Modal('#modal-editar');
+        const avisoBloqueado = document.getElementById('aviso-bloqueado');
+
+        async function cargar() {
+            try {
+                sala = await api(`/lfg/posts/${idSala}`);
+            } catch (e) {
+                if (e.code === 'POST_NOT_FOUND') return location.replace('404.html');
+                throw e;
+            }
+            miembros = sala.members;
+            // Solo el anfitrión ve (y puede pedir) las solicitudes pendientes
+            solicitudes = soyAnfitrion() && salaActiva()
+                ? await api(`/lfg/posts/${idSala}/applications`, { params: { status: 'PENDING' } })
+                : [];
+            pintar();
+        }
+
+        // Ejecuta una acción de la API; si falla avisa con el mensaje del servidor. Siempre recarga.
+        async function accion(llamada, mensajeOk, tipo) {
+            try {
+                await llamada();
+                if (mensajeOk) mostrarToast(mensajeOk, tipo);
+            } catch (e) {
+                avisarError(e);
+            }
+            await cargar();
+        }
 
         function pintar() {
             document.title = `${sala.title} - SquadFinder LFG`;
@@ -222,7 +233,8 @@
             document.getElementById('badge-estado').innerHTML = badgeEstado(sala.status);
             document.getElementById('post-titulo').textContent = sala.title;
             document.getElementById('compatibilidad').textContent =
-                soyAnfitrion ? '' : `Compatibilidad contigo: ${calcularCompatibilidad(sala)}%`;
+                soyAnfitrion() ? '' : `Compatibilidad contigo: ${calcularCompatibilidad(sala, yo)}%`;
+            avisoBloqueado.classList.toggle('d-none', !anfitrionBloqueado || soyAnfitrion());
 
             const meta = [
                 esc(textoPlataformas(sala.platforms)),
@@ -239,10 +251,10 @@
             descripcion.textContent = sala.description ?? 'El anfitrión no agregó descripción.';
             descripcion.classList.toggle('text-secondary', !sala.description);
 
+            const anfitrion = miembros.find((m) => m.role === 'HOST');
             document.getElementById('post-anfitrion').innerHTML =
-                `${avatar(sala.host_username)} <span>Anfitrión: ${enlaceUsuario(sala.host_id, sala.host_username)}</span> ${badgeNivel(sala.host_level)}`;
+                `${avatar(sala.host_username, '', anfitrion?.avatar_url)} <span>Anfitrión: ${enlaceUsuario(sala.host_id, sala.host_username)}</span> ${badgeNivel(sala.host_level)}`;
 
-            sala.current_players = miembros.length;
             document.getElementById('post-cupos').textContent = `${sala.current_players}/${sala.max_players} jugadores`;
             const porcentaje = Math.round((sala.current_players / sala.max_players) * 100);
             const barra = document.getElementById('barra-cupos');
@@ -258,7 +270,7 @@
             document.getElementById('lista-miembros').innerHTML = miembros.map((m) => `
                 <div class="sf-mate">
                     <div class="d-flex align-items-center gap-2">
-                        ${avatar(m.username)}
+                        ${avatar(m.username, '', m.avatar_url)}
                         <div>
                             <div>${enlaceUsuario(m.user_id, m.username)}
                                 ${m.role === 'HOST' ? '<span class="badge text-bg-warning ms-1">Anfitrión</span>' : ''}</div>
@@ -271,7 +283,7 @@
 
         function pintarSolicitudes() {
             const panel = document.getElementById('panel-solicitudes');
-            panel.classList.toggle('d-none', !soyAnfitrion || !salaActiva());
+            panel.classList.toggle('d-none', !soyAnfitrion() || !salaActiva());
             document.getElementById('total-solicitudes').textContent = solicitudes.length;
             const lista = document.getElementById('lista-solicitudes');
             if (solicitudes.length === 0) {
@@ -282,7 +294,7 @@
             lista.innerHTML = solicitudes.map((s) => `
                 <div class="sf-mate d-block">
                     <div class="d-flex align-items-center gap-2 mb-1">
-                        ${avatar(s.username, 'sf-avatar-sm')} ${enlaceUsuario(s.applicant_id, s.username)} ${badgeNivel(s.level)}
+                        ${avatar(s.username, 'sf-avatar-sm', s.avatar_url)} ${enlaceUsuario(s.applicant_id, s.username)} ${badgeNivel(s.level)}
                     </div>
                     <small class="text-secondary d-block">${esc(REGIONES[s.region] ?? 'Sin región')}</small>
                     ${s.message ? `<p class="small mb-2 mt-1">"${esc(s.message)}"</p>` : ''}
@@ -296,18 +308,26 @@
         function pintarAcciones() {
             const acciones = [];
             const chat = `<a class="btn btn-primary" href="chat_sala.html?id=${sala.id}">💬 Ir al chat</a>`;
-            if (!salaActiva()) {
+            if (sala.status === 'CANCELLED') {
+                acciones.push('<span class="text-secondary">El anfitrión canceló esta sala.</span>');
+            } else if (!salaActiva()) {
                 acciones.push('<span class="text-secondary">Esta sala ya terminó. Puedes calificar a tus compañeros desde el <a href="historial_partidas.html">historial</a>.</span>');
-            } else if (soyAnfitrion) {
-                acciones.push(chat,
+            } else if (soyAnfitrion()) {
+                acciones.push(chat);
+                if (sala.status !== 'IN_PROGRESS') {
+                    acciones.push('<button class="btn btn-outline-light" id="btn-empezar">▶️ Empezar partida</button>');
+                }
+                acciones.push(
                     '<button class="btn btn-outline-light" id="btn-editar">✏️ Editar sala</button>',
                     '<button class="btn btn-outline-light" id="btn-terminar">🏁 Marcar como terminada</button>',
-                    '<button class="btn btn-outline-danger ms-sm-auto" id="btn-eliminar">Eliminar sala</button>');
+                    '<button class="btn btn-outline-danger ms-sm-auto" id="btn-eliminar">Cancelar sala</button>');
             } else if (soyMiembro()) {
                 acciones.push(chat, '<button class="btn btn-outline-danger" id="btn-salir">Salir de la sala</button>');
-            } else if (solicitudEnviada) {
+            } else if (solicitudEnviada()) {
                 acciones.push('<span class="badge text-bg-info align-self-center">⏳ Solicitud enviada</span>',
                     '<button class="btn btn-outline-light" id="btn-retirar">Retirar solicitud</button>');
+            } else if (sala.my_application?.status === 'REJECTED') {
+                acciones.push('<span class="text-secondary">El anfitrión rechazó tu solicitud.</span>');
             } else if (sala.current_players >= sala.max_players) {
                 acciones.push('<button class="btn btn-primary" disabled>Sala llena</button>');
             } else {
@@ -319,20 +339,17 @@
         // Un solo listener para todos los botones que se vuelven a pintar
         document.addEventListener('click', async (e) => {
             const boton = e.target.closest('button');
-            if (!boton) return;
+            if (!boton || !sala) return;
+            const base = `/lfg/posts/${sala.id}`;
 
             if (boton.id === 'btn-solicitar') modalSolicitar.show();
 
             if (boton.id === 'btn-retirar' && await confirmar({ titulo: 'Retirar solicitud', mensaje: '¿Seguro que ya no quieres unirte a esta sala?', textoBoton: 'Retirar' })) {
-                solicitudEnviada = false; // DELETE /api/v1/applications/{id}
-                mostrarToast('Retiraste tu solicitud.', 'info');
-                pintar();
+                await accion(() => api(`${base}/applications/me`, { method: 'DELETE' }), 'Retiraste tu solicitud.', 'info');
             }
 
             if (boton.id === 'btn-salir' && await confirmar({ titulo: 'Salir de la sala', mensaje: 'Dejarás tu cupo libre para otro jugador.', textoBoton: 'Salir' })) {
-                miembros = miembros.filter((m) => m.user_id !== USUARIO_DEMO.id);
-                mostrarToast('Saliste de la sala.', 'info');
-                pintar();
+                await accion(() => api(`${base}/applications/me`, { method: 'DELETE' }), 'Saliste de la sala.', 'info');
             }
 
             if (boton.id === 'btn-editar') {
@@ -342,38 +359,49 @@
                 document.getElementById('editar-cupos').min = Math.max(2, sala.current_players);
                 document.getElementById('editar-rango').value = sala.rank_required ?? '';
                 document.getElementById('editar-modo').value = sala.play_mode;
-                document.getElementById('editar-estado').value = sala.status;
                 document.getElementById('editar-mic').checked = sala.mic_required;
                 document.getElementById('form-editar').classList.remove('was-validated');
                 actualizarModoEditar();
                 modalEditar.show();
             }
 
+            if (boton.id === 'btn-empezar') {
+                await accion(() => api(base, { method: 'PUT', body: { status: 'IN_PROGRESS' } }), 'La partida empezó.');
+            }
+
             if (boton.id === 'btn-terminar' && await confirmar({ titulo: 'Marcar como terminada', mensaje: 'La sala se cerrará y pasará al historial de todos los integrantes para que puedan calificarse.', textoBoton: 'Terminar partida', peligro: false })) {
-                sala.status = 'CLOSED'; // PUT /api/v1/lfg/posts/{id} { status: 'CLOSED' }
-                mostrarToast('¡Partida terminada! Ya pueden calificarse en el historial.');
-                pintar();
+                await accion(() => api(base, { method: 'PUT', body: { status: 'CLOSED' } }), '¡Partida terminada! Ya pueden calificarse en el historial.');
             }
 
-            if (boton.id === 'btn-eliminar' && await confirmar({ titulo: 'Eliminar sala', mensaje: 'Se borrarán la sala, sus solicitudes y el chat. Esta acción no se puede deshacer.', textoBoton: 'Eliminar' })) {
-                mostrarToast('Sala eliminada.', 'danger'); // DELETE /api/v1/lfg/posts/{id}
-                setTimeout(() => { location.href = 'index.html'; }, 1200);
+            if (boton.id === 'btn-eliminar' && await confirmar({ titulo: 'Cancelar sala', mensaje: 'La sala se cancelará y dejará de aparecer en el feed. Esta acción no se puede deshacer.', textoBoton: 'Cancelar sala' })) {
+                try {
+                    await api(base, { method: 'DELETE' });
+                    mostrarToast('Sala cancelada.', 'danger');
+                    setTimeout(() => { location.href = 'index.html'; }, 1200);
+                } catch (err) {
+                    avisarError(err);
+                }
             }
 
-            if (boton.dataset.aceptar) {
-                const s = solicitudes.find((x) => x.id === Number(boton.dataset.aceptar));
-                solicitudes = solicitudes.filter((x) => x !== s);
-                miembros.push({ user_id: s.applicant_id, username: s.username, role: 'MEMBER', region: s.region, level: s.level });
-                if (miembros.length >= sala.max_players) sala.status = 'FULL';
-                mostrarToast(`${s.username} se unió a la sala. Le avisamos por Discord.`);
-                pintar();
+            if (boton.dataset.aceptar || boton.dataset.rechazar) {
+                const aceptar = Boolean(boton.dataset.aceptar);
+                const id = Number(boton.dataset.aceptar || boton.dataset.rechazar);
+                const s = solicitudes.find((x) => x.id === id);
+                await accion(
+                    () => api(`${base}/applications/${id}`, { method: 'PUT', body: { status: aceptar ? 'ACCEPTED' : 'REJECTED' } }),
+                    aceptar ? `${s.username} se unió a la sala.` : `Rechazaste la solicitud de ${s.username}.`,
+                    aceptar ? undefined : 'info');
             }
+        });
 
-            if (boton.dataset.rechazar) {
-                const s = solicitudes.find((x) => x.id === Number(boton.dataset.rechazar));
-                solicitudes = solicitudes.filter((x) => x !== s);
-                mostrarToast(`Rechazaste la solicitud de ${s.username}.`, 'info');
-                pintar();
+        document.getElementById('btn-desbloquear-anfitrion').addEventListener('click', async () => {
+            try {
+                await api(`/users/me/blocks/${sala.host_id}`, { method: 'DELETE' });
+                anfitrionBloqueado = false;
+                avisoBloqueado.classList.add('d-none');
+                mostrarToast(`${sala.host_username} salió de tu lista negra.`, 'info');
+            } catch (err) {
+                avisarError(err);
             }
         });
 
@@ -383,12 +411,25 @@
             document.getElementById('contador-solicitud').textContent = mensaje.value.length;
         });
 
-        document.getElementById('form-solicitar').addEventListener('submit', (e) => {
+        document.getElementById('form-solicitar').addEventListener('submit', async (e) => {
             e.preventDefault();
-            solicitudEnviada = true; // POST /api/v1/lfg/posts/{id}/applications
-            modalSolicitar.hide();
-            mostrarToast('Solicitud enviada. El anfitrión recibirá un aviso por Discord.');
-            pintar();
+            const boton = e.submitter;
+            boton.disabled = true;
+            try {
+                await api(`/lfg/posts/${sala.id}/applications`, {
+                    method: 'POST',
+                    body: { message: mensaje.value.trim() || null },
+                });
+                modalSolicitar.hide();
+                mensaje.value = '';
+                document.getElementById('contador-solicitud').textContent = 0;
+                mostrarToast('Solicitud enviada. El anfitrión la verá en su sala.');
+            } catch (err) {
+                modalSolicitar.hide();
+                avisarError(err, 'No se pudo enviar la solicitud.');
+            }
+            boton.disabled = false;
+            await cargar();
         });
 
         // El rango solo aplica (y es obligatorio) en partidas competitivas
@@ -399,22 +440,43 @@
         }
         document.getElementById('editar-modo').addEventListener('change', actualizarModoEditar);
 
-        validarFormulario(document.getElementById('form-editar'), () => {
-            sala.title = document.getElementById('editar-titulo').value.trim();
-            sala.description = document.getElementById('editar-descripcion').value.trim() || null;
-            sala.max_players = Number(document.getElementById('editar-cupos').value);
-            sala.play_mode = document.getElementById('editar-modo').value;
-            sala.rank_required = sala.play_mode === 'COMPETITIVE'
-                ? document.getElementById('editar-rango').value.trim()
-                : null;
-            sala.status = document.getElementById('editar-estado').value;
-            sala.mic_required = document.getElementById('editar-mic').checked;
-            modalEditar.hide(); // PUT /api/v1/lfg/posts/{id}
-            mostrarToast('Sala actualizada.');
-            pintar();
+        validarFormulario(document.getElementById('form-editar'), async () => {
+            const modo = document.getElementById('editar-modo').value;
+            try {
+                await api(`/lfg/posts/${sala.id}`, {
+                    method: 'PUT',
+                    body: {
+                        title: document.getElementById('editar-titulo').value.trim(),
+                        description: document.getElementById('editar-descripcion').value.trim() || null,
+                        max_players: Number(document.getElementById('editar-cupos').value),
+                        play_mode: modo,
+                        rank_required: modo === 'COMPETITIVE' ? document.getElementById('editar-rango').value.trim() : null,
+                        mic_required: document.getElementById('editar-mic').checked,
+                    },
+                });
+                modalEditar.hide();
+                mostrarToast('Sala actualizada.');
+            } catch (err) {
+                avisarError(err, 'No se pudo guardar la sala.');
+            }
+            await cargar();
         });
 
-        pintar();
+        async function iniciar() {
+            if (!idSala) return location.replace('404.html');
+            try {
+                yo = await iniciarPagina();
+                await cargar();
+                // Se puede llegar a una sala bloqueada por un enlace directo: se avisa
+                const bloqueados = await api('/users/me/blocks');
+                anfitrionBloqueado = bloqueados.some((b) => b.user_id === sala.host_id);
+                pintar();
+            } catch (e) {
+                mostrarErrorPagina(e.message);
+            }
+        }
+
+        iniciar();
     </script>
 </body>
 
