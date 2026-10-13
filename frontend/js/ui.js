@@ -1,6 +1,6 @@
 /* =====================================================================
    SquadFinder LFG - Componentes de interfaz compartidos
-   Requiere: Bootstrap (bundle) y js/catalogo.js cargados antes.
+   Requiere: Bootstrap (bundle), js/catalogo.js y js/api.js cargados antes.
    ===================================================================== */
 
 /* ---------------------------------------------------------------------
@@ -153,7 +153,8 @@ function badgeModo(modo) {
 // calculará el matchmaking-service: juego 40 + idioma 30 + región 30.
 function calcularCompatibilidad(sala, usuario = USUARIO_DEMO) {
     let puntos = 0;
-    if (usuario.juegos.includes(sala.game_id)) puntos += 40;
+    // games = juegos del perfil que llegan de la API; juegos = datos de prueba de catalogo.js
+    if ((usuario.games ?? usuario.juegos).includes(sala.game_id)) puntos += 40;
     const habla = usuario.preferred_language_speak;
     if (sala.required_language === 'any' || habla === 'both' || sala.required_language === habla) puntos += 30;
     if (sala.host_region === usuario.region) puntos += 30;
@@ -195,7 +196,9 @@ function activarFiltroJuegos({ buscadorId, contenedorId, botonesId }) {
 /* ---------------------------------------------------------------------
    Ventana para sugerir un juego que no está en la lista (CREATE game_request)
    --------------------------------------------------------------------- */
-function abrirSugerenciaJuego() {
+// alEnviar(datos): si se pasa, la sugerencia no se envía y se le entrega a la página
+// (en el onboarding se envía después de crear el perfil, porque antes no existe el usuario).
+function abrirSugerenciaJuego({ alEnviar = null } = {}) {
     const modal = document.createElement('div');
     modal.className = 'modal fade';
     modal.tabIndex = -1;
@@ -225,20 +228,36 @@ function abrirSugerenciaJuego() {
     const instancia = new bootstrap.Modal(modal);
     const nombre = modal.querySelector('#sf-sugerir-nombre');
     const error = modal.querySelector('[data-error-nombre]');
+    const boton = modal.querySelector('button[type="submit"]');
 
-    modal.querySelector('form').addEventListener('submit', (e) => {
+    function marcarError(mensaje) {
+        error.textContent = mensaje;
+        nombre.classList.toggle('is-invalid', Boolean(mensaje));
+    }
+
+    modal.querySelector('form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const texto = nombre.value.trim();
-        const yaExiste = JUEGOS.some((j) => j.name.toLowerCase() === texto.toLowerCase());
-        const repetida = SUGERENCIAS_DEMO.some((s) => s.status === 'PENDING' && s.user_id === USUARIO_DEMO.id
-            && s.game_name.toLowerCase() === texto.toLowerCase());
-        error.textContent = texto.length < 2 ? 'Escribe el nombre del juego.'
-            : yaExiste ? 'Ese juego ya está en la lista. Búscalo con el buscador.'
-            : repetida ? 'Ya sugeriste ese juego; está pendiente de revisión.' : '';
-        nombre.classList.toggle('is-invalid', Boolean(error.textContent));
-        if (error.textContent) return;
+        const datos = { game_name: texto, platforms_note: modal.querySelector('#sf-sugerir-plataformas').value.trim() || null };
+        if (texto.length < 2) return marcarError('Escribe el nombre del juego.');
+        const { juegos } = await catalogo();
+        if (juegos.some((j) => j.name.toLowerCase() === texto.toLowerCase())) {
+            return marcarError('Ese juego ya está en la lista. Búscalo con el buscador.');
+        }
+        marcarError('');
 
-        sugerirJuego(texto, modal.querySelector('#sf-sugerir-plataformas').value.trim());
+        if (alEnviar) {
+            alEnviar(datos);
+        } else {
+            boton.disabled = true;
+            try {
+                await api('/catalog/game-requests', { method: 'POST', body: datos });
+            } catch (err) {
+                boton.disabled = false;
+                if (['GAME_EXISTS', 'REQUEST_PENDING', 'VALIDATION_ERROR'].includes(err.code)) return marcarError(err.message);
+                return avisarError(err);
+            }
+        }
         instancia.hide();
         mostrarToast(`¡Gracias! Un administrador revisará "${texto}".`);
     });
@@ -342,39 +361,68 @@ function validarFormulario(form, alEnviar) {
 }
 
 /* ---------------------------------------------------------------------
-   Barra de navegación: datos del usuario y cerrar sesión
+   Barra de navegación y arranque de cada página con sesión
    --------------------------------------------------------------------- */
 // Pone la foto (o el avatar) del usuario en el menú superior
-function pintarAvatarNavbar() {
+function pintarAvatarNavbar(usuario = _yo ?? USUARIO_DEMO) {
     const actual = document.getElementById('nav-avatar');
     if (!actual) return;
     const plantilla = document.createElement('template');
-    plantilla.innerHTML = avatar(USUARIO_DEMO.username, 'sf-avatar-sm', USUARIO_DEMO.avatar_url);
+    plantilla.innerHTML = avatar(usuario.username, 'sf-avatar-sm', usuario.avatar_url);
     const nuevo = plantilla.content.firstElementChild;
     nuevo.id = 'nav-avatar';
     actual.replaceWith(nuevo);
 }
 
-function iniciarNavbar() {
+// Aviso dentro de la página cuando no se puede cargar (por ejemplo, la API está apagada)
+function mostrarErrorPagina(mensaje) {
+    document.getElementById('contenido')?.insertAdjacentHTML('afterbegin', `
+        <div class="alert alert-danger mt-3" role="alert">
+            <strong>No se pudo cargar la página.</strong> ${esc(mensaje)}
+            <button type="button" class="btn btn-sm btn-outline-light ms-2" data-sf-reintentar>Reintentar</button>
+        </div>`);
+    document.querySelector('[data-sf-reintentar]')?.addEventListener('click', () => location.reload());
+}
+
+async function iniciarNavbar() {
     const nombre = document.getElementById('nav-username');
-    if (!nombre) return;
-    nombre.textContent = USUARIO_DEMO.username;
-    pintarAvatarNavbar();
-    document.getElementById('nav-perfil-publico').href = `usuario.html?id=${USUARIO_DEMO.id}`;
+    if (!nombre) return null;
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+        const ok = await confirmar({ titulo: 'Cerrar sesión', mensaje: '¿Seguro que quieres salir de tu cuenta?', textoBoton: 'Cerrar sesión', peligro: false });
+        if (ok) await cerrarSesion();
+    });
+
+    let yo;
+    try {
+        yo = await usuarioActual();
+    } catch (e) {
+        if (e.code === 'NETWORK_ERROR') mostrarErrorPagina(e.message);
+        return null;
+    }
+    nombre.textContent = yo.username;
+    pintarAvatarNavbar(yo);
+    document.getElementById('nav-perfil-publico').href = `usuario.html?id=${yo.id}`;
 
     // Solo los administradores ven el panel de moderación
-    if (USUARIO_DEMO.role === 'ADMIN') {
-        const pendientes = REPORTES_DEMO.filter((r) => r.status === 'PENDING').length;
+    if (yo.role === 'ADMIN') {
+        const pendientes = (await api('/admin/reports', { params: { status: 'PENDING' } }).catch(() => [])).length;
         const enPagina = location.pathname.endsWith('admin_reportes.html');
         document.getElementById('btn-logout').closest('li').previousElementSibling.insertAdjacentHTML('beforebegin', `
             <li><a class="dropdown-item d-flex justify-content-between align-items-center gap-3 ${enPagina ? 'active' : ''}"
                    href="admin_reportes.html" ${enPagina ? 'aria-current="page"' : ''}>
                 🛡️ Moderación ${pendientes ? `<span class="badge text-bg-danger">${pendientes}</span>` : ''}</a></li>`);
     }
-    document.getElementById('btn-logout').addEventListener('click', async () => {
-        const ok = await confirmar({ titulo: 'Cerrar sesión', mensaje: '¿Seguro que quieres salir de tu cuenta?', textoBoton: 'Cerrar sesión', peligro: false });
-        if (ok) location.href = 'login.html'; // Semana 2: auth0.logout()
-    });
+    return yo;
 }
 
-document.addEventListener('DOMContentLoaded', iniciarNavbar);
+const _navbarLista = new Promise((listo) => {
+    document.addEventListener('DOMContentLoaded', () => listo(iniciarNavbar()));
+});
+
+// Cada página con sesión empieza con: const yo = await iniciarPagina();
+// Si no hay sesión, api() ya redirigió al login y la página no sigue.
+async function iniciarPagina() {
+    const yo = await _navbarLista;
+    if (!yo) throw new Error('Sin sesión');
+    return yo;
+}

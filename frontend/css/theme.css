@@ -443,6 +443,27 @@ body > main {
 }
 
 /* ---------------------------------------------------------------------
+   Tarjetas de sala (index.html): toda la tarjeta es clicable
+   --------------------------------------------------------------------- */
+.sf-sala {
+    position: relative;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.sf-sala:hover,
+.sf-sala:focus-within {
+    border-color: var(--sf-primary);
+    transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sf-sala:hover,
+    .sf-sala:focus-within {
+        transform: none;
+    }
+}
+
+/* ---------------------------------------------------------------------
    Detalle de sala
    --------------------------------------------------------------------- */
 .sf-meta {

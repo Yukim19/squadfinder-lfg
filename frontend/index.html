@@ -106,11 +106,13 @@
       </div>
     </form>
 
-    <h2 class="h3 mb-3">Salas LFG activas</h2>
-    <!-- Tarea 3: reemplazar este bloque por las tarjetas generadas desde salasVisibles() -->
-    <div id="lista-salas" class="sf-card text-center text-secondary">
-      Aquí irá el feed de salas. Mientras tanto, puedes ver las salas de ejemplo:
-      <span id="salas-ejemplo"></span>
+    <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-3">
+      <h2 class="h3 mb-0">Salas LFG activas</h2>
+      <!-- aria-live: los lectores de pantalla anuncian cuántas salas hay al cambiar los filtros -->
+      <p class="text-secondary mb-0" id="contador-salas" aria-live="polite"></p>
+    </div>
+    <div id="lista-salas" class="row g-3" aria-busy="true">
+      <p class="text-secondary">Cargando salas…</p>
     </div>
   </main>
 
@@ -122,23 +124,133 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@2.1.3/dist/auth0-spa-js.production.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/catalogo.js"></script>
   <script src="js/ui.js"></script>
   <script>
-    // Opciones de los filtros. La lógica de filtrar las tarjetas va junto con la tarea 3.
-    llenarSelect('filtro-juego', Object.fromEntries(JUEGOS.map((j) => [j.id, j.name])));
-    llenarSelect('filtro-plataforma', Object.fromEntries(PLATAFORMAS.map((p) => [p, p])));
-    llenarSelect('filtro-region', REGIONES);
-    llenarSelect('filtro-idioma', IDIOMAS_SALA);
-    llenarSelect('filtro-modo', Object.fromEntries(Object.entries(MODOS_JUEGO).map(([k, m]) => [k, `${m.icono} ${m.texto}`])));
+    /* Feed de salas (GET /api/v1/lfg/posts).
+       1. Los filtros del formulario se convierten en parámetros de la URL de la API.
+       2. El backend (feed_for_user en PostgreSQL) devuelve solo las salas abiertas o llenas,
+          sin las de tu lista negra ni las de cuentas sancionadas.
+       3. Cada sala se pinta como una tarjeta con enlace a su detalle. */
+    const lista = document.getElementById('lista-salas');
+    const contador = document.getElementById('contador-salas');
+    const form = document.getElementById('form-filtros');
+    const $ = (id) => document.getElementById(id);
 
-    // salasVisibles() ya quita las salas de quienes están en tu lista negra
-    const visibles = salasVisibles();
-    const ocultas = SALAS_DEMO.length - visibles.length;
-    document.getElementById('salas-ejemplo').innerHTML = visibles
-      .map((s) => `<a href="detalle_post.html?id=${s.id}">${esc(s.title)}</a> (${esc(s.game_name)}, anfitrión ${esc(s.host_username)})`)
-      .join(' · ')
-      + (ocultas ? `<br><small>🚫 ${ocultas} sala(s) oculta(s) por tu lista negra.</small>` : '');
+    // Lee el formulario y arma los parámetros que entiende la API (los vacíos no se envían)
+    function parametrosDeFiltros() {
+      return {
+        q: $('filtro-texto').value.trim(),
+        play_mode: $('filtro-modo').value,
+        game_id: $('filtro-juego').value,
+        platform: $('filtro-plataforma').value,
+        region: $('filtro-region').value,
+        language: $('filtro-idioma').value,
+        only_my_games: $('filtro-mis-juegos').checked || '',
+        // "Sin micrófono obligatorio" = solo salas con mic_required = false
+        mic_required: $('filtro-sin-mic').checked ? false : '',
+      };
+    }
+
+    // Círculos llenos/vacíos que muestran los lugares ocupados de la sala
+    function lugares(sala) {
+      const circulos = Array.from({ length: sala.max_players }, (_, i) =>
+        `<span class="sf-slot ${i < sala.current_players ? 'sf-slot-lleno' : ''}"></span>`).join('');
+      return `<div class="sf-slots" aria-hidden="true">${circulos}</div>
+              <span class="small text-secondary">${sala.current_players}/${sala.max_players} jugadores</span>`;
+    }
+
+    // Botón o estado según la relación del usuario con la sala
+    function estadoParaMi(sala) {
+      if (sala.is_host) return '<span class="badge text-bg-info">👑 Tu sala</span>';
+      const estados = { PENDING: '⏳ Solicitud enviada', ACCEPTED: '✅ Estás dentro' };
+      return estados[sala.my_application_status] ? `<span class="badge text-bg-secondary">${estados[sala.my_application_status]}</span>` : '';
+    }
+
+    // Todo el texto que viene de la base de datos pasa por esc() para evitar inyección de HTML (XSS)
+    function tarjeta(sala, yo) {
+      const compatibilidad = sala.is_host ? null : calcularCompatibilidad(sala, yo);
+      return `
+        <div class="col-12 col-md-6 col-xl-4">
+          <article class="sf-card sf-sala h-100 d-flex flex-column gap-2">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <span class="sf-kicker small">${esc(sala.game_name)}</span>
+              ${badgeEstado(sala.status)}
+            </div>
+            <h3 class="h5 mb-0">
+              <a class="stretched-link text-reset text-decoration-none" href="detalle_post.html?id=${sala.id}">${esc(sala.title)}</a>
+            </h3>
+            <div class="d-flex align-items-center gap-2 small">
+              ${avatar(sala.host_username, 'sf-avatar-sm', sala.host_avatar_url)}
+              <span>${esc(sala.host_username)}</span> ${badgeNivel(sala.host_level)}
+              <span class="text-secondary">· ${esc(REGIONES[sala.host_region] ?? '')}</span>
+            </div>
+            <div class="sf-meta">
+              ${badgeModo(sala.play_mode)}
+              ${sala.rank_required ? `<span class="badge">🎯 ${esc(sala.rank_required)}+</span>` : ''}
+              <span class="badge">${ICONOS_IDIOMA[sala.required_language]} ${esc(IDIOMAS_SALA[sala.required_language])}</span>
+              <span class="badge">${sala.mic_required ? '🎙️ Con micrófono' : '🔇 Mic opcional'}</span>
+            </div>
+            <div class="small text-secondary">${textoPlataformas(sala.platforms ?? [])}</div>
+            <div class="mt-auto d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2">
+              <div class="d-flex align-items-center gap-2">${lugares(sala)}</div>
+              ${estadoParaMi(sala) || (compatibilidad !== null ? `<span class="small text-secondary">🤝 ${compatibilidad}% compatible</span>` : '')}
+            </div>
+          </article>
+        </div>`;
+    }
+
+    // Evita mostrar resultados viejos si el usuario cambia los filtros muy rápido
+    let pedidoActual = 0;
+
+    async function cargarSalas(yo) {
+      const numero = ++pedidoActual;
+      lista.setAttribute('aria-busy', 'true');
+      let salas;
+      try {
+        salas = await api('/lfg/posts', { params: parametrosDeFiltros() });
+      } catch (e) {
+        lista.innerHTML = '<p class="text-danger">No se pudieron cargar las salas.</p>';
+        return avisarError(e);
+      } finally {
+        lista.setAttribute('aria-busy', 'false');
+      }
+      if (numero !== pedidoActual) return;
+
+      contador.textContent = salas.length === 1 ? '1 sala' : `${salas.length} salas`;
+      lista.innerHTML = salas.length
+        ? salas.map((s) => tarjeta(s, yo)).join('')
+        : `<div class="col-12"><div class="sf-card text-center text-secondary">
+             No hay salas con esos filtros. <a href="crear_post.html">¡Crea la tuya!</a></div></div>`;
+    }
+
+    async function iniciar() {
+      const yo = await iniciarPagina();
+      const { juegos } = await catalogo();
+
+      llenarSelect('filtro-juego', Object.fromEntries(juegos.map((j) => [j.id, j.name])));
+      llenarSelect('filtro-plataforma', Object.fromEntries(PLATAFORMAS.map((p) => [p, `${ICONOS_PLATAFORMA[p]} ${p}`])));
+      llenarSelect('filtro-region', REGIONES);
+      llenarSelect('filtro-idioma', IDIOMAS_SALA);
+      llenarSelect('filtro-modo', Object.fromEntries(Object.entries(MODOS_JUEGO).map(([k, m]) => [k, `${m.icono} ${m.texto}`])));
+
+      // Los selects y switches filtran al instante; el buscador espera a que dejes de escribir
+      form.addEventListener('change', () => cargarSalas(yo));
+      let espera;
+      $('filtro-texto').addEventListener('input', () => {
+        clearTimeout(espera);
+        espera = setTimeout(() => cargarSalas(yo), 300);
+      });
+      form.addEventListener('submit', (e) => e.preventDefault());
+      // "Limpiar filtros": el navegador vacía el formulario y después se recarga la lista
+      form.addEventListener('reset', () => setTimeout(() => cargarSalas(yo)));
+
+      await cargarSalas(yo);
+    }
+
+    iniciar();
   </script>
 </body>
 </html>

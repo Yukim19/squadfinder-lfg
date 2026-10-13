@@ -16,6 +16,7 @@ Protocolo del WebSocket /ws/chat/{post_id} (mensajes JSON):
 
 import asyncio
 import json
+import re
 from contextlib import asynccontextmanager
 from typing import Annotated
 
@@ -32,6 +33,7 @@ from .security import ErrorAuth, acceso_a_sala, usuario_activo, verificar_token
 
 PREFIJO = "/api/v1"
 MAX_CARACTERES = 500
+ORIGEN_LOCAL = r"http://(localhost|127\.0\.0\.1)(:\d+)?"
 
 # Código HTTP y código de cierre del WebSocket para cada error
 ESTADOS = {"NOT_AUTHENTICATED": 401, "TOKEN_EXPIRED": 401, "INVALID_TOKEN": 401, "POST_NOT_FOUND": 404}
@@ -70,6 +72,7 @@ def crear_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
+        allow_origin_regex=ORIGEN_LOCAL if settings.environment == "development" else None,
         allow_methods=["GET"],
         allow_headers=["Authorization", "X-Dev-User"],
     )
@@ -104,7 +107,8 @@ def crear_app() -> FastAPI:
     async def chat(websocket: WebSocket, post_id: int):
         # Solo las páginas permitidas pueden abrir el chat (protege contra sitios de terceros)
         origen = websocket.headers.get("origin")
-        if origen and origen not in settings.cors_origins:
+        local = settings.environment == "development" and origen and re.fullmatch(ORIGEN_LOCAL, origen)
+        if origen and origen not in settings.cors_origins and not local:
             await websocket.close(code=4403, reason="Origen no permitido")
             return
         await websocket.accept()

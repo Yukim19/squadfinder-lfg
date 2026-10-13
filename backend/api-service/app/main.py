@@ -17,6 +17,7 @@ from .routers import admin, catalog, lfg, reports, reputation, users
 from .security import Db
 
 PREFIJO = "/api/v1"
+ORIGEN_LOCAL = r"http://(localhost|127\.0\.0\.1)(:\d+)?"
 
 
 @asynccontextmanager
@@ -40,6 +41,8 @@ def crear_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
+        # En desarrollo se acepta cualquier puerto local (Live Server, vista previa, etc.)
+        allow_origin_regex=ORIGEN_LOCAL if settings.environment == "development" else None,
         allow_methods=["GET", "POST", "PUT", "DELETE"],
         allow_headers=["Authorization", "Content-Type", "X-Dev-User"],
     )
@@ -48,7 +51,8 @@ def crear_app() -> FastAPI:
     @app.get(f"{PREFIJO}/health", tags=["Sistema"], summary="Estado del servicio y de la base de datos")
     def health(db: Db) -> dict:
         db.execute("SELECT 1")
-        return {"status": "ok", "database": "ok", "environment": settings.environment}
+        # auth_mode le dice al frontend si usar Auth0 o los usuarios de prueba
+        return {"status": "ok", "database": "ok", "environment": settings.environment, "auth_mode": settings.auth_mode}
 
     app.include_router(catalog.router, prefix=PREFIJO)
     app.include_router(users.router, prefix=PREFIJO)
