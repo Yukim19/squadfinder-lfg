@@ -145,25 +145,33 @@
     <script src="js/catalogo.js"></script>
     <script src="js/ui.js"></script>
     <script>
-        // Filas de v_match_history (semana 3: GET /api/v1/lfg/history)
-        let filas = HISTORIAL_DEMO.map((f) => ({ ...f }));
-        let filaActual = null;
+        // GET /lfg/history devuelve una fila por partida terminada, con la lista de compañeros
+        // (ya incluye si los bloqueaste, reseñaste o reportaste). Tras cada acción se vuelve a
+        // pedir al servidor para que la pantalla refleje la base de datos.
+        let yo = null;
+        let partidas = [];
+        let bloqueados = [];
+        let companeroActual = null; // { partida, c } al calificar
         const modalResena = new bootstrap.Modal('#modal-resena');
+        const modalBloquear = new bootstrap.Modal('#modal-bloquear');
         const lista = document.getElementById('lista-historial');
+        let usuarioABloquear = null;
 
         // Etiquetas como chips de selección única
         document.getElementById('etiquetas').innerHTML = Object.entries(ETIQUETAS_RESENA).map(([valor, texto]) => `
             <input type="radio" class="btn-check" name="tag" id="tag-${valor}" value="${valor}" autocomplete="off">
             <label class="btn btn-outline-light sf-chip" for="tag-${valor}">${esc(texto)}</label>`).join('');
 
-        function pintar() {
-            const partidas = new Map();
-            for (const fila of filas) {
-                if (!partidas.has(fila.post_id)) partidas.set(fila.post_id, { ...fila, companeros: [] });
-                partidas.get(fila.post_id).companeros.push(fila);
-            }
+        const fecha = (iso) => (iso ? new Date(iso).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
-            if (partidas.size === 0) {
+        async function cargar() {
+            [partidas, bloqueados] = await Promise.all([api('/lfg/history'), api('/users/me/blocks')]);
+            pintar();
+            pintarListaNegra();
+        }
+
+        function pintar() {
+            if (partidas.length === 0) {
                 lista.innerHTML = `
                     <div class="sf-card text-center">
                         <p class="text-secondary">Aún no tienes partidas terminadas.</p>
@@ -172,59 +180,79 @@
                 return;
             }
 
-            lista.innerHTML = [...partidas.values()].map((p) => {
-                const companeros = p.companeros.map((c) => `
+            lista.innerHTML = partidas.map((p) => {
+                const companeros = p.teammates.map((c) => `
                     <div class="sf-mate">
                         <div class="d-flex align-items-center gap-2">
-                            ${avatar(c.teammate_username)}
+                            ${avatar(c.username)}
                             <div>
-                                <div>${enlaceUsuario(c.teammate_id, c.teammate_username)}</div>
-                                <small class="text-secondary">${esc(REGIONES[c.teammate_region] ?? 'Sin región')}</small>
+                                <div>${enlaceUsuario(c.user_id, c.username)}</div>
+                                <small class="text-secondary">${esc(REGIONES[c.region] ?? 'Sin región')}</small>
                             </div>
-                            ${badgeNivel(c.teammate_level)}
+                            ${badgeNivel(c.level)}
                         </div>
                         <div class="d-flex flex-wrap align-items-center gap-2">
                             ${c.already_reviewed
                                 ? `${estrellas(c.my_review.rating)}
-                                   <button class="btn btn-sm btn-outline-light" data-resena="${p.post_id}-${c.teammate_id}">Editar</button>`
-                                : `<button class="btn btn-sm btn-warning" data-resena="${p.post_id}-${c.teammate_id}">⭐ Calificar</button>`}
+                                   <button class="btn btn-sm btn-outline-light" data-resena="${p.post_id}-${c.user_id}">Editar</button>`
+                                : `<button class="btn btn-sm btn-warning" data-resena="${p.post_id}-${c.user_id}">⭐ Calificar</button>`}
                             ${c.already_reported
                                 ? '<span class="badge text-bg-danger" title="Un administrador revisará tu reporte">🚩 Reportado</span>'
-                                : `<button class="btn btn-sm btn-outline-danger" data-reportar="${p.post_id}-${c.teammate_id}"
+                                : `<button class="btn btn-sm btn-outline-danger" data-reportar="${p.post_id}-${c.user_id}"
                                        title="Reportar comportamiento tóxico">🚩 Reportar</button>`}
-                            ${estaBloqueado(c.teammate_id)
-                                ? `<button class="btn btn-sm btn-outline-light" data-desbloquear="${c.teammate_id}"
+                            ${c.is_blocked
+                                ? `<button class="btn btn-sm btn-outline-light" data-desbloquear="${c.user_id}"
                                        title="Volver a ver sus salas">✓ En lista negra · Quitar</button>`
-                                : `<button class="btn btn-sm btn-outline-light" data-bloquear="${c.teammate_id}"
+                                : `<button class="btn btn-sm btn-outline-light" data-bloquear="${c.user_id}"
                                        title="Dejar de ver sus salas">🚫 Lista negra</button>`}
                         </div>
                     </div>`).join('');
 
-                const pendientes = p.companeros.filter((c) => !c.already_reviewed).length;
+                const pendientes = p.teammates.filter((c) => !c.already_reviewed).length;
                 return `
                     <article class="sf-card">
                         <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
                             <div>
                                 <h2 class="h5 mb-1">${esc(p.game_name)} · ${esc(p.title)}</h2>
-                                <small class="text-secondary">${esc(textoPlataformas(p.platforms))} · ${esc(p.closed_at)} · ${p.companeros.length} compañeros</small>
+                                <small class="text-secondary">${esc(textoPlataformas(p.platforms))} · ${esc(fecha(p.closed_at))} · ${p.teammates.length} compañeros</small>
                             </div>
                             ${pendientes ? `<span class="badge text-bg-warning">${pendientes} por calificar</span>` : '<span class="badge sf-badge-honor">Todo calificado ✓</span>'}
                         </div>
                         ${companeros}
-                        ${p.host_id === USUARIO_DEMO.id
-                            ? `<div class="text-end mt-2"><button class="btn btn-sm btn-outline-danger" data-borrar-sala="${p.post_id}">Eliminar sala del historial</button></div>`
-                            : ''}
                     </article>`;
             }).join('');
         }
 
-        function abrirResena(fila) {
-            filaActual = fila;
+        function pintarListaNegra() {
+            document.getElementById('total-lista-negra').textContent = bloqueados.length;
+            document.getElementById('lista-negra').innerHTML = bloqueados.length
+                ? bloqueados.map((b) => `
+                    <div class="sf-card d-flex flex-wrap justify-content-between align-items-center gap-2 py-3">
+                        <div class="d-flex align-items-center gap-2">
+                            ${avatar(b.username, '', b.avatar_url)}
+                            <div>
+                                ${enlaceUsuario(b.user_id, b.username)}
+                                <div class="small text-secondary">Desde ${esc(fecha(b.created_at))}${b.reason ? ` · "${esc(b.reason)}"` : ''}</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-light" data-desbloquear="${b.user_id}">Quitar de la lista</button>
+                    </div>`).join('')
+                : '<div class="sf-card text-center text-secondary">Tu lista negra está vacía.</div>';
+        }
+
+        const buscarCompanero = (clave) => {
+            const [post, id] = clave.split('-').map(Number);
+            const partida = partidas.find((p) => p.post_id === post);
+            return { partida, c: partida.teammates.find((t) => t.user_id === id) };
+        };
+
+        function abrirResena(partida, c) {
+            companeroActual = { partida, c };
             const form = document.getElementById('form-resena');
             form.reset();
             document.getElementById('error-rating').classList.add('d-none');
-            document.getElementById('titulo-resena').textContent = `Calificar a ${fila.teammate_username}`;
-            const r = fila.my_review;
+            document.getElementById('titulo-resena').textContent = `Calificar a ${c.username}`;
+            const r = c.my_review;
             if (r) {
                 document.getElementById(`estrella-${r.rating}`).checked = true;
                 if (r.tag) document.getElementById(`tag-${r.tag}`).checked = true;
@@ -235,30 +263,6 @@
             modalResena.show();
         }
 
-        /* -------------------------------------------------------------
-           Lista negra
-           ------------------------------------------------------------- */
-        const modalBloquear = new bootstrap.Modal('#modal-bloquear');
-        let usuarioABloquear = null;
-
-        function pintarListaNegra() {
-            const bloqueados = listaNegra();
-            document.getElementById('total-lista-negra').textContent = bloqueados.length;
-            document.getElementById('lista-negra').innerHTML = bloqueados.length
-                ? bloqueados.map((b) => `
-                    <div class="sf-card d-flex flex-wrap justify-content-between align-items-center gap-2 py-3">
-                        <div class="d-flex align-items-center gap-2">
-                            ${avatar(b.username)}
-                            <div>
-                                ${enlaceUsuario(b.blocked_id, b.username)}
-                                <div class="small text-secondary">Desde ${esc(b.created_at)}${b.reason ? ` · "${esc(b.reason)}"` : ''}</div>
-                            </div>
-                        </div>
-                        <button class="btn btn-sm btn-outline-light" data-desbloquear="${b.blocked_id}">Quitar de la lista</button>
-                    </div>`).join('')
-                : '<div class="sf-card text-center text-secondary">Tu lista negra está vacía.</div>';
-        }
-
         document.querySelectorAll('input[name="seccion"]').forEach((opcion) => {
             opcion.addEventListener('change', () => {
                 const verLista = opcion.value === 'lista-negra';
@@ -267,57 +271,55 @@
             });
         });
 
-        document.getElementById('form-bloquear').addEventListener('submit', (e) => {
+        // Ejecuta una llamada a la API, avisa si falla y vuelve a cargar los datos
+        async function accion(llamada, mensajeOk, tipo) {
+            try {
+                await llamada();
+                if (mensajeOk) mostrarToast(mensajeOk, tipo);
+            } catch (e) {
+                avisarError(e);
+            }
+            await cargar();
+        }
+
+        document.getElementById('form-bloquear').addEventListener('submit', async (e) => {
             e.preventDefault();
-            bloquearUsuario(usuarioABloquear.id, document.getElementById('motivo-bloqueo').value.trim() || null);
             modalBloquear.hide();
-            mostrarToast(`${usuarioABloquear.username} está en tu lista negra. Ya no verás sus salas.`, 'info');
-            pintar();
-            pintarListaNegra();
+            await accion(
+                () => api('/users/me/blocks', {
+                    method: 'POST',
+                    body: { user_id: usuarioABloquear.user_id, reason: document.getElementById('motivo-bloqueo').value.trim() || null },
+                }),
+                `${usuarioABloquear.username} está en tu lista negra. Ya no verás sus salas.`, 'info');
         });
 
         // Botones de bloquear y quitar, tanto en las partidas como en la lista
-        document.querySelector('main').addEventListener('click', (e) => {
+        document.querySelector('main').addEventListener('click', async (e) => {
             const boton = e.target.closest('button');
-            if (boton?.dataset.bloquear) {
-                usuarioABloquear = usuarioPorId(boton.dataset.bloquear);
+            if (!boton) return;
+            if (boton.dataset.bloquear) {
+                const id = Number(boton.dataset.bloquear);
+                usuarioABloquear = partidas.flatMap((p) => p.teammates).find((t) => t.user_id === id);
                 document.getElementById('titulo-bloquear').textContent = `Agregar a ${usuarioABloquear.username} a la lista negra`;
                 document.getElementById('motivo-bloqueo').value = '';
                 modalBloquear.show();
             }
-            if (boton?.dataset.desbloquear) {
-                const u = usuarioPorId(boton.dataset.desbloquear);
-                desbloquearUsuario(u.id);
-                mostrarToast(`${u.username} salió de tu lista negra.`, 'info');
-                pintar();
-                pintarListaNegra();
+            if (boton.dataset.desbloquear) {
+                await accion(() => api(`/users/me/blocks/${boton.dataset.desbloquear}`, { method: 'DELETE' }),
+                    'Salió de tu lista negra.', 'info');
             }
-        });
-
-        lista.addEventListener('click', async (e) => {
-            const boton = e.target.closest('button');
-            if (!boton) return;
             if (boton.dataset.reportar) {
-                const [post, companero] = boton.dataset.reportar.split('-').map(Number);
-                const fila = filas.find((f) => f.post_id === post && f.teammate_id === companero);
+                const { partida, c } = buscarCompanero(boton.dataset.reportar);
                 abrirReporte({
-                    usuarioId: fila.teammate_id,
-                    username: fila.teammate_username,
-                    postId: fila.post_id,
-                    alEnviar: () => {
-                        fila.already_reported = true;
-                        pintar();
-                    },
+                    usuarioId: c.user_id,
+                    username: c.username,
+                    postId: partida.post_id,
+                    alEnviar: cargar,
                 });
             }
             if (boton.dataset.resena) {
-                const [post, companero] = boton.dataset.resena.split('-').map(Number);
-                abrirResena(filas.find((f) => f.post_id === post && f.teammate_id === companero));
-            }
-            if (boton.dataset.borrarSala && await confirmar({ titulo: 'Eliminar sala', mensaje: 'La sala desaparecerá del historial de todos los integrantes, junto con sus reseñas.', textoBoton: 'Eliminar' })) {
-                filas = filas.filter((f) => f.post_id !== Number(boton.dataset.borrarSala)); // DELETE /api/v1/lfg/posts/{id}
-                mostrarToast('Sala eliminada del historial.', 'danger');
-                pintar();
+                const { partida, c } = buscarCompanero(boton.dataset.resena);
+                abrirResena(partida, c);
             }
         });
 
@@ -326,37 +328,45 @@
             document.getElementById('contador-comentario').textContent = comentario.value.length;
         });
 
-        document.getElementById('form-resena').addEventListener('submit', (e) => {
+        document.getElementById('form-resena').addEventListener('submit', async (e) => {
             e.preventDefault();
             const rating = document.querySelector('input[name="rating"]:checked');
             if (!rating) {
                 document.getElementById('error-rating').classList.remove('d-none');
                 return;
             }
-            const nueva = !filaActual.already_reviewed;
-            filaActual.my_review = {
+            const { partida, c } = companeroActual;
+            const datos = {
                 rating: Number(rating.value),
                 tag: document.querySelector('input[name="tag"]:checked')?.value ?? null,
                 comment: comentario.value.trim() || null,
             };
-            filaActual.already_reviewed = true; // POST o PUT /api/v1/reputation/reviews
             modalResena.hide();
-            mostrarToast(nueva ? `¡Gracias! Calificaste a ${filaActual.teammate_username}.` : 'Reseña actualizada.');
-            pintar();
+            // Reseña nueva: POST. Reseña existente: PUT sobre su id
+            await accion(
+                () => c.my_review
+                    ? api(`/reputation/reviews/${c.my_review.id}`, { method: 'PUT', body: datos })
+                    : api('/reputation/reviews', { method: 'POST', body: { ...datos, post_id: partida.post_id, target_user_id: c.user_id } }),
+                c.my_review ? 'Reseña actualizada.' : `¡Gracias! Calificaste a ${c.username}.`);
         });
 
         document.getElementById('btn-borrar-resena').addEventListener('click', async () => {
+            const { c } = companeroActual;
             modalResena.hide();
-            if (await confirmar({ titulo: 'Borrar reseña', mensaje: `Se quitará tu calificación a ${filaActual.teammate_username}.`, textoBoton: 'Borrar' })) {
-                filaActual.my_review = null; // DELETE /api/v1/reputation/reviews/{id}
-                filaActual.already_reviewed = false;
-                mostrarToast('Reseña borrada.', 'info');
-                pintar();
+            if (await confirmar({ titulo: 'Borrar reseña', mensaje: `Se quitará tu calificación a ${c.username}.`, textoBoton: 'Borrar' })) {
+                await accion(() => api(`/reputation/reviews/${c.my_review.id}`, { method: 'DELETE' }), 'Reseña borrada.', 'info');
             }
         });
 
-        pintar();
-        pintarListaNegra();
+        async function iniciar() {
+            try {
+                yo = await iniciarPagina();
+                await cargar();
+            } catch (e) {
+                mostrarErrorPagina(e.message);
+            }
+        }
+        iniciar();
     </script>
 </body>
 

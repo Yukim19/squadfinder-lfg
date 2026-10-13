@@ -210,9 +210,15 @@ def historial(usuario: Usuario, db: Db) -> list[dict]:
                    'user_id', teammate_id, 'username', teammate_username,
                    'region', teammate_region, 'level', teammate_level,
                    'is_blocked', is_blocked, 'already_reviewed', already_reviewed,
-                   'already_reported', already_reported
+                   'already_reported', already_reported,
+                   -- Mi reseña (si existe): hace falta su id para editarla o borrarla
+                   'my_review', (SELECT JSON_BUILD_OBJECT('id', r.id, 'rating', r.rating,
+                                                          'tag', r.tag, 'comment', r.comment)
+                                 FROM user_reviews r
+                                 WHERE r.post_id = h.post_id AND r.reviewer_id = h.user_id
+                                   AND r.target_user_id = h.teammate_id)
                ) ORDER BY teammate_username) AS teammates
-        FROM v_match_history
+        FROM v_match_history h
         WHERE user_id = %s
         GROUP BY post_id, title, game_name, platforms, closed_at
         ORDER BY closed_at DESC NULLS LAST, post_id DESC

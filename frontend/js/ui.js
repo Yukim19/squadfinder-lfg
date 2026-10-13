@@ -271,7 +271,6 @@ function abrirSugerenciaJuego({ alEnviar = null } = {}) {
    alEnviar(reporte) se llama cuando el reporte es válido.
    --------------------------------------------------------------------- */
 function abrirReporte({ usuarioId, username, postId = null, alEnviar = () => {} }) {
-    const evidencia = postId ? evidenciaChat(postId, usuarioId) : [];
     const modal = document.createElement('div');
     modal.className = 'modal fade';
     modal.tabIndex = -1;
@@ -301,11 +300,10 @@ function abrirReporte({ usuarioId, username, postId = null, alEnviar = () => {} 
                         placeholder="Ej.: Me insultó en el chat después de perder la ronda."></textarea>
                     <div class="invalid-feedback" data-error-comentario></div>
                     <div class="form-text text-end"><span data-contador>0</span>/500</div>
-                    ${evidencia.length ? `
-                        <div class="alert alert-warning small mt-3 mb-0">
-                            🛡️ El filtro anti-toxicidad marcó <strong>${evidencia.length}</strong> mensaje(s) de esta persona en esa partida.
-                            Se adjuntarán al reporte como evidencia.
-                        </div>` : ''}
+                    <div class="alert alert-warning small mt-3 mb-0">
+                        🛡️ Si el filtro anti-toxicidad marcó mensajes de esta persona en esa partida,
+                        el administrador los verá como evidencia.
+                    </div>
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
@@ -323,7 +321,7 @@ function abrirReporte({ usuarioId, username, postId = null, alEnviar = () => {} 
         form.querySelector('[data-contador]').textContent = comentario.value.length;
     });
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const motivo = form.querySelector('input[name="motivo"]:checked')?.value;
         const texto = comentario.value.trim();
@@ -332,8 +330,21 @@ function abrirReporte({ usuarioId, username, postId = null, alEnviar = () => {} 
         comentario.classList.toggle('is-invalid', texto.length < 10);
         if (!motivo || texto.length < 10) return;
 
-        // Semana 3: POST /api/v1/reports
-        alEnviar({ reported_user_id: usuarioId, post_id: postId, reason: motivo, comment: texto });
+        const boton = e.submitter;
+        boton.disabled = true;
+        try {
+            await api('/reports', {
+                method: 'POST',
+                body: { reported_user_id: usuarioId, post_id: postId, reason: motivo, comment: texto },
+            });
+        } catch (err) {
+            boton.disabled = false;
+            // El servidor valida que ambos hayan jugado juntos y que no se reporte dos veces
+            if (err.code === 'ALREADY_REPORTED') alEnviar();
+            instancia.hide();
+            return avisarError(err, 'No se pudo enviar el reporte.');
+        }
+        alEnviar();
         instancia.hide();
         mostrarToast(`Reporte enviado. Un administrador revisará el caso de ${username}.`);
     });
