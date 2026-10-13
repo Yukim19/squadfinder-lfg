@@ -113,101 +113,118 @@
     <script src="js/catalogo.js"></script>
     <script src="js/ui.js"></script>
     <script>
-        // Semana 3: GET /api/v1/users/{id} y GET /api/v1/reputation/users/{id}
-        const u = usuarioPorId(idDeUrl(USUARIO_DEMO.id));
-        if (!u) {
-            location.replace('404.html');
-            throw new Error('Usuario no encontrado');
+        // Dos consultas: GET /users/{id} (datos públicos, juegos y cuentas) y
+        // GET /reputation/users/{id} (nivel, XP, promedio de reseñas, etiquetas y reseñas recientes).
+        let yo = null;
+        let u = null;       // perfil público
+        let honor = null;   // reputación
+        let bloqueado = false;
+        const botonBloquear = document.getElementById('u-bloquear');
+
+        function pintarBloqueo() {
+            botonBloquear.textContent = bloqueado ? '✓ En lista negra · Quitar' : '🚫 Lista negra';
         }
-        const resenas = RESENAS_DEMO.filter((r) => r.target_user_id === u.id);
-        const esMiPerfil = u.id === USUARIO_DEMO.id;
 
-        document.title = `${u.username} - SquadFinder LFG`;
-        document.getElementById('u-avatar').innerHTML = avatar(u.username, 'sf-avatar-lg');
-        document.getElementById('u-nombre').textContent = u.username;
-        document.getElementById('u-cuentas-iconos').innerHTML = iconosCuentas(u.cuentas);
-        document.getElementById('u-en-vivo').classList.toggle('d-none', !u.en_vivo);
-        document.getElementById('u-detalles').textContent =
-            `🌎 ${REGIONES[u.region] ?? 'Sin región'} · Miembro desde ${u.miembro_desde}`;
+        function pintar() {
+            const esMiPerfil = u.id === yo.id;
+            document.title = `${u.username} - SquadFinder LFG`;
+            document.getElementById('u-avatar').innerHTML = avatar(u.username, 'sf-avatar-lg', u.avatar_url);
+            document.getElementById('u-nombre').textContent = u.username;
+            document.getElementById('u-cuentas-iconos').innerHTML = iconosCuentas(u.linked_accounts);
+            document.getElementById('u-detalles').textContent =
+                `🌎 ${REGIONES[u.region] ?? 'Sin región'} · Miembro desde ${new Date(u.created_at).toLocaleDateString('es', { month: 'long', year: 'numeric' })}`;
 
-        // Nivel de honor (0 = Rookie) y progreso de XP
-        document.getElementById('u-nivel').textContent = u.level === 0 ? '🐣' : u.level;
-        document.getElementById('u-nivel-badge').innerHTML = badgeNivel(u.level);
-        document.getElementById('u-xp').innerHTML = barraNivel(u.xp);
-        const promedio = resenas.length ? resenas.reduce((s, r) => s + r.rating, 0) / resenas.length : 0;
-        document.getElementById('u-total-resenas').innerHTML = resenas.length
-            ? `${estrellas(promedio)} ${promedio.toFixed(1)} · ${resenas.length} ${resenas.length === 1 ? 'reseña' : 'reseñas'}`
-            : 'Sin reseñas todavía';
-        document.getElementById('u-editar').classList.toggle('d-none', !esMiPerfil);
+            // Nivel de honor (0 = Rookie) y progreso de XP
+            document.getElementById('u-nivel').textContent = honor.is_rookie ? '🐣' : honor.level;
+            document.getElementById('u-nivel-badge').innerHTML = badgeNivel(honor.level);
+            document.getElementById('u-xp').innerHTML = barraNivel(honor.xp);
+            const { total, average } = honor.reviews;
+            document.getElementById('u-total-resenas').innerHTML = total
+                ? `${estrellas(average)} ${average.toFixed(1)} · ${total} ${total === 1 ? 'reseña' : 'reseñas'}`
+                : 'Sin reseñas todavía';
+
+            document.getElementById('u-editar').classList.toggle('d-none', !esMiPerfil);
+            botonBloquear.classList.toggle('d-none', esMiPerfil);
+            pintarBloqueo();
+
+            document.getElementById('u-juegos').innerHTML = u.games
+                .map((id) => `<span class="badge sf-badge-live">${esc(juegos.find((j) => j.id === id)?.name)}</span>`).join('')
+                || '<span class="text-secondary">Sin juegos elegidos.</span>';
+            document.getElementById('u-generos').textContent =
+                u.genres.map((id) => generos.find((g) => g.id === id)?.name).filter(Boolean).join(', ') || 'Sin géneros elegidos.';
+
+            document.getElementById('u-etiquetas').innerHTML = honor.top_tags
+                .map((t) => `<div class="d-flex justify-content-between"><span>${esc(ETIQUETAS_RESENA[t.tag])}</span><span class="badge sf-badge-honor">×${t.total}</span></div>`)
+                .join('') || '<span class="text-secondary">Todavía nadie le ha dado una etiqueta.</span>';
+
+            const cuentas = Object.entries(u.linked_accounts);
+            document.getElementById('u-cuentas').innerHTML = cuentas.length
+                ? cuentas.map(([clave, usuario]) => {
+                    const enlace = clave === 'twitch' ? `https://www.twitch.tv/${encodeURIComponent(usuario)}`
+                        : clave === 'kick' ? `https://kick.com/${encodeURIComponent(usuario)}` : null;
+                    return `<div class="d-flex justify-content-between align-items-center py-1">
+                        <span class="d-flex align-items-center gap-2">${iconosCuentas({ [clave]: usuario })} ${esc(PROVEEDORES[clave])}</span>
+                        <span>${enlace ? `<a href="${enlace}" target="_blank" rel="noopener">${esc(usuario)}</a>` : esc(usuario)}</span>
+                    </div>`;
+                }).join('')
+                : '<span class="text-secondary">No tiene cuentas vinculadas.</span>';
+
+            document.getElementById('u-resenas').innerHTML = honor.recent_reviews.length
+                ? honor.recent_reviews.map((r) => `
+                    <div class="sf-mate d-block">
+                        <div class="d-flex flex-wrap justify-content-between gap-2">
+                            <span>${avatar(r.reviewer_username, 'sf-avatar-sm', r.reviewer_avatar_url)} ${enlaceUsuario(r.reviewer_id, r.reviewer_username)}</span>
+                            ${estrellas(r.rating)}
+                        </div>
+                        <small class="text-secondary d-block mt-1">${esc(r.game_name)} · ${esc(new Date(r.created_at).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' }))}
+                            ${r.tag ? ` · <span class="badge sf-badge-honor">${esc(ETIQUETAS_RESENA[r.tag])}</span>` : ''}</small>
+                        ${r.comment ? `<p class="mb-0 mt-2">"${esc(r.comment)}"</p>` : ''}
+                    </div>`).join('')
+                : '<p class="text-secondary mb-0">Aún no ha recibido reseñas.</p>';
+        }
 
         // Lista negra: dejar de ver (o volver a ver) las salas de este jugador
-        const botonBloquear = document.getElementById('u-bloquear');
-        botonBloquear.classList.toggle('d-none', esMiPerfil);
-        function pintarBloqueo() {
-            botonBloquear.textContent = estaBloqueado(u.id) ? '✓ En lista negra · Quitar' : '🚫 Lista negra';
-        }
         botonBloquear.addEventListener('click', async () => {
-            if (estaBloqueado(u.id)) {
-                desbloquearUsuario(u.id);
-                mostrarToast(`${u.username} salió de tu lista negra.`, 'info');
-            } else if (await confirmar({ titulo: 'Agregar a la lista negra', mensaje: `No verás las salas que cree ${u.username}. No se le avisa ni recibe castigo.`, textoBoton: 'Agregar', peligro: false })) {
-                bloquearUsuario(u.id);
-                mostrarToast(`${u.username} está en tu lista negra.`, 'info');
+            try {
+                if (bloqueado) {
+                    await api(`/users/me/blocks/${u.id}`, { method: 'DELETE' });
+                    bloqueado = false;
+                    mostrarToast(`${u.username} salió de tu lista negra.`, 'info');
+                } else if (await confirmar({ titulo: 'Agregar a la lista negra', mensaje: `No verás las salas que cree ${u.username}. No se le avisa ni recibe castigo.`, textoBoton: 'Agregar', peligro: false })) {
+                    await api('/users/me/blocks', { method: 'POST', body: { user_id: u.id } });
+                    bloqueado = true;
+                    mostrarToast(`${u.username} está en tu lista negra.`, 'info');
+                }
+            } catch (e) {
+                avisarError(e);
             }
             pintarBloqueo();
         });
-        pintarBloqueo();
 
-        const botonReportar = document.getElementById('u-reportar');
-        botonReportar.classList.toggle('d-none', esMiPerfil);
-        botonReportar.addEventListener('click', () => abrirReporte({
-            usuarioId: u.id,
-            username: u.username,
-            alEnviar: () => {
-                botonReportar.disabled = true;
-                botonReportar.textContent = '🚩 Reportado';
-            },
-        }));
+        let juegos = [];
+        let generos = [];
 
-        document.getElementById('u-juegos').innerHTML = u.juegos
-            .map((id) => `<span class="badge sf-badge-live">${esc(juegoPorId(id)?.name)}</span>`).join('')
-            || '<span class="text-secondary">Sin juegos elegidos.</span>';
-        document.getElementById('u-generos').textContent = u.generos.join(', ') || 'Sin géneros elegidos.';
-
-        // Conteo de etiquetas recibidas
-        const conteo = {};
-        for (const r of resenas) if (r.tag) conteo[r.tag] = (conteo[r.tag] ?? 0) + 1;
-        document.getElementById('u-etiquetas').innerHTML = Object.entries(conteo)
-            .sort((a, b) => b[1] - a[1])
-            .map(([tag, n]) => `<div class="d-flex justify-content-between"><span>${esc(ETIQUETAS_RESENA[tag])}</span><span class="badge sf-badge-honor">×${n}</span></div>`)
-            .join('') || '<span class="text-secondary">Todavía nadie le ha dado una etiqueta.</span>';
-
-        const cuentas = Object.entries(u.cuentas);
-        document.getElementById('u-cuentas').innerHTML = cuentas.length
-            ? cuentas.map(([clave, usuario]) => {
-                const enVivo = u.en_vivo && (clave === 'twitch' || clave === 'kick');
-                const enlace = clave === 'twitch' ? `https://www.twitch.tv/${encodeURIComponent(usuario)}`
-                    : clave === 'kick' ? `https://kick.com/${encodeURIComponent(usuario)}` : null;
-                return `<div class="d-flex justify-content-between align-items-center py-1">
-                    <span class="d-flex align-items-center gap-2">${iconosCuentas({ [clave]: usuario })} ${esc(PROVEEDORES[clave])}</span>
-                    <span>${enlace ? `<a href="${enlace}" target="_blank" rel="noopener">${esc(usuario)}</a>` : esc(usuario)}
-                        ${enVivo ? '<span class="badge sf-badge-live ms-1">EN VIVO</span>' : ''}</span>
-                </div>`;
-            }).join('')
-            : '<span class="text-secondary">No tiene cuentas vinculadas.</span>';
-
-        document.getElementById('u-resenas').innerHTML = resenas.length
-            ? resenas.map((r) => `
-                <div class="sf-mate d-block">
-                    <div class="d-flex flex-wrap justify-content-between gap-2">
-                        <span>${avatar(r.reviewer_username, 'sf-avatar-sm')} ${enlaceUsuario(r.reviewer_id, r.reviewer_username)}</span>
-                        ${estrellas(r.rating)}
-                    </div>
-                    <small class="text-secondary d-block mt-1">${esc(r.game_name)} · ${esc(r.created_at)}
-                        ${r.tag ? ` · <span class="badge sf-badge-honor">${esc(ETIQUETAS_RESENA[r.tag])}</span>` : ''}</small>
-                    ${r.comment ? `<p class="mb-0 mt-2">"${esc(r.comment)}"</p>` : ''}
-                </div>`).join('')
-            : '<p class="text-secondary mb-0">Aún no ha recibido reseñas.</p>';
+        async function iniciar() {
+            try {
+                yo = await iniciarPagina();
+                ({ juegos, generos } = await catalogo());
+                const id = idDeUrl(yo.id);
+                [u, honor] = await Promise.all([api(`/users/${id}`), api(`/reputation/users/${id}`)]);
+            } catch (e) {
+                if (e.code === 'USER_NOT_FOUND') return location.replace('404.html');
+                return mostrarErrorPagina(e.message);
+            }
+            bloqueado = u.is_blocked_by_me;
+            pintar();
+            // El servidor solo acepta reportes de gente con la que se jugó una partida
+            const reportar = document.getElementById('u-reportar');
+            if (u.id !== yo.id) {
+                reportar.classList.remove('d-none');
+                reportar.addEventListener('click', () => mostrarToast(
+                    'Para reportar a alguien, hazlo desde tu historial de partidas, junto a la partida que jugaron.', 'info'));
+            }
+        }
+        iniciar();
     </script>
 </body>
 

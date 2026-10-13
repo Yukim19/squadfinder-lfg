@@ -118,7 +118,7 @@ def honor(user_id: int, usuario: Usuario, db: Db) -> dict:
     ).fetchall()
     recientes = db.execute(
         """
-        SELECT r.id, r.rating, r.tag, r.comment, r.created_at,
+        SELECT r.id, r.reviewer_id, r.rating, r.tag, r.comment, r.created_at,
                u.username AS reviewer_username, u.avatar_url AS reviewer_avatar_url, g.name AS game_name
         FROM user_reviews r
         JOIN users u ON u.id = r.reviewer_id
