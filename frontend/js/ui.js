@@ -330,7 +330,7 @@ function abrirReporte({ usuarioId, username, postId = null, alEnviar = () => {} 
         comentario.classList.toggle('is-invalid', texto.length < 10);
         if (!motivo || texto.length < 10) return;
 
-        const boton = e.submitter;
+        const boton = e.submitter ?? e.target.querySelector('button[type="submit"]');
         boton.disabled = true;
         try {
             await api('/reports', {

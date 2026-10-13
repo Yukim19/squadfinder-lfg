@@ -13,6 +13,9 @@ const CONFIG = {
     // En la semana 6 se cambian por las direcciones de Render
     API_URL: ES_LOCAL ? `http://${location.hostname}:8001/api/v1` : 'https://squadfinder-api.onrender.com/api/v1',
     CHAT_URL: ES_LOCAL ? `ws://${location.hostname}:8002/ws/chat` : 'wss://squadfinder-chat.onrender.com/ws/chat',
+    // Subida de fotos de perfil (Cloudinary, plan gratis). Se llenan al crear la cuenta de Cloudinary:
+    // cloudName y un "upload preset" sin firma (son datos públicos, no secretos).
+    CLOUDINARY: { cloudName: '', uploadPreset: '' },
     // Datos públicos de Auth0 (el Client Secret no se usa nunca en el navegador)
     AUTH0: {
         domain: 'squadfinder-lfg.us.auth0.com',

@@ -413,7 +413,7 @@
 
         document.getElementById('form-solicitar').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const boton = e.submitter;
+            const boton = e.submitter ?? e.target.querySelector('button[type="submit"]');
             boton.disabled = true;
             try {
                 await api(`/lfg/posts/${sala.id}/applications`, {

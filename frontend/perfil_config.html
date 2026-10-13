@@ -155,9 +155,10 @@
     <script src="js/catalogo.js"></script>
     <script src="js/ui.js"></script>
     <script>
-        // Se precargan las preferencias guardadas del usuario (semana 3: GET /api/v1/users/me)
-        const yo = USUARIO_DEMO;
-        const cuentas = { ...yo.cuentas };
+        // Todo se guarda con la API: PUT /users/me (preferencias, juegos, géneros y avatar),
+        // PUT/DELETE /users/social/{proveedor} (cuentas) y DELETE /users/me (eliminar cuenta).
+        let yo = null;
+        let cuentas = {};
 
         function pintarCabecera() {
             document.getElementById('perfil-avatar').innerHTML = avatar(yo.username, 'sf-avatar-lg', yo.avatar_url);
@@ -165,23 +166,32 @@
             document.getElementById('perfil-nombre').textContent = yo.username;
             document.getElementById('perfil-nivel').innerHTML = badgeNivel(yo.level);
             document.getElementById('perfil-xp').innerHTML = barraNivel(yo.xp);
-            pintarAvatarNavbar();
+            document.getElementById('btn-perfil-publico').href = `usuario.html?id=${yo.id}`;
+            pintarAvatarNavbar(yo);
         }
-        pintarCabecera();
-        document.getElementById('btn-perfil-publico').href = `usuario.html?id=${yo.id}`;
+
+        // Guarda cambios en el perfil y actualiza lo que se ve (incluida la barra de navegación)
+        async function guardarPerfil(cambios) {
+            yo = await api('/users/me', { method: 'PUT', body: cambios });
+            _yo = yo; // la copia en memoria de api.js, para que el resto de la página la vea
+            pintarCabecera();
+        }
 
         /* -------------------------------------------------------------
-           Foto de perfil. Semana 3: la imagen se sube a un servicio de
-           almacenamiento (Cloudinary) y en users.avatar_url se guarda su URL.
-           En la demo se guarda reducida a 256x256 en el navegador.
+           Foto de perfil. La imagen se recorta a 256x256 en el navegador, se sube a
+           Cloudinary (plan gratis) y en users.avatar_url se guarda solo su URL.
+           Los avatares prediseñados se guardan como "preset:🦊" y no necesitan subida.
            ------------------------------------------------------------- */
         document.getElementById('avatares-preset').innerHTML = AVATARES_PRESET.map((emoji) =>
             `<button type="button" class="btn btn-outline-light sf-preset" data-preset="${emoji}" aria-label="Avatar ${emoji}">${emoji}</button>`).join('');
 
-        function cambiarFoto(url, mensaje) {
-            guardarUsuarioDemo({ avatar_url: url });
-            pintarCabecera();
-            mostrarToast(mensaje);
+        async function cambiarFoto(url, mensaje) {
+            try {
+                await guardarPerfil({ avatar_url: url });
+                mostrarToast(mensaje);
+            } catch (e) {
+                avisarError(e, 'No se pudo cambiar la foto.');
+            }
         }
 
         document.getElementById('avatares-preset').addEventListener('click', (e) => {
@@ -191,67 +201,86 @@
 
         document.getElementById('btn-quitar-foto').addEventListener('click', () => cambiarFoto(null, 'Foto quitada.'));
 
-        document.getElementById('foto-archivo').addEventListener('change', (e) => {
+        const cloudinaryListo = Boolean(CONFIG.CLOUDINARY.cloudName && CONFIG.CLOUDINARY.uploadPreset);
+        if (!cloudinaryListo) {
+            // Sin cuenta de Cloudinary configurada no hay dónde guardar la imagen
+            const etiqueta = document.querySelector('label[for="foto-archivo"]');
+            etiqueta.classList.add('disabled');
+            etiqueta.title = 'La subida de fotos se activa al configurar Cloudinary';
+            document.getElementById('foto-archivo').disabled = true;
+        }
+
+        // Recorta al centro en cuadrado y reduce a 256x256; devuelve un Blob JPEG
+        function prepararImagen(archivo) {
+            return new Promise((resolve, reject) => {
+                const imagen = new Image();
+                imagen.onload = () => {
+                    const lado = Math.min(imagen.width, imagen.height);
+                    const lienzo = Object.assign(document.createElement('canvas'), { width: 256, height: 256 });
+                    lienzo.getContext('2d').drawImage(imagen, (imagen.width - lado) / 2, (imagen.height - lado) / 2, lado, lado, 0, 0, 256, 256);
+                    URL.revokeObjectURL(imagen.src);
+                    lienzo.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('No se pudo procesar la imagen.'))), 'image/jpeg', 0.85);
+                };
+                imagen.onerror = () => reject(new Error('No se pudo leer la imagen.'));
+                imagen.src = URL.createObjectURL(archivo);
+            });
+        }
+
+        document.getElementById('foto-archivo').addEventListener('change', async (e) => {
             const archivo = e.target.files[0];
             e.target.value = '';
             if (!archivo) return;
             if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(archivo.type)) {
-                mostrarToast('Elige una imagen JPG, PNG, WEBP o GIF.', 'danger');
-                return;
+                return mostrarToast('Elige una imagen JPG, PNG, WEBP o GIF.', 'danger');
             }
             if (archivo.size > 5 * 1024 * 1024) {
-                mostrarToast('La imagen pesa más de 5 MB.', 'danger');
-                return;
+                return mostrarToast('La imagen pesa más de 5 MB.', 'danger');
             }
-            const imagen = new Image();
-            imagen.onload = () => {
-                // Recorta al centro en cuadrado y reduce a 256x256
-                const lado = Math.min(imagen.width, imagen.height);
-                const lienzo = Object.assign(document.createElement('canvas'), { width: 256, height: 256 });
-                lienzo.getContext('2d').drawImage(imagen, (imagen.width - lado) / 2, (imagen.height - lado) / 2, lado, lado, 0, 0, 256, 256);
-                URL.revokeObjectURL(imagen.src);
-                cambiarFoto(lienzo.toDataURL('image/jpeg', 0.85), 'Foto de perfil actualizada.');
-            };
-            imagen.onerror = () => mostrarToast('No se pudo leer la imagen.', 'danger');
-            imagen.src = URL.createObjectURL(archivo);
+            try {
+                const datos = new FormData();
+                datos.append('file', await prepararImagen(archivo));
+                datos.append('upload_preset', CONFIG.CLOUDINARY.uploadPreset);
+                const respuesta = await fetch(`https://api.cloudinary.com/v1_1/${CONFIG.CLOUDINARY.cloudName}/image/upload`, { method: 'POST', body: datos });
+                if (!respuesta.ok) throw new Error('No se pudo subir la imagen.');
+                await cambiarFoto((await respuesta.json()).secure_url, 'Foto de perfil actualizada.');
+            } catch (err) {
+                mostrarToast(err.message || 'No se pudo subir la imagen.', 'danger');
+            }
         });
 
-        llenarSelect('ui-language', IDIOMAS, yo.ui_language);
-        llenarRegiones('region', yo.region);
-        llenarSelect('idioma-hablar', IDIOMAS_USUARIO, yo.preferred_language_speak);
-        llenarSelect('idioma-escribir', IDIOMAS_USUARIO, yo.preferred_language_write);
-        llenarSelect('filtro', NIVELES_FILTRO, yo.toxicity_filter_level);
-        // Sale del catálogo: los juegos aprobados y los géneros nuevos aparecen aquí solos
-        renderChips('juegos', JUEGOS.map((j) => ({ value: j.id, label: j.name, plataformas: j.platforms })), 'juego', yo.juegos);
-        renderChips('generos', GENEROS.map((g) => ({ value: g, label: g })), 'genero', yo.generos);
-        activarFiltroJuegos({ buscadorId: 'buscar-juego', contenedorId: 'juegos', botonesId: 'filtro-juegos' });
-        document.getElementById('btn-sugerir-juego').addEventListener('click', abrirSugerenciaJuego);
-
+        /* ------------------------------------------------------------- */
         const errorJuegos = document.getElementById('error-juegos');
         document.getElementById('juegos').addEventListener('change', () => {
             errorJuegos.classList.toggle('d-none', chipsMarcados('juego').length > 0);
         });
+        document.getElementById('btn-sugerir-juego').addEventListener('click', () => abrirSugerenciaJuego({}));
 
-        validarFormulario(document.getElementById('form-perfil'), () => {
+        validarFormulario(document.getElementById('form-perfil'), async () => {
             const juegos = chipsMarcados('juego').map(Number);
             if (juegos.length === 0) {
                 errorJuegos.classList.remove('d-none');
                 return;
             }
-            // Semana 3: PUT /api/v1/users/me
-            guardarUsuarioDemo({
-                ui_language: document.getElementById('ui-language').value,
-                region: document.getElementById('region').value,
-                preferred_language_speak: document.getElementById('idioma-hablar').value,
-                preferred_language_write: document.getElementById('idioma-escribir').value,
-                juegos,
-                generos: chipsMarcados('genero'),
-                toxicity_filter_level: document.getElementById('filtro').value,
-            });
-            mostrarToast(`Cambios guardados. Filtro del chat: ${NIVELES_FILTRO[yo.toxicity_filter_level]}.`);
+            const boton = document.querySelector('#form-perfil button[type="submit"]');
+            boton.disabled = true;
+            try {
+                await guardarPerfil({
+                    ui_language: document.getElementById('ui-language').value,
+                    region: document.getElementById('region').value,
+                    preferred_language_speak: document.getElementById('idioma-hablar').value,
+                    preferred_language_write: document.getElementById('idioma-escribir').value,
+                    games: juegos,
+                    genres: chipsMarcados('genero').map(Number),
+                    toxicity_filter_level: document.getElementById('filtro').value,
+                });
+                mostrarToast(`Cambios guardados. Filtro del chat: ${NIVELES_FILTRO[yo.toxicity_filter_level]}.`);
+            } catch (e) {
+                avisarError(e, 'No se pudieron guardar los cambios.');
+            }
+            boton.disabled = false;
         });
 
-        // Cuentas vinculadas: vincular (POST) y desvincular (DELETE /api/v1/users/social/{provider})
+        // Cuentas vinculadas
         function pintarCuentas() {
             document.getElementById('lista-cuentas').innerHTML = Object.entries(PROVEEDORES).map(([clave, nombre]) => {
                 const usuario = cuentas[clave];
@@ -274,18 +303,28 @@
         listaCuentas.addEventListener('click', async (e) => {
             const clave = e.target.dataset.desvincular;
             if (clave && await confirmar({ titulo: `Desvincular ${PROVEEDORES[clave]}`, mensaje: `Tu cuenta de ${PROVEEDORES[clave]} dejará de aparecer en tu perfil.`, textoBoton: 'Desvincular' })) {
-                delete cuentas[clave];
-                guardarUsuarioDemo({ cuentas: { ...cuentas } });
-                mostrarToast(`${PROVEEDORES[clave]} desvinculado.`, 'info');
+                try {
+                    await api(`/users/social/${clave}`, { method: 'DELETE' });
+                    delete cuentas[clave];
+                    mostrarToast(`${PROVEEDORES[clave]} desvinculado.`, 'info');
+                } catch (err) {
+                    avisarError(err);
+                }
                 pintarCuentas();
             }
         });
-        listaCuentas.addEventListener('submit', (e) => {
+        listaCuentas.addEventListener('submit', async (e) => {
             e.preventDefault();
             const clave = e.target.dataset.vincular;
-            cuentas[clave] = e.target.querySelector('input').value.trim();
-            guardarUsuarioDemo({ cuentas: { ...cuentas } });
-            mostrarToast(`${PROVEEDORES[clave]} vinculado.`);
+            try {
+                cuentas = await api(`/users/social/${clave}`, {
+                    method: 'PUT',
+                    body: { external_username: e.target.querySelector('input').value.trim() },
+                });
+                mostrarToast(`${PROVEEDORES[clave]} vinculado.`);
+            } catch (err) {
+                avisarError(err, 'No se pudo vincular la cuenta.');
+            }
             pintarCuentas();
         });
 
@@ -295,14 +334,37 @@
                 mensaje: 'Se borrarán permanentemente tu perfil, tus salas, solicitudes, reseñas y mensajes.',
                 textoBoton: 'Sí, eliminar mi cuenta',
             });
-            if (ok) {
-                restablecerUsuarioDemo();
-                mostrarToast('Tu cuenta fue eliminada.', 'danger'); // DELETE /api/v1/users/me
-                setTimeout(() => { location.href = 'login.html'; }, 1500);
+            if (!ok) return;
+            try {
+                await api('/users/me', { method: 'DELETE' });
+            } catch (e) {
+                return avisarError(e, 'No se pudo eliminar la cuenta.');
             }
+            mostrarToast('Tu cuenta fue eliminada.', 'danger');
+            setTimeout(cerrarSesion, 1500);
         });
 
-        pintarCuentas();
+        async function iniciar() {
+            try {
+                yo = await iniciarPagina();
+                const { juegos, generos } = await catalogo();
+                cuentas = { ...yo.linked_accounts };
+                llenarSelect('ui-language', IDIOMAS, yo.ui_language);
+                llenarRegiones('region', yo.region);
+                llenarSelect('idioma-hablar', IDIOMAS_USUARIO, yo.preferred_language_speak);
+                llenarSelect('idioma-escribir', IDIOMAS_USUARIO, yo.preferred_language_write);
+                llenarSelect('filtro', NIVELES_FILTRO, yo.toxicity_filter_level);
+                // Salen de la base de datos: los juegos que apruebe el administrador aparecen aquí solos
+                renderChips('juegos', juegos.map((j) => ({ value: j.id, label: j.name, plataformas: j.platforms })), 'juego', yo.games);
+                renderChips('generos', generos.map((g) => ({ value: g.id, label: g.name })), 'genero', yo.genres);
+                activarFiltroJuegos({ buscadorId: 'buscar-juego', contenedorId: 'juegos', botonesId: 'filtro-juegos' });
+                pintarCabecera();
+                pintarCuentas();
+            } catch (e) {
+                mostrarErrorPagina(e.message);
+            }
+        }
+        iniciar();
     </script>
 </body>
 
