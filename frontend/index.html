@@ -52,6 +52,7 @@
       <h1 class="display-5" data-i18n="index.encabezado">Encuentra tu squad ideal</h1>
       <p class="text-secondary fs-5 mb-4" data-i18n="index.intro">Salas por juego, rango e idioma, con chat sin toxicidad y reputación de la comunidad.</p>
       <a href="crear_post.html" class="btn btn-primary btn-lg" data-i18n="nav.crear">Crear búsqueda</a>
+      <div class="sf-stats" id="hero-stats" aria-live="polite"></div>
     </section>
 
     <form id="form-filtros" class="sf-card mb-4" role="search" aria-label="Filtrar salas" data-i18n-aria-label="index.filtrarAria">
@@ -112,7 +113,11 @@
       <p class="text-secondary mb-0" id="contador-salas" aria-live="polite"></p>
     </div>
     <div id="lista-salas" class="row g-3" aria-busy="true">
-      <p class="text-secondary" data-i18n="index.cargando">Cargando salas…</p>
+      <p class="visually-hidden" data-i18n="index.cargando">Cargando salas…</p>
+      <!-- Esqueletos: marcan el lugar de las tarjetas mientras llegan los datos -->
+      <div class="col-12 col-md-6 col-xl-4"><div class="sf-skeleton" aria-hidden="true"><div class="sf-sk-linea"></div><div class="sf-sk-linea"></div><div class="sf-sk-linea"></div><div class="sf-sk-linea"></div></div></div>
+      <div class="col-12 col-md-6 col-xl-4"><div class="sf-skeleton" aria-hidden="true"><div class="sf-sk-linea"></div><div class="sf-sk-linea"></div><div class="sf-sk-linea"></div><div class="sf-sk-linea"></div></div></div>
+      <div class="col-12 col-md-6 col-xl-4 d-none d-xl-block"><div class="sf-skeleton" aria-hidden="true"><div class="sf-sk-linea"></div><div class="sf-sk-linea"></div><div class="sf-sk-linea"></div><div class="sf-sk-linea"></div></div></div>
     </div>
   </main>
 
@@ -159,9 +164,8 @@
 
     // Círculos llenos/vacíos que muestran los lugares ocupados de la sala
     function lugares(sala) {
-      const circulos = Array.from({ length: sala.max_players }, (_, i) =>
-        `<span class="sf-slot ${i < sala.current_players ? 'sf-slot-lleno' : ''}"></span>`).join('');
-      return `<div class="sf-slots" aria-hidden="true">${circulos}</div>
+      const porcentaje = Math.round((sala.current_players / sala.max_players) * 100);
+      return `<div class="sf-barra-cupos" aria-hidden="true"><span style="width: ${porcentaje}%"></span></div>
               <span class="small text-secondary">${esc(t('ui.jugadores', { actual: sala.current_players, max: sala.max_players }))}</span>`;
     }
 
@@ -173,14 +177,15 @@
     }
 
     // Todo el texto que viene de la base de datos pasa por esc() para evitar inyección de HTML (XSS)
-    function tarjeta(sala, yo) {
+    function tarjeta(sala, yo, indice = 0) {
       const compatibilidad = sala.is_host ? null : calcularCompatibilidad(sala, yo);
       return `
-        <div class="col-12 col-md-6 col-xl-4">
-          <article class="sf-card sf-sala h-100 d-flex flex-column gap-2">
-            <div class="d-flex justify-content-between align-items-start gap-2">
+        <div class="col-12 col-md-6 col-xl-4 sf-aparece" style="--i: ${Math.min(indice, 12)}">
+          <article class="sf-card sf-sala h-100 d-flex flex-column gap-2" style="--hue: ${matizJuego(sala.game_id)}">
+            <div class="d-flex align-items-center gap-2">
+              <span class="sf-juego-icono" aria-hidden="true">${esc(inicialesJuego(sala.game_name))}</span>
               <span class="sf-kicker small">${esc(sala.game_name)}</span>
-              ${badgeEstado(sala.status)}
+              <span class="ms-auto">${badgeEstado(sala.status)}</span>
             </div>
             <h3 class="h5 mb-0">
               <a class="stretched-link text-reset text-decoration-none" href="detalle_post.html?id=${sala.id}">${esc(sala.title)}</a>
@@ -189,6 +194,7 @@
               ${avatar(sala.host_username, 'sf-avatar-sm', sala.host_avatar_url)}
               <span>${esc(sala.host_username)}</span> ${badgeNivel(sala.host_level)}
               <span class="text-secondary">· ${esc(REGIONES[sala.host_region] ?? '')}</span>
+              <span class="sf-sala-ir" aria-hidden="true">${esc(t('index.ir'))} →</span>
             </div>
             <div class="sf-meta">
               ${badgeModo(sala.play_mode)}
@@ -198,7 +204,7 @@
             </div>
             <div class="small text-secondary">${textoPlataformas(sala.platforms ?? [])}</div>
             <div class="mt-auto d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2">
-              <div class="d-flex align-items-center gap-2">${lugares(sala)}</div>
+              <div class="d-flex align-items-center gap-2 flex-grow-1">${lugares(sala)}</div>
               ${estadoParaMi(sala) || (compatibilidad !== null ? `<span class="small text-secondary">${esc(t('index.compatible', { n: compatibilidad }))}</span>` : '')}
             </div>
           </article>
@@ -207,6 +213,15 @@
 
     // Evita mostrar resultados viejos si el usuario cambia los filtros muy rápido
     let pedidoActual = 0;
+
+    // Estadísticas de la portada: se calculan una vez con todas las salas (sin filtros)
+    function pintarEstadisticas(salas) {
+      const abiertas = salas.filter((s) => s.status === 'OPEN');
+      const libres = abiertas.reduce((suma, s) => suma + (s.max_players - s.current_players), 0);
+      $('hero-stats').innerHTML = `
+        <div class="sf-stat"><strong>${abiertas.length}</strong><span>${esc(t('index.statSalas'))}</span></div>
+        <div class="sf-stat"><strong>${libres}</strong><span>${esc(t('index.statLugares'))}</span></div>`;
+    }
 
     async function cargarSalas(yo) {
       const numero = ++pedidoActual;
@@ -224,7 +239,7 @@
 
       contador.textContent = salas.length === 1 ? t('index.unaSala') : t('index.variasSalas', { n: salas.length });
       lista.innerHTML = salas.length
-        ? salas.map((s) => tarjeta(s, yo)).join('')
+        ? salas.map((s, i) => tarjeta(s, yo, i)).join('')
         : `<div class="col-12"><div class="sf-card text-center text-secondary">
              ${esc(t('index.vacio'))} <a href="crear_post.html">${esc(t('index.crearLaTuya'))}</a></div></div>`;
     }
@@ -252,6 +267,7 @@
       form.addEventListener('reset', () => setTimeout(() => cargarSalas(yo)));
 
       await cargarSalas(yo);
+      api('/lfg/posts', { params: { only_open: true, limit: 100 } }).then(pintarEstadisticas).catch(() => {});
     }
 
     iniciar();

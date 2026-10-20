@@ -459,3 +459,74 @@ async function iniciarPagina() {
     if (!yo) throw new Error(t('ui.sinSesion'));
     return yo;
 }
+
+
+/* ---------------------------------------------------------------------
+   Efectos visuales
+   --------------------------------------------------------------------- */
+const sinMovimiento = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Confeti de celebración (al calificar a alguien, terminar una partida o crear el perfil)
+function lanzarConfeti() {
+    if (sinMovimiento()) return;
+    const lienzo = document.createElement('canvas');
+    lienzo.className = 'sf-confeti';
+    lienzo.setAttribute('aria-hidden', 'true');
+    lienzo.width = window.innerWidth;
+    lienzo.height = window.innerHeight;
+    document.body.appendChild(lienzo);
+    const ctx = lienzo.getContext('2d');
+    const colores = ['#8B5CF6', '#22D3EE', '#F472B6', '#FBBF24', '#34D399', '#FFFFFF'];
+    const piezas = Array.from({ length: 110 }, () => ({
+        x: lienzo.width / 2 + (Math.random() - 0.5) * 220,
+        y: lienzo.height * 0.35,
+        vx: (Math.random() - 0.5) * 15,
+        vy: -Math.random() * 14 - 4,
+        giro: Math.random() * Math.PI,
+        vgiro: (Math.random() - 0.5) * 0.4,
+        ancho: 6 + Math.random() * 7,
+        alto: 4 + Math.random() * 5,
+        color: colores[Math.floor(Math.random() * colores.length)],
+    }));
+    const inicio = performance.now();
+    (function cuadro(ahora) {
+        const t = ahora - inicio;
+        ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+        for (const p of piezas) {
+            p.vy += 0.38;
+            p.vx *= 0.99;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.giro += p.vgiro;
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, 1 - t / 2600);
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.giro);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.ancho / 2, -p.alto / 2, p.ancho, p.alto);
+            ctx.restore();
+        }
+        if (t < 2600) requestAnimationFrame(cuadro);
+        else lienzo.remove();
+    })(inicio);
+}
+
+// Las tarjetas de sala brillan en el punto donde está el puntero
+document.addEventListener('pointermove', (e) => {
+    const tarjeta = e.target.closest?.('.sf-sala');
+    if (!tarjeta) return;
+    const caja = tarjeta.getBoundingClientRect();
+    tarjeta.style.setProperty('--mx', `${e.clientX - caja.left}px`);
+    tarjeta.style.setProperty('--my', `${e.clientY - caja.top}px`);
+});
+
+
+// Color propio de cada juego: el mismo juego siempre tiene el mismo matiz (sirve también para juegos nuevos)
+const matizJuego = (idJuego) => (Number(idJuego) * 47 + 255) % 360;
+
+// Iniciales del juego para su ícono: "League of Legends" -> "LL", "Valorant" -> "VA"
+function inicialesJuego(nombre) {
+    const palabras = String(nombre).replace(/[^\p{L}\p{N} ]/gu, '').split(/\s+/).filter(Boolean);
+    const letras = palabras.length > 1 ? palabras[0][0] + palabras[1][0] : (palabras[0] ?? '?').slice(0, 2);
+    return letras.toUpperCase();
+}

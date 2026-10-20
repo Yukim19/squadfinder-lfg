@@ -276,13 +276,16 @@
 
         // Ejecuta una llamada a la API, avisa si falla y vuelve a cargar los datos
         async function accion(llamada, mensajeOk, tipo) {
+            let exito = true;
             try {
                 await llamada();
                 if (mensajeOk) mostrarToast(mensajeOk, tipo);
             } catch (e) {
+                exito = false;
                 avisarError(e);
             }
             await cargar();
+            return exito;
         }
 
         document.getElementById('form-bloquear').addEventListener('submit', async (e) => {
@@ -346,11 +349,13 @@
             };
             modalResena.hide();
             // Reseña nueva: POST. Reseña existente: PUT sobre su id
-            await accion(
+            const nueva = !c.my_review;
+            const exito = await accion(
                 () => c.my_review
                     ? api(`/reputation/reviews/${c.my_review.id}`, { method: 'PUT', body: datos })
                     : api('/reputation/reviews', { method: 'POST', body: { ...datos, post_id: partida.post_id, target_user_id: c.user_id } }),
                 c.my_review ? t('historial.actualizada') : t('historial.gracias', { usuario: c.username }));
+            if (exito && nueva) lanzarConfeti();
         });
 
         document.getElementById('btn-borrar-resena').addEventListener('click', async () => {

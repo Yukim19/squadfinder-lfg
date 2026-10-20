@@ -211,6 +211,7 @@
                     await api('/catalog/game-requests', { method: 'POST', body: sugerencia }).catch(() => {});
                 }
                 mostrarToast(t('onboarding.listo'));
+                lanzarConfeti();
                 setTimeout(() => { location.href = 'index.html'; }, 1200);
             });
         }

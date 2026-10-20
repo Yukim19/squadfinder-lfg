@@ -58,8 +58,9 @@
 
         <div class="row g-4">
             <section class="col-lg-8">
-                <article class="sf-card">
+                <article class="sf-card sf-acento" id="tarjeta-sala">
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <span class="sf-juego-icono" id="icono-juego" aria-hidden="true"></span>
                         <span class="badge sf-badge-live" id="badge-juego"></span>
                         <span id="badge-estado"></span>
                         <span class="ms-auto small text-secondary" id="compatibilidad"></span>
@@ -221,18 +222,23 @@
 
         // Ejecuta una acción de la API; si falla avisa con el mensaje del servidor. Siempre recarga.
         async function accion(llamada, mensajeOk, tipo) {
+            let exito = true;
             try {
                 await llamada();
                 if (mensajeOk) mostrarToast(mensajeOk, tipo);
             } catch (e) {
+                exito = false;
                 avisarError(e);
             }
             await cargar();
+            return exito;
         }
 
         function pintar() {
             document.title = `${sala.title} - SquadFinder LFG`;
             document.getElementById('badge-juego').textContent = sala.game_name;
+            document.getElementById('tarjeta-sala').style.setProperty('--hue', matizJuego(sala.game_id));
+            document.getElementById('icono-juego').textContent = inicialesJuego(sala.game_name);
             document.getElementById('badge-estado').innerHTML = badgeEstado(sala.status);
             document.getElementById('post-titulo').textContent = sala.title;
             document.getElementById('compatibilidad').textContent =
@@ -373,7 +379,7 @@
             }
 
             if (boton.id === 'btn-terminar' && await confirmar({ titulo: t('detalle.terminarTitulo'), mensaje: t('detalle.terminarMensaje'), textoBoton: t('detalle.terminarBoton'), peligro: false })) {
-                await accion(() => api(base, { method: 'PUT', body: { status: 'CLOSED' } }), t('detalle.terminoOk'));
+                if (await accion(() => api(base, { method: 'PUT', body: { status: 'CLOSED' } }), t('detalle.terminoOk'))) lanzarConfeti();
             }
 
             if (boton.id === 'btn-eliminar' && await confirmar({ titulo: t('detalle.cancelarTitulo'), mensaje: t('detalle.cancelarMensaje'), textoBoton: t('detalle.cancelarSala') })) {

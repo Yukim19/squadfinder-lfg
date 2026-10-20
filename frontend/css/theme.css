@@ -941,3 +941,398 @@ main:focus {
 .sf-danger-zone {
     border-color: rgba(244, 63, 94, 0.5);
 }
+
+
+/* =====================================================================
+   PULIDO VISUAL
+   Animaciones suaves, tarjetas con color por juego, esqueletos de carga,
+   botones con degradado y confeti. Todo se apaga con "Reducir movimiento"
+   (ver la regla prefers-reduced-motion más arriba).
+   ===================================================================== */
+
+:root {
+    --sf-gradient: linear-gradient(135deg, #8B5CF6 0%, #6366F1 45%, #22D3EE 100%);
+    --sf-gradient-text: linear-gradient(100deg, #FFFFFF 0%, #C4B5FD 45%, #67E8F9 100%);
+    --sf-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.7);
+    --sf-glow: 0 0 0 1px rgba(139, 92, 246, 0.5), 0 12px 32px -10px rgba(139, 92, 246, 0.55);
+}
+
+/* ---------- Fondo: cuadrícula tenue + resplandores que flotan ---------- */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(139, 92, 246, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(139, 92, 246, 0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 0%, transparent 70%);
+    mask-image: radial-gradient(ellipse at 50% 0%, #000 0%, transparent 70%);
+}
+
+/* ---------- Entrada de contenido ---------- */
+@keyframes sf-subir {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes sf-aparecer {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+main#contenido > * {
+    animation: sf-subir 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+main#contenido > *:nth-child(2) { animation-delay: 0.06s; }
+main#contenido > *:nth-child(3) { animation-delay: 0.12s; }
+main#contenido > *:nth-child(4) { animation-delay: 0.18s; }
+.sf-aparece {
+    animation: sf-subir 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+/* ---------- Títulos con degradado ---------- */
+.sf-hero h1,
+h1.display-5 {
+    background: var(--sf-gradient-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 4px 24px rgba(139, 92, 246, 0.25));
+}
+main h2.h3::after {
+    content: "";
+    display: block;
+    width: 2.5rem;
+    height: 3px;
+    margin-top: 0.35rem;
+    border-radius: 2px;
+    background: var(--sf-gradient);
+}
+
+/* ---------- Barra de navegación ---------- */
+.sf-navbar {
+    box-shadow: 0 8px 24px -16px rgba(0, 0, 0, 0.8);
+}
+.sf-navbar .navbar-brand {
+    font-size: 1.5rem;
+    transition: transform 0.2s ease;
+}
+.sf-navbar .navbar-brand:hover {
+    transform: scale(1.04);
+}
+.sf-navbar .navbar-brand span {
+    background: linear-gradient(100deg, #22D3EE, #8B5CF6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.sf-navbar .nav-link {
+    transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+.sf-navbar .nav-link.active {
+    text-shadow: 0 0 18px rgba(139, 92, 246, 0.8);
+}
+
+/* ---------- Botones ---------- */
+.btn {
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+.btn:active:not(:disabled) {
+    transform: translateY(1px) scale(0.98);
+}
+.btn-primary {
+    background-image: var(--sf-gradient);
+    background-size: 160% 100%;
+    background-position: 0% 0%;
+    border: 0;
+    box-shadow: 0 8px 22px -8px rgba(124, 58, 237, 0.7);
+}
+.btn-primary:hover:not(:disabled) {
+    background-position: 100% 0%;
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px -8px rgba(124, 58, 237, 0.85);
+}
+.btn-outline-light {
+    border-color: rgba(255, 255, 255, 0.22);
+}
+.btn-outline-light:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px -10px rgba(139, 92, 246, 0.7);
+}
+
+/* ---------- Tarjetas ---------- */
+.sf-card {
+    background: linear-gradient(155deg, rgba(38, 32, 54, 0.92), rgba(24, 20, 35, 0.92));
+    box-shadow: var(--sf-shadow);
+}
+.sf-card:is(form, section, article) {
+    backdrop-filter: blur(4px);
+}
+
+/* ---------- Inicio: portada con estadísticas ---------- */
+.sf-hero {
+    position: relative;
+    padding: 3rem 0 2rem;
+}
+.sf-hero::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: -2rem;
+    right: -4rem;
+    width: 26rem;
+    height: 26rem;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.35), transparent 65%);
+    filter: blur(20px);
+    animation: sf-flotar 9s ease-in-out infinite;
+}
+.sf-hero::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    bottom: -3rem;
+    left: 30%;
+    width: 18rem;
+    height: 18rem;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.2), transparent 65%);
+    filter: blur(24px);
+    animation: sf-flotar 11s ease-in-out infinite reverse;
+}
+@keyframes sf-flotar {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-24px, 18px); }
+}
+.sf-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+.sf-stat {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.55rem 1rem;
+    border: 1px solid var(--sf-border);
+    border-radius: 999px;
+    background: rgba(26, 22, 37, 0.7);
+    backdrop-filter: blur(6px);
+}
+.sf-stat strong {
+    font-family: var(--sf-font-display);
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--sf-accent);
+}
+.sf-stat span {
+    font-size: 0.85rem;
+    color: var(--sf-text-muted);
+}
+
+/* ---------- Tarjetas de sala: color propio por juego ---------- */
+.sf-sala {
+    --hue: 262;
+    --acento: hsl(var(--hue) 85% 62%);
+    overflow: hidden;
+    padding-top: 1.75rem;
+    transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+.sf-sala::before {
+    /* Brillo que sigue al puntero */
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 0%), hsl(var(--hue) 90% 65% / 0.16), transparent 70%);
+    transition: opacity 0.3s ease;
+}
+.sf-sala::after {
+    /* Franja de color del juego arriba */
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--acento), hsl(calc(var(--hue) + 50) 90% 62%));
+}
+.sf-sala:hover,
+.sf-sala:focus-within {
+    border-color: var(--acento);
+    transform: translateY(-5px);
+    box-shadow: 0 18px 38px -14px hsl(var(--hue) 85% 55% / 0.55);
+}
+.sf-sala:hover::before,
+.sf-sala:focus-within::before {
+    opacity: 1;
+}
+.sf-juego-icono {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.7rem;
+    font-family: var(--sf-font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #fff;
+    background: linear-gradient(135deg, hsl(var(--hue) 80% 52%), hsl(calc(var(--hue) + 40) 85% 42%));
+    box-shadow: 0 6px 16px -6px hsl(var(--hue) 85% 50% / 0.8);
+}
+.sf-sala .sf-kicker {
+    color: var(--acento);
+}
+.sf-sala-ir {
+    margin-left: auto;
+    font-size: 0.85rem;
+    color: var(--sf-text-muted);
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.25s ease, transform 0.25s ease, color 0.25s ease;
+}
+.sf-sala:hover .sf-sala-ir,
+.sf-sala:focus-within .sf-sala-ir {
+    opacity: 1;
+    transform: none;
+    color: var(--acento);
+}
+.sf-barra-cupos {
+    flex: 1;
+    min-width: 5rem;
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+}
+.sf-barra-cupos > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--acento), hsl(calc(var(--hue) + 50) 90% 62%));
+    transform-origin: left;
+    animation: sf-llenar 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes sf-llenar {
+    from { transform: scaleX(0); }
+}
+
+/* ---------- Esqueletos de carga ---------- */
+.sf-skeleton {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    min-height: 13rem;
+    border: 1px solid var(--sf-border);
+    background: rgba(36, 30, 51, 0.6);
+}
+.sf-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.14), transparent);
+    animation: sf-brillo 1.4s ease-in-out infinite;
+}
+.sf-skeleton .sf-sk-linea {
+    height: 0.8rem;
+    margin: 1.1rem 1.5rem 0;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.07);
+}
+.sf-skeleton .sf-sk-linea:nth-child(1) { width: 35%; margin-top: 1.6rem; }
+.sf-skeleton .sf-sk-linea:nth-child(2) { width: 80%; height: 1.2rem; }
+.sf-skeleton .sf-sk-linea:nth-child(3) { width: 55%; }
+.sf-skeleton .sf-sk-linea:nth-child(4) { width: 70%; }
+@keyframes sf-brillo {
+    to { transform: translateX(100%); }
+}
+
+/* ---------- Barras de progreso (XP) ---------- */
+.progress {
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+.progress-bar {
+    background-image: var(--sf-gradient);
+    box-shadow: 0 0 14px rgba(139, 92, 246, 0.7);
+    transform-origin: left;
+    animation: sf-llenar 1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* ---------- Chat: burbujas ---------- */
+.sf-msg {
+    border-radius: 1rem 1rem 1rem 0.3rem;
+    box-shadow: 0 6px 16px -10px rgba(0, 0, 0, 0.7);
+    animation: sf-subir 0.3s ease both;
+}
+.sf-msg.sf-msg-mio {
+    border-radius: 1rem 1rem 0.3rem 1rem;
+    background-image: linear-gradient(135deg, rgba(124, 58, 237, 0.85), rgba(79, 70, 229, 0.85));
+}
+
+/* ---------- Insignias y avatares ---------- */
+.sf-avatar {
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.35);
+}
+.sf-badge-live::before {
+    animation: sf-latido 1.6s ease-in-out infinite;
+}
+@keyframes sf-latido {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.75); }
+}
+
+/* ---------- Confeti ---------- */
+.sf-confeti {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    pointer-events: none;
+}
+
+/* ---------- Pantallas táctiles: sin efectos que dependen del puntero ---------- */
+@media (hover: none) {
+    .sf-sala::before { display: none; }
+    .sf-sala-ir { opacity: 1; transform: none; }
+}
+
+/* Título de portada más grande y con presencia */
+.sf-hero h1,
+h1.display-5 {
+    font-size: clamp(2.4rem, 5.2vw, 3.9rem);
+    line-height: 1.05;
+    letter-spacing: 0.01em;
+}
+.sf-hero > p.text-secondary {
+    max-width: 38rem;
+}
+
+/* Franja de color del juego en tarjetas grandes (detalle de sala) */
+.sf-acento {
+    --hue: 262;
+    position: relative;
+    overflow: hidden;
+    padding-top: 1.9rem;
+}
+.sf-acento::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, hsl(var(--hue) 85% 62%), hsl(calc(var(--hue) + 50) 90% 62%));
+}
+.sf-acento .sf-juego-icono {
+    width: 2.1rem;
+    height: 2.1rem;
+    font-size: 0.95rem;
+}

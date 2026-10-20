@@ -1328,3 +1328,6 @@ Object.assign(TRADUCCIONES.en.translation, {
         errorCarga: 'The panel could not be loaded.',
     },
 });
+
+Object.assign(TRADUCCIONES.es.translation.index, { statSalas: 'salas abiertas', statLugares: 'lugares libres', ir: 'Ver sala' });
+Object.assign(TRADUCCIONES.en.translation.index, { statSalas: 'open rooms', statLugares: 'free spots', ir: 'View room' });
