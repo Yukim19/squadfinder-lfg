@@ -209,21 +209,42 @@
     <script src="js/catalogo.js"></script>
     <script src="js/ui.js"></script>
     <script>
-        // Semana 3: GET /api/v1/admin/reports, PUT /api/v1/admin/reports/{id} (llama a resolve_report()),
-        // GET/PUT /api/v1/admin/settings y /api/v1/admin/game-requests.
-        // El backend responde 403 si el JWT no es de un usuario con role = 'ADMIN'.
-        const esAdmin = USUARIO_DEMO.role === 'ADMIN';
-        document.getElementById(esAdmin ? 'panel' : 'sin-permiso').classList.remove('d-none');
-
+        // Todo viene de la API de administración (el servidor responde 403 si no eres ADMIN):
+        //   GET/PUT /admin/reports, GET/PUT /admin/settings, GET/PUT /admin/game-requests.
+        // Las sanciones las calcula la base de datos (función resolve_report): aquí solo se envía
+        // la decisión y luego se vuelve a cargar todo.
         const $ = (id) => document.getElementById(id);
-        const reglas = { ...REGLAS_MODERACION_DEMO };
-        const reportes = REPORTES_DEMO.map((r) => ({ ...r }));
-        const sugerencias = SUGERENCIAS_DEMO;
+        let yo = null;
+        let reglas = null;
+        let reportes = [];
+        let sugerencias = [];
+        let generos = [];
         const NIVEL_TOXICIDAD = { MILD: 'Leve', SEVERE: 'Grave' };
         const modalSancion = new bootstrap.Modal('#modal-sancion');
         const modalJuego = new bootstrap.Modal('#modal-juego');
         let reporteActual = null;
         let sugerenciaActual = null;
+
+        const fecha = (iso) => (iso ? new Date(iso).toLocaleString('es', { dateStyle: 'medium', timeStyle: 'short' }) : '');
+
+        async function cargar() {
+            [reglas, reportes, sugerencias] = await Promise.all([
+                api('/admin/settings'), api('/admin/reports'), api('/admin/game-requests'),
+            ]);
+            pintarReglas();
+            pintar();
+        }
+
+        // Llama a la API; si falla avisa con el mensaje del servidor. Siempre recarga.
+        async function accion(llamada, mensajeOk, tipo) {
+            try {
+                const resultado = await llamada();
+                if (mensajeOk) mostrarToast(typeof mensajeOk === 'function' ? mensajeOk(resultado) : mensajeOk, tipo);
+            } catch (e) {
+                avisarError(e);
+            }
+            await cargar();
+        }
 
         /* -------------------------------------------------------------
            Reglas automáticas
@@ -244,71 +265,39 @@
             $('bloque-regla-dias').classList.toggle('d-none', $('regla-accion').value !== 'SUSPEND');
         });
 
-        validarFormulario($('form-reglas'), () => {
-            Object.assign(reglas, {
+        validarFormulario($('form-reglas'), () => accion(() => api('/admin/settings', {
+            method: 'PUT',
+            body: {
                 warnings_limit: Number($('regla-limite').value),
                 auto_action: $('regla-accion').value,
                 auto_suspension_days: Number($('regla-dias').value),
                 warning_levels_removed: Number($('regla-niveles-advertencia').value),
                 suspension_levels_removed: Number($('regla-niveles-suspension').value),
-            });
-            pintarReglas();
-            pintar();
-            mostrarToast('Reglas de moderación guardadas.');
-        });
+            },
+        }), 'Reglas de moderación guardadas.'));
 
         /* -------------------------------------------------------------
-           Aplicar una decisión (misma lógica que resolve_report() en la BD)
+           Resolver un reporte
            ------------------------------------------------------------- */
-        function resolver(r, accion, { dias = null, niveles = null, nota = '' } = {}) {
-            let estado = accion;
-            let quitados = 0;
-            let automatica = false;
-            const afectados = reportes.filter((x) => x.reported_user_id === r.reported_user_id);
-
-            if (accion === 'WARNED') {
-                quitados = niveles ?? reglas.warning_levels_removed;
-                const advertencias = r.reported_warnings + 1;
-                afectados.forEach((x) => { x.reported_warnings = advertencias; });
-                if (advertencias >= reglas.warnings_limit) {
-                    automatica = true;
-                    estado = reglas.auto_action === 'BAN' ? 'BANNED' : 'SUSPENDED';
-                    dias = reglas.auto_suspension_days;
-                    if (estado === 'SUSPENDED') {
-                        quitados += reglas.suspension_levels_removed;
-                        afectados.forEach((x) => { x.reported_warnings = 0; });
+        async function resolver(r, action, { dias = null, niveles = null, nota = '' } = {}) {
+            await accion(
+                () => api(`/admin/reports/${r.id}`, {
+                    method: 'PUT',
+                    body: { action, suspension_days: dias, levels_removed: niveles, notes: nota || null },
+                }),
+                (res) => {
+                    const u = res.reported_user;
+                    if (res.is_automatic) {
+                        return `${u.username} llegó al límite de advertencias: regla automática aplicada (${res.status === 'BANNED' ? 'cuenta eliminada' : `suspendido ${res.suspension_days} días`}).`;
                     }
-                }
-            } else if (accion === 'SUSPENDED') {
-                quitados = niveles ?? reglas.suspension_levels_removed;
-                dias = dias ?? 7;
-            }
-
-            const nivelNuevo = Math.max(0, r.reported_level - quitados);
-            afectados.forEach((x) => {
-                x.reported_level = nivelNuevo;
-                if (estado === 'SUSPENDED') x.reported_account_status = 'SUSPENDED';
-                if (estado === 'BANNED') x.reported_account_status = 'BANNED';
-            });
-            Object.assign(r, {
-                status: estado, suspension_days: estado === 'SUSPENDED' ? dias : null,
-                levels_removed: Math.min(quitados, 10), is_automatic: automatica,
-                admin_notes: nota || null, resolved_at: new Date().toLocaleString('es'),
-            });
-
-            if (automatica) {
-                mostrarToast(`${r.reported_username} llegó a ${reglas.warnings_limit} advertencias: `
-                    + (estado === 'BANNED' ? 'cuenta eliminada automáticamente.' : `suspendido ${dias} días automáticamente.`), 'danger');
-            } else {
-                const avisos = {
-                    DISMISSED: ['Reporte descartado.', 'info'],
-                    WARNED: [`${r.reported_username} recibió una advertencia (−${quitados} nivel).`, 'warning'],
-                    SUSPENDED: [`${r.reported_username} fue suspendido ${dias} días (−${quitados} niveles).`, 'warning'],
-                    BANNED: [`La cuenta de ${r.reported_username} fue eliminada.`, 'danger'],
-                };
-                mostrarToast(...avisos[estado]);
-            }
-            pintar();
+                    return {
+                        DISMISSED: 'Reporte descartado.',
+                        WARNED: `${u.username} recibió una advertencia (−${res.levels_removed} nivel).`,
+                        SUSPENDED: `${u.username} fue suspendido ${res.suspension_days} días (−${res.levels_removed} niveles).`,
+                        BANNED: `La cuenta de ${u.username} fue eliminada.`,
+                    }[res.status];
+                },
+                action === 'DISMISSED' ? 'info' : 'warning');
         }
 
         /* -------------------------------------------------------------
@@ -316,7 +305,7 @@
            ------------------------------------------------------------- */
         function tarjeta(r) {
             const motivo = MOTIVOS_REPORTE[r.reason];
-            const evidencia = evidenciaChat(r.post_id, r.reported_user_id);
+            const evidencia = r.evidence;
             const pendiente = r.status === 'PENDING';
             const cuenta = { ACTIVE: '', SUSPENDED: '<span class="badge text-bg-info">Suspendida</span>', BANNED: '<span class="badge text-bg-danger">Eliminada</span>' };
             const advertencias = `${r.reported_warnings}/${reglas.warnings_limit} advertencias`;
@@ -330,7 +319,7 @@
                 ].filter(Boolean).join(' · ');
                 decision = `
                     <div class="small">
-                        <strong>Decisión:</strong> ${esc(ESTADOS_REPORTE[r.status].texto)}${detalles ? ` (${esc(detalles)})` : ''} · ${esc(r.resolved_at)}
+                        <strong>Decisión:</strong> ${esc(ESTADOS_REPORTE[r.status].texto)}${detalles ? ` (${esc(detalles)})` : ''} · ${esc(fecha(r.resolved_at))}
                         ${r.admin_notes ? `<br><strong>Nota:</strong> ${esc(r.admin_notes)}` : ''}
                     </div>`;
             }
@@ -350,7 +339,7 @@
                         </div>
                         <div class="text-end">
                             <span class="badge ${ESTADOS_REPORTE[r.status].clase}">${esc(ESTADOS_REPORTE[r.status].texto)}</span>
-                            <div class="small text-secondary mt-1">#${r.id} · ${esc(r.created_at)}</div>
+                            <div class="small text-secondary mt-1">#${r.id} · ${esc(fecha(r.created_at))}</div>
                         </div>
                     </div>
 
@@ -365,7 +354,7 @@
                             ? evidencia.map((m) => `
                                 <div class="small d-flex flex-wrap gap-2 align-items-center mb-1">
                                     <span class="badge ${m.toxicity_level === 'SEVERE' ? 'text-bg-danger' : 'text-bg-warning'}">${NIVEL_TOXICIDAD[m.toxicity_level]}</span>
-                                    <span class="text-secondary">${esc(m.sent_at)}</span>
+                                    <span class="text-secondary">${esc(fecha(m.sent_at))}</span>
                                     <span>"${esc(m.message)}"</span>
                                 </div>`).join('')
                             : '<p class="small text-secondary mb-0">El filtro no marcó mensajes de esta persona en esa partida.</p>'}
@@ -401,8 +390,9 @@
                 <article class="sf-card d-flex flex-wrap justify-content-between align-items-center gap-3">
                     <div>
                         <h2 class="h5 mb-1">🎮 ${esc(s.game_name)}</h2>
-                        <small class="text-secondary">Sugerido por ${enlaceUsuario(s.user_id, s.username)} · ${esc(s.created_at)}
-                            ${s.platforms_note ? ` · Plataformas: ${esc(s.platforms_note)}` : ''}</small>
+                        <small class="text-secondary">Sugerido por ${enlaceUsuario(s.user_id, s.username)} · ${esc(fecha(s.created_at))}
+                            ${s.platforms_note ? ` · Plataformas: ${esc(s.platforms_note)}` : ''}
+                            ${s.times_requested > 1 ? ` · <strong>${s.times_requested} personas lo pidieron</strong>` : ''}</small>
                     </div>
                     ${s.status === 'PENDING'
                         ? `<div class="d-flex gap-2">
@@ -413,7 +403,6 @@
                 </article>`;
         }
 
-        $('juego-genero').innerHTML = GENEROS.map((g) => `<option>${esc(g)}</option>`).join('');
         $('juego-plataformas').innerHTML = PLATAFORMAS.map((p) => `
             <input type="checkbox" class="btn-check" name="juego-plataforma" id="jp-${p}" value="${p}" autocomplete="off">
             <label class="btn btn-outline-light sf-chip" for="jp-${p}">${ICONOS_PLATAFORMA[p]} ${p}</label>`).join('');
@@ -435,9 +424,8 @@
             $('reglas').classList.toggle('d-none', vista === 'GAMES');
 
             if (vista === 'GAMES') {
-                const orden = [...juegosPendientes, ...sugerencias.filter((s) => s.status !== 'PENDING')];
-                $('lista-juegos').innerHTML = orden.length
-                    ? orden.map(tarjetaSugerencia).join('')
+                $('lista-juegos').innerHTML = sugerencias.length
+                    ? sugerencias.map(tarjetaSugerencia).join('')
                     : '<div class="sf-card text-center text-secondary">No hay juegos sugeridos.</div>';
                 return;
             }
@@ -491,7 +479,7 @@
                     + (reglas.auto_action === 'BAN' ? 'eliminar la cuenta' : `suspender ${reglas.auto_suspension_days} días`) + ').';
             }
             if (await confirmar({ titulo: c.titulo, mensaje, textoBoton: c.boton, peligro: c.peligro })) {
-                resolver(r, accion, { nota: nota.value.trim() });
+                await resolver(r, accion, { nota: nota.value.trim() });
             }
         });
 
@@ -524,7 +512,11 @@
             if (diasMal || nivelesMal || !nota) return;
 
             modalSancion.hide();
-            resolver(reporteActual, tipo, { dias, niveles, nota });
+            await resolver(reporteActual, tipo, {
+                dias: tipo === 'SUSPENDED' ? dias : null,
+                niveles: tipo === 'BANNED' ? null : niveles,
+                nota,
+            });
         });
 
         /* -------------------------------------------------------------
@@ -539,18 +531,17 @@
                 sugerenciaActual = s;
                 $('form-juego').reset();
                 $('juego-nombre').value = s.game_name;
+                $('juego-nombre').classList.remove('is-invalid');
                 $('error-juego-plataformas').classList.add('d-none');
                 modalJuego.show();
             }
             if (boton.dataset.rechazar && await confirmar({ titulo: 'Rechazar sugerencia', mensaje: `"${s.game_name}" no se agregará al catálogo.`, textoBoton: 'Rechazar', peligro: false })) {
-                s.status = 'REJECTED';
-                guardarLocal(CLAVE_SUGERENCIAS, sugerencias.filter((x) => x.id !== 1));
-                mostrarToast('Sugerencia rechazada.', 'info');
-                pintar();
+                await accion(() => api(`/admin/game-requests/${id}`, { method: 'PUT', body: { status: 'REJECTED' } }),
+                    'Sugerencia rechazada.', 'info');
             }
         });
 
-        $('form-juego').addEventListener('submit', (e) => {
+        $('form-juego').addEventListener('submit', async (e) => {
             e.preventDefault();
             const nombre = $('juego-nombre').value.trim();
             const plataformas = [...document.querySelectorAll('input[name="juego-plataforma"]:checked')].map((i) => i.value);
@@ -558,24 +549,34 @@
             $('error-juego-plataformas').classList.toggle('d-none', plataformas.length > 0);
             if (nombre.length < 2 || plataformas.length === 0) return;
 
-            // Demo: se guarda en el navegador para que aparezca en el onboarding y el perfil
-            const nuevo = {
-                id: Math.max(...JUEGOS.map((j) => j.id)) + 1, name: nombre, genre: $('juego-genero').value,
-                crossplay: $('juego-crossplay').checked, platforms: plataformas,
-            };
-            JUEGOS.push(nuevo);
-            guardarLocal(CLAVE_JUEGOS_EXTRA, [...leerLocal(CLAVE_JUEGOS_EXTRA, []), nuevo]);
-            sugerenciaActual.status = 'APPROVED';
-            guardarLocal(CLAVE_SUGERENCIAS, sugerencias.filter((x) => x.id !== 1));
             modalJuego.hide();
-            mostrarToast(`"${nombre}" ya aparece en la lista de juegos para todos.`);
-            pintar();
+            // Al aprobar, el servidor crea el juego con sus plataformas: aparece al instante para todos
+            await accion(() => api(`/admin/game-requests/${sugerenciaActual.id}`, {
+                method: 'PUT',
+                body: {
+                    status: 'APPROVED', name: nombre, genre_id: Number($('juego-genero').value),
+                    platforms: plataformas, crossplay: $('juego-crossplay').checked,
+                },
+            }), `"${nombre}" ya aparece en la lista de juegos para todos.`);
         });
 
-        if (esAdmin) {
-            pintarReglas();
-            pintar();
+        async function iniciar() {
+            try {
+                yo = await iniciarPagina();
+            } catch (e) {
+                return mostrarErrorPagina(e.message);
+            }
+            if (yo.role !== 'ADMIN') return $('sin-permiso').classList.remove('d-none');
+            $('panel').classList.remove('d-none');
+            try {
+                generos = (await catalogo()).generos;
+                $('juego-genero').innerHTML = generos.map((g) => `<option value="${g.id}">${esc(g.name)}</option>`).join('');
+                await cargar();
+            } catch (e) {
+                avisarError(e, 'No se pudo cargar el panel.');
+            }
         }
+        iniciar();
     </script>
 </body>
 
