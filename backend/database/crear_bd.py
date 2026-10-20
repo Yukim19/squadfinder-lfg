@@ -4,6 +4,7 @@ Uso (desde la carpeta del proyecto):
     python backend/database/crear_bd.py                # schema + catálogo
     python backend/database/crear_bd.py --demo         # + datos de prueba
     python backend/database/crear_bd.py --reset --demo # borra todo y vuelve a crear
+    python backend/database/crear_bd.py --migrar-amigos # agrega amigos y mensajes a una base ya creada
 
 La conexión se toma de DATABASE_URL (variable de entorno o backend/api-service/.env).
 Si la base de datos indicada no existe en el servidor, se crea.
@@ -48,6 +49,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--demo", action="store_true", help="cargar también seed_demo.sql")
     parser.add_argument("--reset", action="store_true", help="borrar todas las tablas antes de crearlas")
+    parser.add_argument("--migrar-amigos", action="store_true", help="solo agrega las tablas de amigos y mensajes privados")
     parser.add_argument("--forzar", action="store_true", help="permitir --reset contra un servidor remoto")
     args = parser.parse_args()
 
@@ -55,6 +57,12 @@ def main() -> None:
     host = conninfo_to_dict(url).get("host", "")
     if args.reset and host not in ("localhost", "127.0.0.1", "::1") and not args.forzar:
         sys.exit(f"--reset borraría todos los datos de '{host}'. Si de verdad quieres hacerlo, agrega --forzar.")
+
+    if args.migrar_amigos:
+        with psycopg.connect(url, autocommit=True) as conn:
+            conn.execute((CARPETA / "migracion_amigos.sql").read_text(encoding="utf-8"))
+        print("OK migracion_amigos.sql")
+        return
 
     if host in ("localhost", "127.0.0.1", "::1"):
         asegurar_base(url)

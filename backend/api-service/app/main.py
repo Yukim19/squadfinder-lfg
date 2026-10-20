@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import get_settings
 from .database import abrir_pool, cerrar_pool
 from .errors import registrar_manejadores
-from .routers import admin, catalog, lfg, reports, reputation, users
+from .routers import admin, catalog, friends, lfg, reports, reputation, users
 from .security import Db
 
 PREFIJO = "/api/v1"
@@ -60,6 +60,7 @@ def crear_app() -> FastAPI:
     app.include_router(reputation.router, prefix=PREFIJO)
     app.include_router(reports.router, prefix=PREFIJO)
     app.include_router(admin.router, prefix=PREFIJO)
+    app.include_router(friends.router, prefix=PREFIJO)
     return app
 
 

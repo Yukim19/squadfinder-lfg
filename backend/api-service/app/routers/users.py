@@ -162,6 +162,15 @@ def bloquear(datos: Bloqueo, usuario: Usuario, db: Db) -> dict:
         raise ApiError(422, "CANNOT_BLOCK_SELF", "No puedes agregarte a tu propia lista negra.")
     if not db.execute("SELECT 1 FROM users WHERE id = %s", (datos.user_id,)).fetchone():
         raise ApiError(404, "USER_NOT_FOUND", "Ese jugador no existe.")
+    # Bloquear a alguien también deshace la amistad o la solicitud pendiente con esa persona
+    db.execute(
+        """
+        DELETE FROM friendships
+        WHERE LEAST(requester_id, addressee_id) = LEAST(%(a)s, %(b)s)
+          AND GREATEST(requester_id, addressee_id) = GREATEST(%(a)s, %(b)s)
+        """,
+        {"a": usuario["id"], "b": datos.user_id},
+    )
     fila = db.execute(
         """
         INSERT INTO user_blocks (blocker_id, blocked_id, reason) VALUES (%s, %s, %s)

@@ -60,6 +60,14 @@ class Bloqueo(Entrada):
     reason: Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)] | None = None
 
 
+class AmistadCrear(Entrada):
+    user_id: int
+
+
+class AmistadDecision(Entrada):
+    status: Literal["ACCEPTED", "REJECTED"]
+
+
 class SugerenciaJuego(Entrada):
     game_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=100)]
     platforms_note: Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)] | None = None

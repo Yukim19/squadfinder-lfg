@@ -125,3 +125,20 @@ INSERT INTO user_blocks (blocker_id, blocked_id, reason) VALUES
 -- Juego sugerido por un usuario, pendiente de revisión
 INSERT INTO game_requests (user_id, game_name, platforms_note) VALUES
     ((SELECT id FROM users WHERE username = 'carla_heals'), 'Deadlock', 'PC');
+
+-- Amigos: ana_gg y bruno_tank ya son amigos; carla_heals le envió una solicitud a ana_gg
+INSERT INTO friendships (requester_id, addressee_id, status, responded_at) VALUES
+    ((SELECT id FROM users WHERE username = 'bruno_tank'),
+     (SELECT id FROM users WHERE username = 'ana_gg'), 'ACCEPTED', NOW());
+INSERT INTO friendships (requester_id, addressee_id) VALUES
+    ((SELECT id FROM users WHERE username = 'carla_heals'),
+     (SELECT id FROM users WHERE username = 'ana_gg'));
+
+-- Mensajes privados de ejemplo entre ana_gg y bruno_tank
+INSERT INTO direct_messages (sender_id, recipient_id, message, toxicity_level, sent_at, read_at) VALUES
+    ((SELECT id FROM users WHERE username = 'bruno_tank'), (SELECT id FROM users WHERE username = 'ana_gg'),
+     'Oye, ¿jugamos ranked más tarde?', 'NONE', NOW() - INTERVAL '2 hours', NOW() - INTERVAL '1 hour'),
+    ((SELECT id FROM users WHERE username = 'ana_gg'), (SELECT id FROM users WHERE username = 'bruno_tank'),
+     '¡Dale! Entro a las 8.', 'NONE', NOW() - INTERVAL '1 hour', NOW() - INTERVAL '50 minutes'),
+    ((SELECT id FROM users WHERE username = 'bruno_tank'), (SELECT id FROM users WHERE username = 'ana_gg'),
+     'Perfecto, te espero en la sala.', 'NONE', NOW() - INTERVAL '10 minutes', NULL);
