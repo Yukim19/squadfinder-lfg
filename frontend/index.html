@@ -14,31 +14,31 @@
   <link href="css/theme.css" rel="stylesheet">
 </head>
 <body>
-  <a class="visually-hidden-focusable sf-skip" href="#contenido">Saltar al contenido</a>
+  <a class="visually-hidden-focusable sf-skip" href="#contenido" data-i18n="comun.saltar">Saltar al contenido</a>
 
   <nav class="navbar navbar-expand-lg sf-navbar sticky-top">
     <div class="container">
       <a class="navbar-brand" href="index.html">Squad<span>Finder</span></a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav-principal"
-        aria-controls="nav-principal" aria-expanded="false" aria-label="Abrir menú">
+        aria-controls="nav-principal" aria-expanded="false" aria-label="Abrir menú" data-i18n-aria-label="nav.menu">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="nav-principal">
         <div class="navbar-nav ms-auto">
-          <a class="nav-link active" aria-current="page" href="index.html">Salas</a>
-          <a class="nav-link" href="crear_post.html">Crear búsqueda</a>
-          <a class="nav-link" href="historial_partidas.html">Historial</a>
+          <a class="nav-link active" aria-current="page" href="index.html" data-i18n="nav.salas">Salas</a>
+          <a class="nav-link" href="crear_post.html" data-i18n="nav.crear">Crear búsqueda</a>
+          <a class="nav-link" href="historial_partidas.html" data-i18n="nav.historial">Historial</a>
           <div class="nav-item dropdown ms-lg-2">
             <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               <span class="sf-avatar sf-avatar-sm" id="nav-avatar" aria-hidden="true">?</span>
               <span id="nav-username">Mi cuenta</span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="perfil_config.html">Configurar perfil</a></li>
-              <li><a class="dropdown-item" id="nav-perfil-publico" href="usuario.html">Ver mi perfil público</a></li>
-              <li><a class="dropdown-item" href="historial_partidas.html">Historial</a></li>
+              <li><a class="dropdown-item" href="perfil_config.html" data-i18n="nav.configurar">Configurar perfil</a></li>
+              <li><a class="dropdown-item" id="nav-perfil-publico" href="usuario.html" data-i18n="nav.perfilPublico">Ver mi perfil público</a></li>
+              <li><a class="dropdown-item" href="historial_partidas.html" data-i18n="nav.historial">Historial</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><button class="dropdown-item text-danger" id="btn-logout" type="button">Cerrar sesión</button></li>
+              <li><button class="dropdown-item text-danger" id="btn-logout" type="button" data-i18n="nav.salir">Cerrar sesión</button></li>
             </ul>
           </div>
         </div>
@@ -51,7 +51,7 @@
       <p class="sf-kicker mb-2">Looking For Group</p>
       <h1 class="display-5">Encuentra tu squad ideal</h1>
       <p class="text-secondary fs-5 mb-4">Salas por juego, rango e idioma, con chat sin toxicidad y reputación de la comunidad.</p>
-      <a href="crear_post.html" class="btn btn-primary btn-lg">Crear búsqueda</a>
+      <a href="crear_post.html" class="btn btn-primary btn-lg" data-i18n="nav.crear">Crear búsqueda</a>
     </section>
 
     <form id="form-filtros" class="sf-card mb-4" role="search" aria-label="Filtrar salas">
@@ -118,14 +118,17 @@
 
   <footer class="sf-footer py-4 mt-5">
     <div class="container d-flex flex-wrap justify-content-between gap-2">
-      <span>© 2026 SquadFinder LFG · Proyecto Full-Stack COMP2053</span>
-      <span><a href="index.html">Salas</a> · <a href="crear_post.html">Crear búsqueda</a> · <a href="perfil_config.html">Mi perfil</a></span>
+      <span data-i18n="pie.proyecto">© 2026 SquadFinder LFG · Proyecto Full-Stack COMP2053</span>
+      <span><a href="index.html" data-i18n="nav.salas">Salas</a> · <a href="crear_post.html" data-i18n="nav.crear">Crear búsqueda</a> · <a href="perfil_config.html" data-i18n="pie.miPerfil">Mi perfil</a></span>
     </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@2.1.3/dist/auth0-spa-js.production.js"></script>
-  <script src="js/api.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"></script>
+    <script src="js/locales.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/api.js"></script>
   <script src="js/catalogo.js"></script>
   <script src="js/ui.js"></script>
   <script>

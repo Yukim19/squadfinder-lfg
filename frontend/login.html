@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0E0B16">
     <link rel="icon" href="img/icono.svg" type="image/svg+xml">
-    <title>Iniciar sesión - SquadFinder LFG</title>
+    <title data-i18n="login.titulo">Iniciar sesión - SquadFinder LFG</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,32 +16,34 @@
 </head>
 
 <body>
-    <a class="visually-hidden-focusable sf-skip" href="#contenido">Saltar al contenido</a>
+    <a class="visually-hidden-focusable sf-skip" href="#contenido" data-i18n="comun.saltar">Saltar al contenido</a>
 
     <nav class="navbar sf-navbar">
         <div class="container">
             <a class="navbar-brand" href="login.html">Squad<span>Finder</span></a>
+            <button type="button" class="btn btn-sm btn-outline-light" id="btn-idioma-login"
+                data-i18n="comun.idiomaBoton" data-i18n-aria-label="comun.idiomaEtiqueta">🌐 English</button>
         </div>
     </nav>
 
     <main id="contenido" tabindex="-1" class="container py-5">
         <div class="row align-items-center g-4 g-lg-5">
             <section class="col-lg-6">
-                <p class="sf-kicker mb-2">Looking For Group</p>
-                <h1 class="display-5 mb-3">Deja de jugar solo.</h1>
-                <p class="text-secondary fs-5 mb-4">Encuentra compañeros de tu nivel, idioma y región, coordina en un chat sin toxicidad y construye tu reputación.</p>
+                <p class="sf-kicker mb-2" data-i18n="login.kicker">Looking For Group</p>
+                <h1 class="display-5 mb-3" data-i18n="login.encabezado">Deja de jugar solo.</h1>
+                <p class="text-secondary fs-5 mb-4" data-i18n="login.intro">Encuentra compañeros de tu nivel, idioma y región, coordina en un chat sin toxicidad y construye tu reputación.</p>
                 <ul class="list-unstyled d-grid gap-3 mb-0">
                     <li class="d-flex gap-3">
                         <span class="sf-avatar sf-avatar-sm" aria-hidden="true">1</span>
-                        <span><strong>Salas por juego y rango</strong><br><span class="text-secondary">Filtra por plataforma, región, idioma y micrófono.</span></span>
+                        <span><strong data-i18n="login.beneficio1">Salas por juego y rango</strong><br><span class="text-secondary" data-i18n="login.beneficio1Texto">Filtra por plataforma, región, idioma y micrófono.</span></span>
                     </li>
                     <li class="d-flex gap-3">
                         <span class="sf-avatar sf-avatar-sm" aria-hidden="true">2</span>
-                        <span><strong>Chat con filtro anti-toxicidad</strong><br><span class="text-secondary">Tú decides qué tan estricto es.</span></span>
+                        <span><strong data-i18n="login.beneficio2">Chat con filtro anti-toxicidad</strong><br><span class="text-secondary" data-i18n="login.beneficio2Texto">Tú decides qué tan estricto es.</span></span>
                     </li>
                     <li class="d-flex gap-3">
                         <span class="sf-avatar sf-avatar-sm" aria-hidden="true">3</span>
-                        <span><strong>Sube de nivel</strong><br><span class="text-secondary">Las buenas reseñas te llevan del nivel 1 al 10.</span></span>
+                        <span><strong data-i18n="login.beneficio3">Sube de nivel</strong><br><span class="text-secondary" data-i18n="login.beneficio3Texto">Las buenas reseñas te llevan del nivel 1 al 10.</span></span>
                     </li>
                 </ul>
             </section>
@@ -49,40 +51,40 @@
             <section class="col-lg-5 offset-lg-1">
                 <div class="sf-card p-4 p-md-5">
                     <div id="aviso-login" class="alert d-none" role="alert"></div>
-                    <div class="btn-group w-100 mb-4" role="group" aria-label="Elegir acción">
+                    <div class="btn-group w-100 mb-4" role="group" aria-label="Elegir acción" data-i18n-aria-label="login.accionesAria">
                         <input type="radio" class="btn-check" name="modo-acceso" id="modo-login" value="login" checked>
-                        <label class="btn btn-outline-light" for="modo-login">Iniciar sesión</label>
+                        <label class="btn btn-outline-light" for="modo-login" data-i18n="login.tabEntrar">Iniciar sesión</label>
                         <input type="radio" class="btn-check" name="modo-acceso" id="modo-registro" value="signup">
-                        <label class="btn btn-outline-light" for="modo-registro">Crear cuenta</label>
+                        <label class="btn btn-outline-light" for="modo-registro" data-i18n="login.tabRegistro">Crear cuenta</label>
                     </div>
 
                     <div id="panel-login">
-                        <h2 class="h3 mb-2 text-center">Bienvenido de vuelta</h2>
-                        <p class="text-secondary text-center mb-4">Entra con tu correo o tu cuenta de Google.</p>
-                        <button class="btn btn-primary btn-lg w-100" id="btn-login" type="button">Iniciar sesión</button>
+                        <h2 class="h3 mb-2 text-center" data-i18n="login.bienvenida">Bienvenido de vuelta</h2>
+                        <p class="text-secondary text-center mb-4" data-i18n="login.bienvenidaTexto">Entra con tu correo o tu cuenta de Google.</p>
+                        <button class="btn btn-primary btn-lg w-100" id="btn-login" type="button" data-i18n="login.btnEntrar">Iniciar sesión</button>
                     </div>
 
                     <div id="panel-registro" class="d-none">
-                        <h2 class="h3 mb-2 text-center">Crea tu cuenta gratis</h2>
-                        <p class="text-secondary text-center mb-3">Empiezas en el <strong>nivel 1</strong>; después configuras tus juegos y tu región.</p>
+                        <h2 class="h3 mb-2 text-center" data-i18n="login.crearTitulo">Crea tu cuenta gratis</h2>
+                        <p class="text-secondary text-center mb-3" data-i18n-html="login.crearTexto">Empiezas en el <strong>nivel 1</strong>; después configuras tus juegos y tu región.</p>
                         <ul class="small text-secondary mb-4">
-                            <li>Te enviaremos un correo para verificar tu cuenta.</li>
-                            <li>Si usas Google, tu cuenta queda protegida con su verificación en dos pasos.</li>
+                            <li data-i18n="login.crearNota1">Te enviaremos un correo para verificar tu cuenta.</li>
+                            <li data-i18n="login.crearNota2">Si usas Google, tu cuenta queda protegida con su verificación en dos pasos.</li>
                         </ul>
-                        <button class="btn btn-primary btn-lg w-100" id="btn-registro" type="button">Crear cuenta</button>
+                        <button class="btn btn-primary btn-lg w-100" id="btn-registro" type="button" data-i18n="login.btnRegistro">Crear cuenta</button>
                     </div>
 
                     <!-- Solo aparece cuando el backend está en modo desarrollo (AUTH_MODE=dev) -->
                     <div id="panel-prueba" class="d-none mt-4">
                         <hr class="my-4">
-                        <h2 class="h6 mb-1">🧪 Modo desarrollo</h2>
-                        <p class="small text-secondary mb-2">Entra como un usuario de prueba de <code>seed_demo.sql</code>, sin Auth0.</p>
+                        <h2 class="h6 mb-1" data-i18n="login.modoDev">🧪 Modo desarrollo</h2>
+                        <p class="small text-secondary mb-2" data-i18n-html="login.modoDevTexto">Entra como un usuario de prueba de <code>seed_demo.sql</code>, sin Auth0.</p>
                         <div class="d-grid gap-2" id="usuarios-prueba"></div>
                     </div>
 
                     <hr class="my-4">
-                    <p class="small text-secondary mb-2">🔒 Tu contraseña la maneja Auth0; nunca se guarda en SquadFinder.</p>
-                    <p class="small text-secondary mb-0">🎮 Después podrás vincular Discord, Steam y Twitch desde tu perfil.</p>
+                    <p class="small text-secondary mb-2" data-i18n="login.privacidad">🔒 Tu contraseña la maneja Auth0; nunca se guarda en SquadFinder.</p>
+                    <p class="small text-secondary mb-0" data-i18n="login.cuentas">🎮 Después podrás vincular Discord, Steam y Twitch desde tu perfil.</p>
                 </div>
             </section>
         </div>
@@ -90,26 +92,30 @@
 
     <footer class="sf-footer py-4 mt-5">
         <div class="container">
-            <span>© 2026 SquadFinder LFG · Proyecto Full-Stack COMP2053</span>
+            <span data-i18n="pie.proyecto">© 2026 SquadFinder LFG · Proyecto Full-Stack COMP2053</span>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@2.1.3/dist/auth0-spa-js.production.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"></script>
+    <script src="js/locales.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/api.js"></script>
     <script src="js/catalogo.js"></script>
     <script>
+        // Los textos se piden con t() en el momento de usarlos, para respetar el idioma elegido
         const MOTIVOS = {
-            sesion: ['info', 'Inicia sesión para continuar.'],
-            expirada: ['info', 'Tu sesión expiró. Vuelve a iniciar sesión.'],
-            eliminada: ['danger', 'Tu cuenta fue eliminada por un administrador por incumplir las normas de la comunidad.'],
-            suspendida: ['warning', 'Tu cuenta está suspendida temporalmente por incumplir las normas de la comunidad.'],
+            sesion: ['info', () => t('login.motivoSesion')],
+            expirada: ['info', () => t('login.motivoExpirada')],
+            eliminada: ['danger', () => t('login.motivoEliminada')],
+            suspendida: ['warning', () => t('login.motivoSuspendida')],
         };
         const USUARIOS_PRUEBA = [
-            ['demo|ana', '🦊 ana_gg', 'Administradora: puede ver el panel de moderación'],
-            ['demo|bruno', 'bruno_tank', 'Está aceptado en la sala de ana'],
-            ['demo|carla', '🦄 carla_heals', 'Filtro del chat apagado'],
-            ['demo|diego', 'diego_entry', 'Nivel 0 (Rookie) por una advertencia'],
+            ['demo|ana', '🦊 ana_gg', () => t('login.adminPrueba')],
+            ['demo|bruno', 'bruno_tank', () => t('login.brunoPrueba')],
+            ['demo|carla', '🦄 carla_heals', () => t('login.carlaPrueba')],
+            ['demo|diego', 'diego_entry', () => t('login.diegoPrueba')],
         ];
 
         const aviso = document.getElementById('aviso-login');
@@ -119,11 +125,19 @@
         }
 
         const parametros = new URLSearchParams(location.search);
-        if (MOTIVOS[parametros.get('motivo')]) {
+        i18nListo.then(() => {
+            if (!MOTIVOS[parametros.get('motivo')]) return;
             const [tipo, texto] = MOTIVOS[parametros.get('motivo')];
             const hasta = parametros.get('hasta');
-            mostrarAviso(tipo, hasta ? `${texto} Podrás volver el ${new Date(hasta).toLocaleString('es')}.` : texto);
-        }
+            mostrarAviso(tipo, hasta
+                ? `${texto()} ${t('login.podrasVolver', { fecha: new Date(hasta).toLocaleString(i18next.language) })}`
+                : texto());
+        });
+
+        // Botón de idioma (la barra de este página no tiene menú de usuario)
+        document.getElementById('btn-idioma-login').addEventListener('click', () => {
+            cambiarIdioma(i18next.language === 'es' ? 'en' : 'es');
+        });
 
         // Cambia entre "Iniciar sesión" y "Crear cuenta"
         document.querySelectorAll('input[name="modo-acceso"]').forEach((opcion) => {
@@ -145,8 +159,8 @@
                 location.replace('index.html');
             } catch (e) {
                 if (e.code === 'ONBOARDING_REQUIRED') return location.replace('onboarding.html');
-                if (e.code === 'ACCOUNT_BANNED') mostrarAviso('danger', MOTIVOS.eliminada[1]);
-                else if (e.code === 'ACCOUNT_SUSPENDED') mostrarAviso('warning', MOTIVOS.suspendida[1]);
+                if (e.code === 'ACCOUNT_BANNED') mostrarAviso('danger', MOTIVOS.eliminada[1]());
+                else if (e.code === 'ACCOUNT_SUSPENDED') mostrarAviso('warning', MOTIVOS.suspendida[1]());
                 else mostrarAviso('danger', e.message);
                 if (['ACCOUNT_BANNED', 'ACCOUNT_SUSPENDED'].includes(e.code) && await modoAuth() === 'auth0') {
                     // Cierra la sesión de Auth0 sin salir de esta página, para que vea el aviso
@@ -159,10 +173,10 @@
             document.getElementById('panel-prueba').classList.remove('d-none');
             document.getElementById('usuarios-prueba').innerHTML = USUARIOS_PRUEBA.map(([sub, nombre, detalle]) => `
                 <button type="button" class="btn btn-outline-light text-start" data-sub="${esc(sub)}">
-                    <strong>${esc(nombre)}</strong><br><span class="small text-secondary">${esc(detalle)}</span>
+                    <strong>${esc(nombre)}</strong><br><span class="small text-secondary">${esc(detalle())}</span>
                 </button>`).join('') + `
                 <button type="button" class="btn btn-outline-light text-start" data-sub="nuevo">
-                    <strong>✨ Usuario nuevo</strong><br><span class="small text-secondary">Para probar el onboarding</span>
+                    <strong>${esc(t('login.usuarioNuevo'))}</strong><br><span class="small text-secondary">${esc(t('login.usuarioNuevoTexto'))}</span>
                 </button>`;
             document.getElementById('usuarios-prueba').addEventListener('click', (e) => {
                 const boton = e.target.closest('[data-sub]');
@@ -174,11 +188,12 @@
             // El backend no aceptaría tokens de Auth0 en modo desarrollo
             bloquearBotones(true);
             document.querySelectorAll('#panel-login p, #panel-registro p').forEach((p) => {
-                p.textContent = 'Auth0 está desactivado mientras el backend esté en modo desarrollo. Usa un usuario de prueba.';
+                p.textContent = t('login.authDesactivado');
             });
         }
 
         async function iniciar() {
+            await i18nListo;
             let modo;
             try {
                 modo = await modoAuth();
@@ -200,7 +215,7 @@
                     history.replaceState({}, '', 'login.html');
                 } catch {
                     bloquearBotones(false);
-                    return mostrarAviso('danger', 'No se pudo iniciar sesión. Inténtalo de nuevo.');
+                    return mostrarAviso('danger', t('login.errorEntrar'));
                 }
             }
             if (await cliente.isAuthenticated() && !parametros.has('motivo')) await entrar();

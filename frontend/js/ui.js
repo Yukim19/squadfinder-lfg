@@ -394,11 +394,29 @@ function mostrarErrorPagina(mensaje) {
     document.querySelector('[data-sf-reintentar]')?.addEventListener('click', () => location.reload());
 }
 
+// Opción del menú de usuario para alternar español / inglés (se guarda en el perfil)
+function agregarBotonIdioma() {
+    const salir = document.getElementById('btn-logout').closest('li');
+    salir.previousElementSibling.insertAdjacentHTML('beforebegin',
+        '<li><button class="dropdown-item" id="btn-idioma" type="button"></button></li>');
+    const boton = document.getElementById('btn-idioma');
+    boton.textContent = t('comun.idiomaBoton');
+    boton.setAttribute('aria-label', t('comun.idiomaEtiqueta'));
+    boton.addEventListener('click', async () => {
+        const otro = i18next.language === 'es' ? 'en' : 'es';
+        try {
+            await api('/users/me', { method: 'PUT', body: { ui_language: otro } });
+        } catch { /* si falla, igual se cambia en este navegador */ }
+        await cambiarIdioma(otro);
+    });
+}
+
 async function iniciarNavbar() {
     const nombre = document.getElementById('nav-username');
     if (!nombre) return null;
+    await i18nListo;
     document.getElementById('btn-logout').addEventListener('click', async () => {
-        const ok = await confirmar({ titulo: 'Cerrar sesión', mensaje: '¿Seguro que quieres salir de tu cuenta?', textoBoton: 'Cerrar sesión', peligro: false });
+        const ok = await confirmar({ titulo: t('nav.salirTitulo'), mensaje: t('nav.salirMensaje'), textoBoton: t('nav.salir'), peligro: false });
         if (ok) await cerrarSesion();
     });
 
@@ -409,8 +427,14 @@ async function iniciarNavbar() {
         if (e.code === 'NETWORK_ERROR') mostrarErrorPagina(e.message);
         return null;
     }
+    // El idioma del perfil manda: si es distinto al de este navegador, se cambia y se recarga
+    if (IDIOMAS_UI.includes(yo.ui_language) && yo.ui_language !== i18next.language) {
+        await cambiarIdioma(yo.ui_language);
+        return null;
+    }
     nombre.textContent = yo.username;
     pintarAvatarNavbar(yo);
+    agregarBotonIdioma();
     document.getElementById('nav-perfil-publico').href = `usuario.html?id=${yo.id}`;
 
     // Solo los administradores ven el panel de moderación
@@ -420,7 +444,7 @@ async function iniciarNavbar() {
         document.getElementById('btn-logout').closest('li').previousElementSibling.insertAdjacentHTML('beforebegin', `
             <li><a class="dropdown-item d-flex justify-content-between align-items-center gap-3 ${enPagina ? 'active' : ''}"
                    href="admin_reportes.html" ${enPagina ? 'aria-current="page"' : ''}>
-                🛡️ Moderación ${pendientes ? `<span class="badge text-bg-danger">${pendientes}</span>` : ''}</a></li>`);
+                🛡️ ${esc(t('nav.moderacion'))} ${pendientes ? `<span class="badge text-bg-danger">${pendientes}</span>` : ''}</a></li>`);
     }
     return yo;
 }
