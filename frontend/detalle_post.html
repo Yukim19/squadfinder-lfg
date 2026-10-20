@@ -49,11 +49,11 @@
     </nav>
 
     <main id="contenido" tabindex="-1" class="container py-4">
-        <a href="index.html" class="d-inline-block mb-3">← Volver a las salas</a>
+        <a href="index.html" class="d-inline-block mb-3" data-i18n="detalle.volver">← Volver a las salas</a>
 
         <div id="aviso-bloqueado" class="alert alert-warning d-none d-flex flex-wrap align-items-center gap-2" role="status">
-            <span class="flex-grow-1">🚫 El anfitrión está en tu <strong>lista negra</strong>: sus salas no aparecen en tu feed.</span>
-            <button type="button" class="btn btn-sm btn-outline-dark" id="btn-desbloquear-anfitrion">Quitar de la lista negra</button>
+            <span class="flex-grow-1" data-i18n-html="detalle.bloqueado">🚫 El anfitrión está en tu <strong>lista negra</strong>: sus salas no aparecen en tu feed.</span>
+            <button type="button" class="btn btn-sm btn-outline-dark" id="btn-desbloquear-anfitrion" data-i18n="detalle.quitarBloqueo">Quitar de la lista negra</button>
         </div>
 
         <div class="row g-4">
@@ -64,7 +64,7 @@
                         <span id="badge-estado"></span>
                         <span class="ms-auto small text-secondary" id="compatibilidad"></span>
                     </div>
-                    <h1 id="post-titulo" class="mb-3">Cargando sala...</h1>
+                    <h1 id="post-titulo" class="mb-3" data-i18n="detalle.cargando">Cargando sala...</h1>
                     <div class="sf-meta mb-3" id="post-meta"></div>
                     <p id="post-descripcion" class="mb-4"></p>
 
@@ -72,10 +72,10 @@
 
                     <div class="mb-4">
                         <div class="d-flex justify-content-between small mb-1">
-                            <span>Cupos</span>
+                            <span data-i18n="detalle.cupos">Cupos</span>
                             <span id="post-cupos">0/0</span>
                         </div>
-                        <div class="progress" role="progressbar" aria-label="Cupos ocupados" id="barra-cupos">
+                        <div class="progress" role="progressbar" aria-label="Cupos ocupados" data-i18n-aria-label="detalle.cuposAria" id="barra-cupos">
                             <div class="progress-bar" style="width: 0%"></div>
                         </div>
                     </div>
@@ -86,11 +86,11 @@
 
             <aside class="col-lg-4 d-grid gap-4 align-content-start">
                 <section class="sf-card">
-                    <h2 class="h5 mb-2">Integrantes</h2>
+                    <h2 class="h5 mb-2" data-i18n="detalle.integrantes">Integrantes</h2>
                     <div id="lista-miembros"></div>
                 </section>
                 <section class="sf-card d-none" id="panel-solicitudes">
-                    <h2 class="h5 mb-2">Solicitudes <span class="badge text-bg-warning" id="total-solicitudes">0</span></h2>
+                    <h2 class="h5 mb-2"><span data-i18n="detalle.solicitudes">Solicitudes</span> <span class="badge text-bg-warning" id="total-solicitudes">0</span></h2>
                     <div id="lista-solicitudes"></div>
                 </section>
             </aside>
@@ -102,18 +102,18 @@
         <div class="modal-dialog modal-dialog-centered">
             <form class="modal-content sf-modal" id="form-solicitar">
                 <div class="modal-header border-0">
-                    <h2 class="modal-title h5" id="titulo-solicitar">Solicitar unirme</h2>
+                    <h2 class="modal-title h5" id="titulo-solicitar" data-i18n="detalle.solicitarTitulo">Solicitar unirme</h2>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body pt-0">
-                    <label class="form-label" for="mensaje-solicitud">Mensaje para el anfitrión (opcional)</label>
+                    <label class="form-label" for="mensaje-solicitud" data-i18n="detalle.mensajeAnfitrion">Mensaje para el anfitrión (opcional)</label>
                     <textarea class="form-control" id="mensaje-solicitud" rows="3" maxlength="200"
-                        placeholder="Ej.: Juego de soporte y tengo micrófono."></textarea>
+                        placeholder="Ej.: Juego de soporte y tengo micrófono." data-i18n-placeholder="detalle.mensajeEjemplo"></textarea>
                     <div class="form-text text-end"><span id="contador-solicitud">0</span>/200</div>
                 </div>
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Enviar solicitud</button>
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal" data-i18n="comun.cancelar">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="detalle.enviarSolicitud">Enviar solicitud</button>
                 </div>
             </form>
         </div>
@@ -124,46 +124,46 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <form class="modal-content sf-modal" id="form-editar">
                 <div class="modal-header border-0">
-                    <h2 class="modal-title h5" id="titulo-editar">Editar sala</h2>
+                    <h2 class="modal-title h5" id="titulo-editar" data-i18n="detalle.editarTitulo">Editar sala</h2>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body pt-0">
                     <div class="mb-3">
-                        <label class="form-label" for="editar-titulo">Título</label>
+                        <label class="form-label" for="editar-titulo" data-i18n="detalle.campoTitulo">Título</label>
                         <input type="text" class="form-control" id="editar-titulo" required minlength="3" maxlength="100" pattern=".*\S.*\S.*\S.*">
-                        <div class="invalid-feedback">El título debe tener entre 3 y 100 caracteres.</div>
+                        <div class="invalid-feedback" data-i18n="detalle.errorTitulo">El título debe tener entre 3 y 100 caracteres.</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" for="editar-descripcion">Descripción</label>
+                        <label class="form-label" for="editar-descripcion" data-i18n="detalle.campoDescripcion">Descripción</label>
                         <textarea class="form-control" id="editar-descripcion" rows="3" maxlength="500"></textarea>
                     </div>
                     <div class="row g-3">
                         <div class="col-sm-6">
-                            <label class="form-label" for="editar-cupos">Cupos</label>
+                            <label class="form-label" for="editar-cupos" data-i18n="detalle.campoCupos">Cupos</label>
                             <input type="number" class="form-control" id="editar-cupos" required min="2" max="10">
-                            <div class="invalid-feedback">Entre los jugadores actuales y 10.</div>
+                            <div class="invalid-feedback" data-i18n="detalle.errorCupos">Entre los jugadores actuales y 10.</div>
                         </div>
                         <div class="col-sm-6">
-                            <label class="form-label" for="editar-modo">Tipo de partida</label>
+                            <label class="form-label" for="editar-modo" data-i18n="detalle.campoTipo">Tipo de partida</label>
                             <select class="form-select" id="editar-modo">
-                                <option value="CASUAL">😎 Casual</option>
-                                <option value="COMPETITIVE">🏆 Competitivo</option>
+                                <option value="CASUAL" data-i18n="catalogo.modos.CASUAL.texto">😎 Casual</option>
+                                <option value="COMPETITIVE" data-i18n="catalogo.modos.COMPETITIVE.texto">🏆 Competitivo</option>
                             </select>
                         </div>
                         <div class="col-12" id="bloque-editar-rango">
-                            <label class="form-label" for="editar-rango">🏆 Rango o nivel mínimo</label>
+                            <label class="form-label" for="editar-rango" data-i18n="detalle.campoRango">🏆 Rango o nivel mínimo</label>
                             <input type="text" class="form-control" id="editar-rango" maxlength="50">
-                            <div class="invalid-feedback">En una sala competitiva indica el rango mínimo.</div>
+                            <div class="invalid-feedback" data-i18n="detalle.errorRango">En una sala competitiva indica el rango mínimo.</div>
                         </div>
                     </div>
                     <div class="form-check mt-3">
                         <input class="form-check-input" type="checkbox" id="editar-mic">
-                        <label class="form-check-label" for="editar-mic">Se requiere micrófono</label>
+                        <label class="form-check-label" for="editar-mic" data-i18n="detalle.campoMic">Se requiere micrófono</label>
                     </div>
                 </div>
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal" data-i18n="comun.cancelar">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="detalle.guardarCambios">Guardar cambios</button>
                 </div>
             </form>
         </div>
@@ -236,29 +236,29 @@
             document.getElementById('badge-estado').innerHTML = badgeEstado(sala.status);
             document.getElementById('post-titulo').textContent = sala.title;
             document.getElementById('compatibilidad').textContent =
-                soyAnfitrion() ? '' : `Compatibilidad contigo: ${calcularCompatibilidad(sala, yo)}%`;
+                soyAnfitrion() ? '' : t('detalle.compatibilidad', { n: calcularCompatibilidad(sala, yo) });
             avisoBloqueado.classList.toggle('d-none', !anfitrionBloqueado || soyAnfitrion());
 
             const meta = [
                 esc(textoPlataformas(sala.platforms)),
-                sala.game_crossplay && sala.platforms.length > 1 ? '✅ Crossplay' : null,
+                sala.game_crossplay && sala.platforms.length > 1 ? t('detalle.crossplay') : null,
                 `${ICONOS_IDIOMA[sala.required_language]} ${esc(IDIOMAS_SALA[sala.required_language])}`,
-                sala.mic_required ? '🎙️ Micrófono obligatorio' : '🔇 Micrófono opcional',
-                sala.play_mode === 'COMPETITIVE' ? `🏆 Rango mínimo: ${esc(sala.rank_required ?? 'Cualquiera')}` : null,
-                `🌎 ${esc(REGIONES[sala.host_region] ?? 'Sin región')}`,
+                sala.mic_required ? t('detalle.micObligatorio') : t('detalle.micOpcional'),
+                sala.play_mode === 'COMPETITIVE' ? esc(t('detalle.rangoMinimo', { rango: sala.rank_required ?? t('detalle.cualquiera') })) : null,
+                `🌎 ${esc(REGIONES[sala.host_region] ?? t('detalle.sinRegion'))}`,
             ];
             document.getElementById('post-meta').innerHTML = badgeModo(sala.play_mode)
                 + meta.filter(Boolean).map((m) => `<span class="badge">${m}</span>`).join('');
 
             const descripcion = document.getElementById('post-descripcion');
-            descripcion.textContent = sala.description ?? 'El anfitrión no agregó descripción.';
+            descripcion.textContent = sala.description ?? t('detalle.sinDescripcion');
             descripcion.classList.toggle('text-secondary', !sala.description);
 
             const anfitrion = miembros.find((m) => m.role === 'HOST');
             document.getElementById('post-anfitrion').innerHTML =
-                `${avatar(sala.host_username, '', anfitrion?.avatar_url)} <span>Anfitrión: ${enlaceUsuario(sala.host_id, sala.host_username)}</span> ${badgeNivel(sala.host_level)}`;
+                `${avatar(sala.host_username, '', anfitrion?.avatar_url)} <span>${esc(t('detalle.anfitrionDe'))}${enlaceUsuario(sala.host_id, sala.host_username)}</span> ${badgeNivel(sala.host_level)}`;
 
-            document.getElementById('post-cupos').textContent = `${sala.current_players}/${sala.max_players} jugadores`;
+            document.getElementById('post-cupos').textContent = t('ui.jugadores', { actual: sala.current_players, max: sala.max_players });
             const porcentaje = Math.round((sala.current_players / sala.max_players) * 100);
             const barra = document.getElementById('barra-cupos');
             barra.setAttribute('aria-valuenow', porcentaje);
@@ -276,8 +276,8 @@
                         ${avatar(m.username, '', m.avatar_url)}
                         <div>
                             <div>${enlaceUsuario(m.user_id, m.username)}
-                                ${m.role === 'HOST' ? '<span class="badge text-bg-warning ms-1">Anfitrión</span>' : ''}</div>
-                            <small class="text-secondary">${esc(REGIONES[m.region] ?? 'Sin región')}</small>
+                                ${m.role === 'HOST' ? `<span class="badge text-bg-warning ms-1">${esc(t('detalle.anfitrion'))}</span>` : ''}</div>
+                            <small class="text-secondary">${esc(REGIONES[m.region] ?? t('detalle.sinRegion'))}</small>
                         </div>
                     </div>
                     ${badgeNivel(m.level)}
@@ -290,7 +290,7 @@
             document.getElementById('total-solicitudes').textContent = solicitudes.length;
             const lista = document.getElementById('lista-solicitudes');
             if (solicitudes.length === 0) {
-                lista.innerHTML = '<p class="text-secondary small mb-0">No hay solicitudes pendientes.</p>';
+                lista.innerHTML = `<p class="text-secondary small mb-0">${esc(t('detalle.sinSolicitudes'))}</p>`;
                 return;
             }
             const lleno = sala.current_players >= sala.max_players;
@@ -299,42 +299,42 @@
                     <div class="d-flex align-items-center gap-2 mb-1">
                         ${avatar(s.username, 'sf-avatar-sm', s.avatar_url)} ${enlaceUsuario(s.applicant_id, s.username)} ${badgeNivel(s.level)}
                     </div>
-                    <small class="text-secondary d-block">${esc(REGIONES[s.region] ?? 'Sin región')}</small>
+                    <small class="text-secondary d-block">${esc(REGIONES[s.region] ?? t('detalle.sinRegion'))}</small>
                     ${s.message ? `<p class="small mb-2 mt-1">"${esc(s.message)}"</p>` : ''}
                     <div class="d-flex gap-2 mt-2">
-                        <button class="btn btn-sm btn-success" data-aceptar="${s.id}" ${lleno ? 'disabled title="La sala está llena"' : ''}>Aceptar</button>
-                        <button class="btn btn-sm btn-danger" data-rechazar="${s.id}">Rechazar</button>
+                        <button class="btn btn-sm btn-success" data-aceptar="${s.id}" ${lleno ? `disabled title="${esc(t('detalle.salaLlena'))}"` : ''}>${esc(t('detalle.aceptar'))}</button>
+                        <button class="btn btn-sm btn-danger" data-rechazar="${s.id}">${esc(t('detalle.rechazar'))}</button>
                     </div>
                 </div>`).join('');
         }
 
         function pintarAcciones() {
             const acciones = [];
-            const chat = `<a class="btn btn-primary" href="chat_sala.html?id=${sala.id}">💬 Ir al chat</a>`;
+            const chat = `<a class="btn btn-primary" href="chat_sala.html?id=${sala.id}">${esc(t('detalle.chat'))}</a>`;
             if (sala.status === 'CANCELLED') {
-                acciones.push('<span class="text-secondary">El anfitrión canceló esta sala.</span>');
+                acciones.push(`<span class="text-secondary">${esc(t('detalle.cancelada'))}</span>`);
             } else if (!salaActiva()) {
-                acciones.push('<span class="text-secondary">Esta sala ya terminó. Puedes calificar a tus compañeros desde el <a href="historial_partidas.html">historial</a>.</span>');
+                acciones.push(`<span class="text-secondary">${t('detalle.terminada')}</span>`);
             } else if (soyAnfitrion()) {
                 acciones.push(chat);
                 if (sala.status !== 'IN_PROGRESS') {
-                    acciones.push('<button class="btn btn-outline-light" id="btn-empezar">▶️ Empezar partida</button>');
+                    acciones.push(`<button class="btn btn-outline-light" id="btn-empezar">${esc(t('detalle.empezar'))}</button>`);
                 }
                 acciones.push(
-                    '<button class="btn btn-outline-light" id="btn-editar">✏️ Editar sala</button>',
-                    '<button class="btn btn-outline-light" id="btn-terminar">🏁 Marcar como terminada</button>',
-                    '<button class="btn btn-outline-danger ms-sm-auto" id="btn-eliminar">Cancelar sala</button>');
+                    `<button class="btn btn-outline-light" id="btn-editar">${esc(t('detalle.editar'))}</button>`,
+                    `<button class="btn btn-outline-light" id="btn-terminar">${esc(t('detalle.terminar'))}</button>`,
+                    `<button class="btn btn-outline-danger ms-sm-auto" id="btn-eliminar">${esc(t('detalle.cancelarSala'))}</button>`);
             } else if (soyMiembro()) {
-                acciones.push(chat, '<button class="btn btn-outline-danger" id="btn-salir">Salir de la sala</button>');
+                acciones.push(chat, `<button class="btn btn-outline-danger" id="btn-salir">${esc(t('detalle.salir'))}</button>`);
             } else if (solicitudEnviada()) {
-                acciones.push('<span class="badge text-bg-info align-self-center">⏳ Solicitud enviada</span>',
-                    '<button class="btn btn-outline-light" id="btn-retirar">Retirar solicitud</button>');
+                acciones.push(`<span class="badge text-bg-info align-self-center">${esc(t('detalle.solicitudEnviada'))}</span>`,
+                    `<button class="btn btn-outline-light" id="btn-retirar">${esc(t('detalle.retirar'))}</button>`);
             } else if (sala.my_application?.status === 'REJECTED') {
-                acciones.push('<span class="text-secondary">El anfitrión rechazó tu solicitud.</span>');
+                acciones.push(`<span class="text-secondary">${esc(t('detalle.rechazada'))}</span>`);
             } else if (sala.current_players >= sala.max_players) {
-                acciones.push('<button class="btn btn-primary" disabled>Sala llena</button>');
+                acciones.push(`<button class="btn btn-primary" disabled>${esc(t('detalle.llena'))}</button>`);
             } else {
-                acciones.push('<button class="btn btn-primary" id="btn-solicitar">🙋 Solicitar unirme</button>');
+                acciones.push(`<button class="btn btn-primary" id="btn-solicitar">${esc(t('detalle.solicitar'))}</button>`);
             }
             document.getElementById('acciones').innerHTML = acciones.join('');
         }
@@ -347,12 +347,12 @@
 
             if (boton.id === 'btn-solicitar') modalSolicitar.show();
 
-            if (boton.id === 'btn-retirar' && await confirmar({ titulo: 'Retirar solicitud', mensaje: '¿Seguro que ya no quieres unirte a esta sala?', textoBoton: 'Retirar' })) {
-                await accion(() => api(`${base}/applications/me`, { method: 'DELETE' }), 'Retiraste tu solicitud.', 'info');
+            if (boton.id === 'btn-retirar' && await confirmar({ titulo: t('detalle.retirarTitulo'), mensaje: t('detalle.retirarMensaje'), textoBoton: t('detalle.retirarBoton') })) {
+                await accion(() => api(`${base}/applications/me`, { method: 'DELETE' }), t('detalle.retirada'), 'info');
             }
 
-            if (boton.id === 'btn-salir' && await confirmar({ titulo: 'Salir de la sala', mensaje: 'Dejarás tu cupo libre para otro jugador.', textoBoton: 'Salir' })) {
-                await accion(() => api(`${base}/applications/me`, { method: 'DELETE' }), 'Saliste de la sala.', 'info');
+            if (boton.id === 'btn-salir' && await confirmar({ titulo: t('detalle.salirTitulo'), mensaje: t('detalle.salirMensaje'), textoBoton: t('detalle.salirBoton') })) {
+                await accion(() => api(`${base}/applications/me`, { method: 'DELETE' }), t('detalle.saliste'), 'info');
             }
 
             if (boton.id === 'btn-editar') {
@@ -369,17 +369,17 @@
             }
 
             if (boton.id === 'btn-empezar') {
-                await accion(() => api(base, { method: 'PUT', body: { status: 'IN_PROGRESS' } }), 'La partida empezó.');
+                await accion(() => api(base, { method: 'PUT', body: { status: 'IN_PROGRESS' } }), t('detalle.empezo'));
             }
 
-            if (boton.id === 'btn-terminar' && await confirmar({ titulo: 'Marcar como terminada', mensaje: 'La sala se cerrará y pasará al historial de todos los integrantes para que puedan calificarse.', textoBoton: 'Terminar partida', peligro: false })) {
-                await accion(() => api(base, { method: 'PUT', body: { status: 'CLOSED' } }), '¡Partida terminada! Ya pueden calificarse en el historial.');
+            if (boton.id === 'btn-terminar' && await confirmar({ titulo: t('detalle.terminarTitulo'), mensaje: t('detalle.terminarMensaje'), textoBoton: t('detalle.terminarBoton'), peligro: false })) {
+                await accion(() => api(base, { method: 'PUT', body: { status: 'CLOSED' } }), t('detalle.terminoOk'));
             }
 
-            if (boton.id === 'btn-eliminar' && await confirmar({ titulo: 'Cancelar sala', mensaje: 'La sala se cancelará y dejará de aparecer en el feed. Esta acción no se puede deshacer.', textoBoton: 'Cancelar sala' })) {
+            if (boton.id === 'btn-eliminar' && await confirmar({ titulo: t('detalle.cancelarTitulo'), mensaje: t('detalle.cancelarMensaje'), textoBoton: t('detalle.cancelarSala') })) {
                 try {
                     await api(base, { method: 'DELETE' });
-                    mostrarToast('Sala cancelada.', 'danger');
+                    mostrarToast(t('detalle.cancelarOk'), 'danger');
                     setTimeout(() => { location.href = 'index.html'; }, 1200);
                 } catch (err) {
                     avisarError(err);
@@ -392,7 +392,7 @@
                 const s = solicitudes.find((x) => x.id === id);
                 await accion(
                     () => api(`${base}/applications/${id}`, { method: 'PUT', body: { status: aceptar ? 'ACCEPTED' : 'REJECTED' } }),
-                    aceptar ? `${s.username} se unió a la sala.` : `Rechazaste la solicitud de ${s.username}.`,
+                    aceptar ? t('detalle.seUnio', { usuario: s.username }) : t('detalle.rechazo', { usuario: s.username }),
                     aceptar ? undefined : 'info');
             }
         });
@@ -402,7 +402,7 @@
                 await api(`/users/me/blocks/${sala.host_id}`, { method: 'DELETE' });
                 anfitrionBloqueado = false;
                 avisoBloqueado.classList.add('d-none');
-                mostrarToast(`${sala.host_username} salió de tu lista negra.`, 'info');
+                mostrarToast(t('detalle.quitadoBloqueo', { usuario: sala.host_username }), 'info');
             } catch (err) {
                 avisarError(err);
             }
@@ -426,10 +426,10 @@
                 modalSolicitar.hide();
                 mensaje.value = '';
                 document.getElementById('contador-solicitud').textContent = 0;
-                mostrarToast('Solicitud enviada. El anfitrión la verá en su sala.');
+                mostrarToast(t('detalle.solicitudOk'));
             } catch (err) {
                 modalSolicitar.hide();
-                avisarError(err, 'No se pudo enviar la solicitud.');
+                avisarError(err, t('detalle.solicitudError'));
             }
             boton.disabled = false;
             await cargar();
@@ -458,9 +458,9 @@
                     },
                 });
                 modalEditar.hide();
-                mostrarToast('Sala actualizada.');
+                mostrarToast(t('detalle.actualizada'));
             } catch (err) {
-                avisarError(err, 'No se pudo guardar la sala.');
+                avisarError(err, t('detalle.errorGuardar'));
             }
             await cargar();
         });
@@ -468,6 +468,7 @@
         async function iniciar() {
             if (!idSala) return location.replace('404.html');
             try {
+                await i18nListo;
                 yo = await iniciarPagina();
                 await cargar();
                 // Se puede llegar a una sala bloqueada por un enlace directo: se avisa

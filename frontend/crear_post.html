@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0E0B16">
     <link rel="icon" href="img/icono.svg" type="image/svg+xml">
-    <title>Crear búsqueda - SquadFinder LFG</title>
+    <title data-i18n="crear.titulo">Crear búsqueda - SquadFinder LFG</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,76 +50,76 @@
 
     <main id="contenido" tabindex="-1" class="container py-4">
         <header class="mb-4">
-            <p class="sf-kicker mb-2">Nueva sala LFG</p>
-            <h1 class="mb-1">Crear búsqueda de equipo</h1>
-            <p class="text-secondary mb-0">Completa los 3 pasos; en la vista previa ves cómo verán tu sala los demás jugadores.</p>
+            <p class="sf-kicker mb-2" data-i18n="crear.kicker">Nueva sala LFG</p>
+            <h1 class="mb-1" data-i18n="crear.encabezado">Crear búsqueda de equipo</h1>
+            <p class="text-secondary mb-0" data-i18n="crear.intro">Completa los 3 pasos; en la vista previa ves cómo verán tu sala los demás jugadores.</p>
         </header>
 
         <div class="row g-4">
             <form id="form-post" class="col-lg-7 d-grid gap-4">
                 <!-- Paso 1: juego -->
                 <section class="sf-card">
-                    <h2 class="h5 mb-1"><span class="sf-paso">1</span>¿A qué van a jugar?</h2>
-                    <p class="text-secondary small">Solo aparecen los juegos de tu perfil.
+                    <h2 class="h5 mb-1"><span class="sf-paso">1</span><span data-i18n="crear.paso1">¿A qué van a jugar?</span></h2>
+                    <p class="text-secondary small" data-i18n-html="crear.soloTuPerfil">Solo aparecen los juegos de tu perfil.
                         <a href="perfil_config.html">¿No ves tu juego? Agrégalo aquí.</a></p>
-                    <div class="d-flex flex-wrap gap-2" id="opciones-juego" role="radiogroup" aria-label="Juego"></div>
-                    <div id="error-juego" class="text-danger small mt-2 d-none" role="alert">Elige el juego de la sala.</div>
+                    <div class="d-flex flex-wrap gap-2" id="opciones-juego" role="radiogroup" aria-label="Juego" data-i18n-aria-label="crear.juegoAria"></div>
+                    <div id="error-juego" class="text-danger small mt-2 d-none" role="alert" data-i18n="crear.errorJuego">Elige el juego de la sala.</div>
                 </section>
 
                 <!-- Paso 2: título y descripción -->
                 <section class="sf-card">
-                    <h2 class="h5 mb-3"><span class="sf-paso">2</span>Cuéntales de qué se trata</h2>
-                    <p class="small mb-2">Plantillas rápidas:</p>
+                    <h2 class="h5 mb-3"><span class="sf-paso">2</span><span data-i18n="crear.paso2">Cuéntales de qué se trata</span></h2>
+                    <p class="small mb-2" data-i18n="crear.plantillas">Plantillas rápidas:</p>
                     <div class="d-flex flex-wrap gap-2 mb-3" id="plantillas"></div>
 
                     <div class="mb-3">
-                        <label class="form-label" for="titulo">Título</label>
+                        <label class="form-label" for="titulo" data-i18n="crear.tituloCampo">Título</label>
                         <input type="text" class="form-control" id="titulo" required minlength="3" maxlength="100"
-                            pattern=".*\S.*\S.*\S.*" placeholder="Ej.: Ranked tranqui esta noche">
-                        <div class="invalid-feedback">El título debe tener entre 3 y 100 caracteres.</div>
+                            pattern=".*\S.*\S.*\S.*" placeholder="Ej.: Ranked tranqui esta noche" data-i18n-placeholder="crear.tituloEjemplo">
+                        <div class="invalid-feedback" data-i18n="crear.tituloError">El título debe tener entre 3 y 100 caracteres.</div>
                         <div class="form-text text-end"><span id="contador-titulo">0</span>/100</div>
                     </div>
                     <div>
-                        <label class="form-label" for="descripcion">Descripción <span class="text-secondary">(opcional)</span></label>
+                        <label class="form-label" for="descripcion" data-i18n-html="crear.descripcion">Descripción <span class="text-secondary">(opcional)</span></label>
                         <textarea class="form-control" id="descripcion" rows="3" maxlength="500"
-                            placeholder="¿Qué buscas? Rol, horario, estilo de juego..."></textarea>
+                            placeholder="¿Qué buscas? Rol, horario, estilo de juego..." data-i18n-placeholder="crear.descripcionEjemplo"></textarea>
                         <div class="form-text text-end"><span id="contador-descripcion">0</span>/500</div>
                     </div>
                 </section>
 
                 <!-- Paso 3: requisitos -->
                 <section class="sf-card">
-                    <h2 class="h5 mb-3"><span class="sf-paso">3</span>Requisitos de la sala</h2>
+                    <h2 class="h5 mb-3"><span class="sf-paso">3</span><span data-i18n="crear.paso3">Requisitos de la sala</span></h2>
 
                     <fieldset class="mb-4">
                         <legend class="form-label fs-6 d-flex flex-wrap align-items-center gap-2">
-                            Plataformas <span id="badge-crossplay"></span>
+                            <span data-i18n="crear.plataformas">Plataformas</span> <span id="badge-crossplay"></span>
                         </legend>
-                        <p class="form-text mt-0" id="ayuda-plataformas">Elige primero el juego.</p>
+                        <p class="form-text mt-0" id="ayuda-plataformas" data-i18n="crear.elegirJuegoPrimero">Elige primero el juego.</p>
                         <div class="d-flex flex-wrap gap-2" id="opciones-plataforma"></div>
-                        <div id="error-plataforma" class="text-danger small mt-2 d-none" role="alert">Elige al menos una plataforma.</div>
+                        <div id="error-plataforma" class="text-danger small mt-2 d-none" role="alert" data-i18n="crear.errorPlataforma">Elige al menos una plataforma.</div>
                     </fieldset>
 
                     <fieldset class="mb-4">
-                        <legend class="form-label fs-6">Tipo de partida</legend>
+                        <legend class="form-label fs-6" data-i18n="crear.tipoPartida">Tipo de partida</legend>
                         <div class="d-flex flex-wrap gap-2" id="opciones-modo"></div>
                     </fieldset>
 
                     <div class="row g-4 mb-4">
                         <div class="col-sm-6">
-                            <span class="form-label d-block" id="etiqueta-cupos">Jugadores en total</span>
+                            <span class="form-label d-block" id="etiqueta-cupos" data-i18n="crear.jugadoresTotal">Jugadores en total</span>
                             <div class="sf-stepper" role="group" aria-labelledby="etiqueta-cupos">
-                                <button type="button" id="cupos-menos" aria-label="Quitar un cupo">−</button>
+                                <button type="button" id="cupos-menos" aria-label="Quitar un cupo" data-i18n-aria-label="crear.quitarCupo">−</button>
                                 <output id="cupos" aria-live="polite">5</output>
-                                <button type="button" id="cupos-mas" aria-label="Agregar un cupo">+</button>
+                                <button type="button" id="cupos-mas" aria-label="Agregar un cupo" data-i18n-aria-label="crear.agregarCupo">+</button>
                             </div>
-                            <div class="form-text">Entre 2 y 10, contándote a ti.</div>
+                            <div class="form-text" data-i18n="crear.cuposAyuda">Entre 2 y 10, contándote a ti.</div>
                         </div>
                         <div class="col-sm-6 d-none" id="bloque-rango">
-                            <label class="form-label" for="rango">🏆 Rango o nivel mínimo</label>
+                            <label class="form-label" for="rango" data-i18n="crear.rango">🏆 Rango o nivel mínimo</label>
                             <input type="text" class="form-control" id="rango" maxlength="50" list="lista-rangos"
-                                placeholder="Ej.: Oro">
-                            <div class="invalid-feedback">En una sala competitiva indica el rango mínimo.</div>
+                                placeholder="Ej.: Oro" data-i18n-placeholder="crear.rangoEjemplo">
+                            <div class="invalid-feedback" data-i18n="crear.rangoError">En una sala competitiva indica el rango mínimo.</div>
                             <datalist id="lista-rangos"></datalist>
                             <div class="d-flex flex-wrap gap-1 mt-2" id="rangos-rapidos"></div>
                         </div>
@@ -127,11 +127,11 @@
 
                     <div class="row g-4">
                         <fieldset class="col-sm-6">
-                            <legend class="form-label fs-6">Idioma de la sala</legend>
+                            <legend class="form-label fs-6" data-i18n="crear.idiomaSala">Idioma de la sala</legend>
                             <div class="d-flex flex-wrap gap-2" id="opciones-idioma"></div>
                         </fieldset>
                         <div class="col-sm-6">
-                            <span class="form-label d-block">Micrófono</span>
+                            <span class="form-label d-block" data-i18n="crear.microfono">Micrófono</span>
                             <div class="form-check form-switch fs-5">
                                 <input class="form-check-input" type="checkbox" role="switch" id="mic">
                                 <label class="form-check-label fs-6" for="mic" id="texto-mic">Opcional</label>
@@ -141,20 +141,20 @@
                 </section>
 
                 <div class="d-flex flex-wrap gap-2">
-                    <button type="submit" class="btn btn-primary btn-lg">🚀 Publicar sala</button>
-                    <button type="button" class="btn btn-outline-light btn-lg" id="btn-limpiar">Limpiar</button>
-                    <a href="index.html" class="btn btn-link btn-lg ms-sm-auto">Cancelar</a>
+                    <button type="submit" class="btn btn-primary btn-lg" data-i18n="crear.publicar">🚀 Publicar sala</button>
+                    <button type="button" class="btn btn-outline-light btn-lg" id="btn-limpiar" data-i18n="crear.limpiar">Limpiar</button>
+                    <a href="index.html" class="btn btn-link btn-lg ms-sm-auto" data-i18n="crear.cancelar">Cancelar</a>
                 </div>
             </form>
 
             <!-- Vista previa en vivo -->
             <aside class="col-lg-5">
                 <div class="sf-preview">
-                    <p class="small text-secondary mb-2">👁️ Vista previa: así aparecerá en el feed</p>
+                    <p class="small text-secondary mb-2" data-i18n="crear.vistaPrevia">👁️ Vista previa: así aparecerá en el feed</p>
                     <article class="sf-card">
                         <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
                             <span class="badge sf-badge-live" id="prev-juego">Elige un juego</span>
-                            <span class="badge text-bg-success">Abierta</span>
+                            <span class="badge text-bg-success" data-i18n="crear.abierta">Abierta</span>
                         </div>
                         <h2 class="h4 mb-2" id="prev-titulo">Tu título aparecerá aquí</h2>
                         <p class="text-secondary small mb-3" id="prev-descripcion">Sin descripción.</p>
@@ -165,7 +165,7 @@
                             <small class="text-secondary" id="prev-cupos">1/5</small>
                         </div>
                     </article>
-                    <div class="sf-card mt-3 small text-secondary">
+                    <div class="sf-card mt-3 small text-secondary" data-i18n-html="crear.consejos">
                         💡 <strong>Consejos:</strong> un título claro y una descripción con tu rol y horario reciben
                         más solicitudes. Cuando alguien pida unirse, te avisaremos por Discord.
                     </div>
@@ -223,7 +223,7 @@
             if (!juego) {
                 $('opciones-plataforma').innerHTML = '';
                 $('badge-crossplay').innerHTML = '';
-                $('ayuda-plataformas').textContent = 'Elige primero el juego.';
+                $('ayuda-plataformas').textContent = t('crear.elegirJuegoPrimero');
                 return;
             }
             const anteriores = marcados('plataforma').filter((p) => juego.platforms.includes(p));
@@ -231,11 +231,11 @@
             if (!juego.crossplay) seleccion = seleccion.slice(0, 1);
 
             $('badge-crossplay').innerHTML = juego.crossplay
-                ? '<span class="badge sf-badge-honor">✅ Crossplay</span>'
-                : '<span class="badge text-bg-secondary">Sin crossplay</span>';
+                ? `<span class="badge sf-badge-honor">${esc(t('crear.crossplay'))}</span>`
+                : `<span class="badge text-bg-secondary">${esc(t('crear.sinCrossplay'))}</span>`;
             $('ayuda-plataformas').textContent = juego.crossplay
-                ? `${juego.name} tiene crossplay: marca todas las plataformas desde las que pueden unirse.`
-                : `${juego.name} no tiene crossplay entre plataformas: elige una sola.`;
+                ? t('crear.ayudaCrossplay', { juego: juego.name })
+                : t('crear.ayudaSinCrossplay', { juego: juego.name });
             opciones('opciones-plataforma', 'plataforma',
                 juego.platforms.map((p) => ({ valor: p, icono: ICONOS_PLATAFORMA[p], texto: p })),
                 seleccion, juego.crossplay ? 'checkbox' : 'radio');
@@ -268,24 +268,24 @@
             $('cupos').textContent = cupos;
             $('cupos-menos').disabled = cupos <= 2;
             $('cupos-mas').disabled = cupos >= 10;
-            $('texto-mic').textContent = $('mic').checked ? 'Obligatorio' : 'Opcional';
+            $('texto-mic').textContent = $('mic').checked ? t('crear.micObligatorio') : t('crear.micOpcional');
 
-            $('prev-juego').textContent = juego?.name ?? 'Elige un juego';
-            $('prev-titulo').textContent = titulo || 'Tu título aparecerá aquí';
+            $('prev-juego').textContent = juego?.name ?? t('crear.elegirJuego');
+            $('prev-titulo').textContent = titulo || t('crear.tituloPrevia');
             $('prev-titulo').classList.toggle('text-secondary', !titulo);
-            $('prev-descripcion').textContent = descripcion || 'Sin descripción.';
+            $('prev-descripcion').textContent = descripcion || t('crear.sinDescripcion');
             $('prev-meta').innerHTML = badgeModo(valorRadio('modo')) + [
-                plataformas.length ? esc(textoPlataformas(plataformas)) : 'Sin plataforma',
+                plataformas.length ? esc(textoPlataformas(plataformas)) : t('crear.sinPlataforma'),
                 `${ICONOS_IDIOMA[idioma]} ${esc(IDIOMAS_SALA[idioma])}`,
-                $('mic').checked ? '🎙️ Micrófono obligatorio' : '🔇 Micrófono opcional',
-                competitivo ? `🏆 ${esc($('rango').value.trim() || 'Rango por definir')}` : null,
+                $('mic').checked ? t('crear.micPrevObligatorio') : t('crear.micPrevOpcional'),
+                competitivo ? `🏆 ${esc($('rango').value.trim() || t('crear.rangoPorDefinir'))}` : null,
                 `🌎 ${esc(REGIONES[yo.region])}`,
             ].filter(Boolean).map((m) => `<span class="badge">${m}</span>`).join('');
             $('prev-anfitrion').innerHTML = `${avatar(yo.username, 'sf-avatar-sm', yo.avatar_url)}
-                <span class="small">Anfitrión: <strong>${esc(yo.username)}</strong></span> ${badgeNivel(yo.level)}`;
+                <span class="small">${esc(t('crear.anfitrion'))} <strong>${esc(yo.username)}</strong></span> ${badgeNivel(yo.level)}`;
             $('prev-slots').innerHTML = Array.from({ length: cupos }, (_, i) =>
                 `<span class="sf-slot ${i === 0 ? 'sf-slot-lleno' : ''}"></span>`).join('');
-            $('prev-cupos').textContent = `1/${cupos} jugadores`;
+            $('prev-cupos').textContent = t('crear.jugadoresPrevia', { max: cupos });
         }
 
         form.addEventListener('input', actualizarVistaPrevia);
@@ -315,13 +315,13 @@
                 $('mic').checked = p.mic;
                 $(`modo-${p.modo}`).checked = true;
                 actualizarModo();
-                mostrarToast(`Plantilla "${p.nombre}" aplicada. Puedes editar el texto.`, 'info');
+                mostrarToast(t('crear.plantillaAplicada', { nombre: p.nombre }), 'info');
             }
             actualizarVistaPrevia();
         });
 
         $('btn-limpiar').addEventListener('click', async () => {
-            if (!await confirmar({ titulo: 'Limpiar formulario', mensaje: 'Se borrará todo lo que escribiste.', textoBoton: 'Limpiar', peligro: false })) return;
+            if (!await confirmar({ titulo: t('crear.limpiarTitulo'), mensaje: t('crear.limpiarMensaje'), textoBoton: t('crear.limpiar'), peligro: false })) return;
             form.reset();
             form.classList.remove('was-validated');
             cupos = 5;
@@ -360,19 +360,20 @@
             boton.disabled = true; // evita publicar dos veces con doble clic
             try {
                 const sala = await api('/lfg/posts', { method: 'POST', body: datos });
-                mostrarToast('¡Sala publicada! Te llevamos a tu sala.');
+                mostrarToast(t('crear.publicada'));
                 setTimeout(() => { location.href = `detalle_post.html?id=${sala.id}`; }, 900);
             } catch (e) {
                 boton.disabled = false;
                 if (e.code === 'GAME_NOT_IN_PROFILE') {
-                    return mostrarToast('Ese juego no está en tu perfil. Agrégalo en "Configurar perfil".', 'danger');
+                    return mostrarToast(t('crear.juegoNoPerfil'), 'danger');
                 }
-                avisarError(e, 'No se pudo publicar la sala.');
+                avisarError(e, t('crear.errorPublicar'));
             }
         });
 
         async function iniciar() {
             try {
+                await i18nListo;
                 yo = await iniciarPagina();
                 const { juegos } = await catalogo();
                 misJuegos = juegos.filter((j) => yo.games.includes(j.id));

@@ -176,7 +176,12 @@ function chipsMarcados(nombre) {
    Idioma: reemplaza los textos de las constantes de arriba por los del idioma
    elegido (las mismas variables, así el resto del código no cambia).
    --------------------------------------------------------------------- */
+const RANGOS_ORIGINALES = structuredClone(RANGOS_POR_JUEGO);
+
 function localizarCatalogo() {
+    for (const id of Object.keys(RANGOS_POR_JUEGO)) {
+        RANGOS_POR_JUEGO[id] = RANGOS_ORIGINALES[id].map((r) => t(`catalogo.rangos.${r}`, { defaultValue: r }));
+    }
     for (const k of Object.keys(REGIONES)) REGIONES[k] = t(`catalogo.regiones.${k}`);
     IDIOMAS_USUARIO.both = t('catalogo.idiomaAmbos');
     IDIOMAS_SALA.any = t('catalogo.idiomaTodos');
