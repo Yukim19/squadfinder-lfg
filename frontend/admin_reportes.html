@@ -50,61 +50,61 @@
 
     <main id="contenido" tabindex="-1" class="container py-4" style="max-width: 980px;">
         <div id="sin-permiso" class="sf-card text-center d-none">
-            <h1 class="h3">🔒 Acceso solo para administradores</h1>
-            <p class="text-secondary">Tu cuenta no tiene permisos de moderación.</p>
-            <a href="index.html" class="btn btn-primary">Volver a las salas</a>
+            <h1 class="h3" data-i18n="admin.sinPermisoTitulo">🔒 Acceso solo para administradores</h1>
+            <p class="text-secondary" data-i18n="admin.sinPermisoTexto">Tu cuenta no tiene permisos de moderación.</p>
+            <a href="index.html" class="btn btn-primary" data-i18n="admin.volverSalas">Volver a las salas</a>
         </div>
 
         <div id="panel" class="d-none">
             <header class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
                 <div>
-                    <p class="sf-kicker mb-2">Panel de administrador</p>
-                    <h1 class="mb-1">🛡️ Moderación</h1>
-                    <p class="text-secondary mb-0">Revisa los reportes de la comunidad y los juegos que sugieren los usuarios.</p>
+                    <p class="sf-kicker mb-2" data-i18n="admin.kicker">Panel de administrador</p>
+                    <h1 class="mb-1" data-i18n="admin.encabezado">🛡️ Moderación</h1>
+                    <p class="text-secondary mb-0" data-i18n="admin.intro">Revisa los reportes de la comunidad y los juegos que sugieren los usuarios.</p>
                 </div>
-                <div class="btn-group flex-wrap" role="group" aria-label="Secciones">
+                <div class="btn-group flex-wrap" role="group" aria-label="Secciones" data-i18n-aria-label="admin.seccionesAria">
                     <input type="radio" class="btn-check" name="vista" id="vista-pendientes" value="PENDING" checked>
-                    <label class="btn btn-outline-light" for="vista-pendientes">Pendientes <span class="badge text-bg-danger" id="total-pendientes">0</span></label>
+                    <label class="btn btn-outline-light" for="vista-pendientes"><span data-i18n="admin.pendientes">Pendientes</span> <span class="badge text-bg-danger" id="total-pendientes">0</span></label>
                     <input type="radio" class="btn-check" name="vista" id="vista-resueltos" value="RESOLVED">
-                    <label class="btn btn-outline-light" for="vista-resueltos">Resueltos <span class="badge text-bg-secondary" id="total-resueltos">0</span></label>
+                    <label class="btn btn-outline-light" for="vista-resueltos"><span data-i18n="admin.resueltos">Resueltos</span> <span class="badge text-bg-secondary" id="total-resueltos">0</span></label>
                     <input type="radio" class="btn-check" name="vista" id="vista-juegos" value="GAMES">
-                    <label class="btn btn-outline-light" for="vista-juegos">🎮 Juegos sugeridos <span class="badge text-bg-info" id="total-juegos">0</span></label>
+                    <label class="btn btn-outline-light" for="vista-juegos"><span data-i18n="admin.juegosSugeridos">🎮 Juegos sugeridos</span> <span class="badge text-bg-info" id="total-juegos">0</span></label>
                 </div>
             </header>
 
             <!-- Reglas automáticas (tabla moderation_settings) -->
             <details class="sf-card mb-4" id="reglas">
-                <summary class="fw-semibold">⚙️ Reglas automáticas: <span id="resumen-reglas" class="text-secondary fw-normal"></span></summary>
+                <summary class="fw-semibold"><span data-i18n="admin.reglasTitulo">⚙️ Reglas automáticas:</span> <span id="resumen-reglas" class="text-secondary fw-normal"></span></summary>
                 <form id="form-reglas" class="row g-3 mt-2">
                     <div class="col-sm-6 col-lg-4">
-                        <label class="form-label" for="regla-limite">Advertencias antes de sancionar</label>
+                        <label class="form-label" for="regla-limite" data-i18n="admin.limite">Advertencias antes de sancionar</label>
                         <input type="number" class="form-control" id="regla-limite" min="1" max="10" required>
-                        <div class="invalid-feedback">Entre 1 y 10.</div>
+                        <div class="invalid-feedback" data-i18n="admin.errorLimite">Entre 1 y 10.</div>
                     </div>
                     <div class="col-sm-6 col-lg-4">
-                        <label class="form-label" for="regla-accion">Al llegar al límite</label>
+                        <label class="form-label" for="regla-accion" data-i18n="admin.alLimite">Al llegar al límite</label>
                         <select class="form-select" id="regla-accion">
-                            <option value="BAN">🚫 Eliminar la cuenta</option>
-                            <option value="SUSPEND">⏸️ Suspender la cuenta</option>
+                            <option value="BAN" data-i18n="admin.accionBan">🚫 Eliminar la cuenta</option>
+                            <option value="SUSPEND" data-i18n="admin.accionSuspend">⏸️ Suspender la cuenta</option>
                         </select>
                     </div>
                     <div class="col-sm-6 col-lg-4" id="bloque-regla-dias">
-                        <label class="form-label" for="regla-dias">Días de suspensión automática</label>
+                        <label class="form-label" for="regla-dias" data-i18n="admin.diasAuto">Días de suspensión automática</label>
                         <input type="number" class="form-control" id="regla-dias" min="1" max="365" required>
-                        <div class="invalid-feedback">Entre 1 y 365.</div>
+                        <div class="invalid-feedback" data-i18n="admin.errorDias">Entre 1 y 365.</div>
                     </div>
                     <div class="col-sm-6 col-lg-4">
-                        <label class="form-label" for="regla-niveles-advertencia">Niveles que quita una advertencia</label>
+                        <label class="form-label" for="regla-niveles-advertencia" data-i18n="admin.nivelesAdvertencia">Niveles que quita una advertencia</label>
                         <input type="number" class="form-control" id="regla-niveles-advertencia" min="0" max="10" required>
-                        <div class="invalid-feedback">Entre 0 y 10.</div>
+                        <div class="invalid-feedback" data-i18n="admin.errorNiveles">Entre 0 y 10.</div>
                     </div>
                     <div class="col-sm-6 col-lg-4">
-                        <label class="form-label" for="regla-niveles-suspension">Niveles que quita una suspensión</label>
+                        <label class="form-label" for="regla-niveles-suspension" data-i18n="admin.nivelesSuspension">Niveles que quita una suspensión</label>
                         <input type="number" class="form-control" id="regla-niveles-suspension" min="0" max="10" required>
-                        <div class="invalid-feedback">Entre 0 y 10.</div>
+                        <div class="invalid-feedback" data-i18n="admin.errorNiveles">Entre 0 y 10.</div>
                     </div>
                     <div class="col-12">
-                        <button type="submit" class="btn btn-primary">Guardar reglas</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="admin.guardarReglas">Guardar reglas</button>
                     </div>
                 </form>
             </details>
@@ -119,47 +119,47 @@
         <div class="modal-dialog modal-dialog-centered">
             <form class="modal-content sf-modal" id="form-sancion" novalidate>
                 <div class="modal-header border-0">
-                    <h2 class="modal-title h5" id="titulo-sancion">⚙️ Personalizar sanción</h2>
+                    <h2 class="modal-title h5" id="titulo-sancion" data-i18n="admin.sancionTitulo">⚙️ Personalizar sanción</h2>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body pt-0">
                     <fieldset class="mb-3">
-                        <legend class="form-label fs-6">Tipo de sanción</legend>
+                        <legend class="form-label fs-6" data-i18n="admin.tipoSancion">Tipo de sanción</legend>
                         <div class="d-grid gap-2">
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="tipo-sancion" id="sancion-WARNED" value="WARNED" checked>
-                                <label class="form-check-label" for="sancion-WARNED">⚠️ Advertencia <span class="text-secondary small">(suma al contador de advertencias)</span></label>
+                                <label class="form-check-label" for="sancion-WARNED" data-i18n-html="admin.tipoWarned">⚠️ Advertencia <span class="text-secondary small">(suma al contador de advertencias)</span></label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="tipo-sancion" id="sancion-SUSPENDED" value="SUSPENDED">
-                                <label class="form-check-label" for="sancion-SUSPENDED">⏸️ Suspensión temporal</label>
+                                <label class="form-check-label" for="sancion-SUSPENDED" data-i18n="admin.tipoSuspended">⏸️ Suspensión temporal</label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="tipo-sancion" id="sancion-BANNED" value="BANNED">
-                                <label class="form-check-label" for="sancion-BANNED">🚫 Eliminar la cuenta</label>
+                                <label class="form-check-label" for="sancion-BANNED" data-i18n="admin.tipoBanned">🚫 Eliminar la cuenta</label>
                             </div>
                         </div>
                     </fieldset>
                     <div class="row g-3 mb-3">
                         <div class="col-6" id="bloque-dias">
-                            <label class="form-label" for="sancion-dias">Días de suspensión</label>
+                            <label class="form-label" for="sancion-dias" data-i18n="admin.diasSuspension">Días de suspensión</label>
                             <input type="number" class="form-control" id="sancion-dias" min="1" max="365" value="7">
-                            <div class="invalid-feedback">Entre 1 y 365.</div>
+                            <div class="invalid-feedback" data-i18n="admin.errorDias">Entre 1 y 365.</div>
                         </div>
                         <div class="col-6" id="bloque-niveles">
-                            <label class="form-label" for="sancion-niveles">Niveles a quitar</label>
+                            <label class="form-label" for="sancion-niveles" data-i18n="admin.nivelesQuitar">Niveles a quitar</label>
                             <input type="number" class="form-control" id="sancion-niveles" min="0" max="10" value="1">
-                            <div class="invalid-feedback">Entre 0 y 10.</div>
+                            <div class="invalid-feedback" data-i18n="admin.errorNiveles">Entre 0 y 10.</div>
                         </div>
                     </div>
                     <p class="small mb-3" id="sancion-vista-previa"></p>
-                    <label class="form-label" for="sancion-nota">Nota del administrador</label>
-                    <textarea class="form-control" id="sancion-nota" rows="2" maxlength="500" placeholder="Justifica la sanción"></textarea>
-                    <div class="invalid-feedback">Escribe una nota para justificar la sanción.</div>
+                    <label class="form-label" for="sancion-nota" data-i18n="admin.notaAdmin">Nota del administrador</label>
+                    <textarea class="form-control" id="sancion-nota" rows="2" maxlength="500" placeholder="Justifica la sanción" data-i18n-placeholder="admin.notaEjemplo"></textarea>
+                    <div class="invalid-feedback" data-i18n="admin.notaError">Escribe una nota para justificar la sanción.</div>
                 </div>
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Aplicar sanción</button>
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal" data-i18n="comun.cancelar">Cancelar</button>
+                    <button type="submit" class="btn btn-danger" data-i18n="admin.aplicar">Aplicar sanción</button>
                 </div>
             </form>
         </div>
@@ -170,27 +170,27 @@
         <div class="modal-dialog modal-dialog-centered">
             <form class="modal-content sf-modal" id="form-juego" novalidate>
                 <div class="modal-header border-0">
-                    <h2 class="modal-title h5" id="titulo-juego">🎮 Agregar juego al catálogo</h2>
+                    <h2 class="modal-title h5" id="titulo-juego" data-i18n="admin.juegoTitulo">🎮 Agregar juego al catálogo</h2>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body pt-0">
-                    <label class="form-label" for="juego-nombre">Nombre</label>
+                    <label class="form-label" for="juego-nombre" data-i18n="admin.juegoNombre">Nombre</label>
                     <input type="text" class="form-control mb-3" id="juego-nombre" maxlength="100" required>
-                    <label class="form-label" for="juego-genero">Género</label>
+                    <label class="form-label" for="juego-genero" data-i18n="admin.juegoGenero">Género</label>
                     <select class="form-select mb-3" id="juego-genero"></select>
                     <fieldset class="mb-3">
-                        <legend class="form-label fs-6">Plataformas</legend>
+                        <legend class="form-label fs-6" data-i18n="admin.juegoPlataformas">Plataformas</legend>
                         <div class="d-flex flex-wrap gap-2" id="juego-plataformas"></div>
-                        <div class="text-danger small mt-1 d-none" id="error-juego-plataformas">Elige al menos una plataforma.</div>
+                        <div class="text-danger small mt-1 d-none" id="error-juego-plataformas" data-i18n="admin.juegoErrorPlataformas">Elige al menos una plataforma.</div>
                     </fieldset>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" role="switch" id="juego-crossplay">
-                        <label class="form-check-label" for="juego-crossplay">Tiene crossplay entre plataformas</label>
+                        <label class="form-check-label" for="juego-crossplay" data-i18n="admin.juegoCrossplay">Tiene crossplay entre plataformas</label>
                     </div>
                 </div>
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Aprobar y agregar</button>
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal" data-i18n="comun.cancelar">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="admin.juegoAprobar">Aprobar y agregar</button>
                 </div>
             </form>
         </div>
@@ -222,13 +222,13 @@
         let reportes = [];
         let sugerencias = [];
         let generos = [];
-        const NIVEL_TOXICIDAD = { MILD: 'Leve', SEVERE: 'Grave' };
+        const NIVEL_TOXICIDAD = { MILD: () => t('admin.leve'), SEVERE: () => t('admin.grave') };
         const modalSancion = new bootstrap.Modal('#modal-sancion');
         const modalJuego = new bootstrap.Modal('#modal-juego');
         let reporteActual = null;
         let sugerenciaActual = null;
 
-        const fecha = (iso) => (iso ? new Date(iso).toLocaleString('es', { dateStyle: 'medium', timeStyle: 'short' }) : '');
+        const fecha = (iso) => (iso ? new Date(iso).toLocaleString(i18next.language, { dateStyle: 'medium', timeStyle: 'short' }) : '');
 
         async function cargar() {
             [reglas, reportes, sugerencias] = await Promise.all([
@@ -259,9 +259,9 @@
             $('regla-niveles-advertencia').value = reglas.warning_levels_removed;
             $('regla-niveles-suspension').value = reglas.suspension_levels_removed;
             $('bloque-regla-dias').classList.toggle('d-none', reglas.auto_action !== 'SUSPEND');
-            $('resumen-reglas').textContent = `con ${reglas.warnings_limit} advertencias la cuenta se `
-                + (reglas.auto_action === 'BAN' ? 'elimina' : `suspende ${reglas.auto_suspension_days} días`)
-                + ` · cada advertencia quita ${reglas.warning_levels_removed} nivel(es)`;
+            $('resumen-reglas').textContent = reglas.auto_action === 'BAN'
+                ? t('admin.resumenBan', { limite: reglas.warnings_limit, niveles: reglas.warning_levels_removed })
+                : t('admin.resumenSuspend', { limite: reglas.warnings_limit, dias: reglas.auto_suspension_days, niveles: reglas.warning_levels_removed });
         }
 
         $('regla-accion').addEventListener('change', () => {
@@ -277,7 +277,7 @@
                 warning_levels_removed: Number($('regla-niveles-advertencia').value),
                 suspension_levels_removed: Number($('regla-niveles-suspension').value),
             },
-        }), 'Reglas de moderación guardadas.'));
+        }), t('admin.reglasGuardadas')));
 
         /* -------------------------------------------------------------
            Resolver un reporte
@@ -291,13 +291,13 @@
                 (res) => {
                     const u = res.reported_user;
                     if (res.is_automatic) {
-                        return `${u.username} llegó al límite de advertencias: regla automática aplicada (${res.status === 'BANNED' ? 'cuenta eliminada' : `suspendido ${res.suspension_days} días`}).`;
+                        return t('admin.resAuto', { usuario: u.username, que: res.status === 'BANNED' ? t('admin.autoBan') : t('admin.autoSuspend', { dias: res.suspension_days }) });
                     }
                     return {
-                        DISMISSED: 'Reporte descartado.',
-                        WARNED: `${u.username} recibió una advertencia (−${res.levels_removed} nivel).`,
-                        SUSPENDED: `${u.username} fue suspendido ${res.suspension_days} días (−${res.levels_removed} niveles).`,
-                        BANNED: `La cuenta de ${u.username} fue eliminada.`,
+                        DISMISSED: t('admin.resDescartado'),
+                        WARNED: t('admin.resAdvertido', { usuario: u.username, n: res.levels_removed }),
+                        SUSPENDED: t('admin.resSuspendido', { usuario: u.username, dias: res.suspension_days, n: res.levels_removed }),
+                        BANNED: t('admin.resBaneado', { usuario: u.username }),
                     }[res.status];
                 },
                 action === 'DISMISSED' ? 'info' : 'warning');
@@ -310,20 +310,19 @@
             const motivo = MOTIVOS_REPORTE[r.reason];
             const evidencia = r.evidence;
             const pendiente = r.status === 'PENDING';
-            const cuenta = { ACTIVE: '', SUSPENDED: '<span class="badge text-bg-info">Suspendida</span>', BANNED: '<span class="badge text-bg-danger">Eliminada</span>' };
-            const advertencias = `${r.reported_warnings}/${reglas.warnings_limit} advertencias`;
+            const cuenta = { ACTIVE: '', SUSPENDED: `<span class="badge text-bg-info">${esc(t('admin.cuentaSuspendida'))}</span>`, BANNED: `<span class="badge text-bg-danger">${esc(t('admin.cuentaEliminada'))}</span>` };
 
             let decision = '';
             if (!pendiente) {
                 const detalles = [
-                    r.suspension_days ? `${r.suspension_days} días` : null,
-                    r.levels_removed ? `−${r.levels_removed} nivel(es)` : null,
-                    r.is_automatic ? '🤖 automática' : null,
+                    r.suspension_days ? t('admin.dias', { n: r.suspension_days }) : null,
+                    r.levels_removed ? t('admin.niveles', { n: r.levels_removed }) : null,
+                    r.is_automatic ? t('admin.automatica') : null,
                 ].filter(Boolean).join(' · ');
                 decision = `
                     <div class="small">
-                        <strong>Decisión:</strong> ${esc(ESTADOS_REPORTE[r.status].texto)}${detalles ? ` (${esc(detalles)})` : ''} · ${esc(fecha(r.resolved_at))}
-                        ${r.admin_notes ? `<br><strong>Nota:</strong> ${esc(r.admin_notes)}` : ''}
+                        <strong>${esc(t('admin.decision'))}</strong> ${esc(ESTADOS_REPORTE[r.status].texto)}${detalles ? ` (${esc(detalles)})` : ''} · ${esc(fecha(r.resolved_at))}
+                        ${r.admin_notes ? `<br><strong>${esc(t('admin.nota'))}</strong> ${esc(r.admin_notes)}` : ''}
                     </div>`;
             }
 
@@ -337,7 +336,7 @@
                                     ${enlaceUsuario(r.reported_user_id, r.reported_username)} ${badgeNivel(r.reported_level)}
                                     ${cuenta[r.reported_account_status] ?? ''}
                                 </div>
-                                <small class="text-secondary">${r.total_reports} reporte(s) · ⚠️ ${advertencias}</small>
+                                <small class="text-secondary">${esc(t('admin.reportesTotal', { n: r.total_reports, adv: r.reported_warnings, limite: reglas.warnings_limit }))}</small>
                             </div>
                         </div>
                         <div class="text-end">
@@ -347,34 +346,34 @@
                     </div>
 
                     <p class="mb-1"><strong>${motivo.icono} ${esc(motivo.texto)}</strong></p>
-                    <p class="small text-secondary mb-2">Reportado por ${enlaceUsuario(r.reporter_id, r.reporter_username)}
-                        ${r.post_title ? ` en la partida <em>${esc(r.post_title)}</em>` : ''}</p>
+                    <p class="small text-secondary mb-2">${esc(t('admin.reportadoPor', { usuario: '' })).trimEnd()} ${enlaceUsuario(r.reporter_id, r.reporter_username)}
+                        ${r.post_title ? t('admin.enPartida', { partida: esc(r.post_title) }) : ''}</p>
                     <blockquote class="border-start border-3 border-danger ps-3 mb-3">"${esc(r.comment)}"</blockquote>
 
                     <div class="sf-surface rounded-3 p-3 mb-3">
-                        <p class="small fw-semibold mb-2">🛡️ Evidencia del chat (mensajes marcados por el filtro)</p>
+                        <p class="small fw-semibold mb-2">${esc(t('admin.evidencia'))}</p>
                         ${evidencia.length
                             ? evidencia.map((m) => `
                                 <div class="small d-flex flex-wrap gap-2 align-items-center mb-1">
-                                    <span class="badge ${m.toxicity_level === 'SEVERE' ? 'text-bg-danger' : 'text-bg-warning'}">${NIVEL_TOXICIDAD[m.toxicity_level]}</span>
+                                    <span class="badge ${m.toxicity_level === 'SEVERE' ? 'text-bg-danger' : 'text-bg-warning'}">${esc(NIVEL_TOXICIDAD[m.toxicity_level]())}</span>
                                     <span class="text-secondary">${esc(fecha(m.sent_at))}</span>
                                     <span>"${esc(m.message)}"</span>
                                 </div>`).join('')
-                            : '<p class="small text-secondary mb-0">El filtro no marcó mensajes de esta persona en esa partida.</p>'}
+                            : `<p class="small text-secondary mb-0">${esc(t('admin.sinEvidencia'))}</p>`}
                     </div>
 
                     ${pendiente ? `
-                        <label class="form-label small" for="nota-${r.id}">Nota del administrador (se guarda con la decisión)</label>
+                        <label class="form-label small" for="nota-${r.id}">${esc(t('admin.notaLabel'))}</label>
                         <textarea class="form-control mb-1" id="nota-${r.id}" rows="2" maxlength="500"
-                            placeholder="Ej.: Se confirmaron insultos en el chat."></textarea>
-                        <div class="invalid-feedback mb-2">Escribe una nota para justificar la sanción.</div>
+                            placeholder="${esc(t('admin.notaCampoEjemplo'))}"></textarea>
+                        <div class="invalid-feedback mb-2">${esc(t('admin.notaError'))}</div>
                         <div class="d-flex flex-wrap gap-2 mt-2">
-                            <button class="btn btn-outline-light" data-accion="DISMISSED" data-id="${r.id}">Descartar</button>
+                            <button class="btn btn-outline-light" data-accion="DISMISSED" data-id="${r.id}">${esc(t('admin.descartar'))}</button>
                             <button class="btn btn-warning" data-accion="WARNED" data-id="${r.id}"
-                                title="Suma 1 al contador; al llegar a ${reglas.warnings_limit} se aplica la regla automática">
-                                ⚠️ Advertir (−${reglas.warning_levels_removed} nivel)</button>
-                            <button class="btn btn-info" data-accion="CUSTOM" data-id="${r.id}">⚙️ Personalizar sanción</button>
-                            <button class="btn btn-danger ms-sm-auto" data-accion="BANNED" data-id="${r.id}">🚫 Eliminar cuenta</button>
+                                title="${esc(t('admin.advertirTitulo', { limite: reglas.warnings_limit }))}">
+                                ${esc(t('admin.advertir', { n: reglas.warning_levels_removed }))}</button>
+                            <button class="btn btn-info" data-accion="CUSTOM" data-id="${r.id}">${esc(t('admin.personalizar'))}</button>
+                            <button class="btn btn-danger ms-sm-auto" data-accion="BANNED" data-id="${r.id}">${esc(t('admin.eliminarCuenta'))}</button>
                         </div>` : decision}
                 </article>`;
         }
@@ -383,9 +382,9 @@
            Juegos sugeridos
            ------------------------------------------------------------- */
         const ESTADOS_SUGERENCIA = {
-            PENDING: { texto: 'Pendiente', clase: 'text-bg-warning' },
-            APPROVED: { texto: 'Aprobado', clase: 'text-bg-success' },
-            REJECTED: { texto: 'Rechazado', clase: 'text-bg-secondary' },
+            PENDING: { clase: 'text-bg-warning' },
+            APPROVED: { clase: 'text-bg-success' },
+            REJECTED: { clase: 'text-bg-secondary' },
         };
 
         function tarjetaSugerencia(s) {
@@ -393,16 +392,16 @@
                 <article class="sf-card d-flex flex-wrap justify-content-between align-items-center gap-3">
                     <div>
                         <h2 class="h5 mb-1">🎮 ${esc(s.game_name)}</h2>
-                        <small class="text-secondary">Sugerido por ${enlaceUsuario(s.user_id, s.username)} · ${esc(fecha(s.created_at))}
-                            ${s.platforms_note ? ` · Plataformas: ${esc(s.platforms_note)}` : ''}
-                            ${s.times_requested > 1 ? ` · <strong>${s.times_requested} personas lo pidieron</strong>` : ''}</small>
+                        <small class="text-secondary">${esc(t('admin.sugeridoPor', { usuario: '' })).trimEnd()} ${enlaceUsuario(s.user_id, s.username)} · ${esc(fecha(s.created_at))}
+                            ${s.platforms_note ? esc(t('admin.plataformasNota', { p: s.platforms_note })) : ''}
+                            ${s.times_requested > 1 ? t('admin.pidieron', { n: s.times_requested }) : ''}</small>
                     </div>
                     ${s.status === 'PENDING'
                         ? `<div class="d-flex gap-2">
-                               <button class="btn btn-success" data-aprobar="${s.id}">✓ Aprobar</button>
-                               <button class="btn btn-outline-light" data-rechazar="${s.id}">Rechazar</button>
+                               <button class="btn btn-success" data-aprobar="${s.id}">${esc(t('admin.aprobar'))}</button>
+                               <button class="btn btn-outline-light" data-rechazar="${s.id}">${esc(t('admin.rechazar'))}</button>
                            </div>`
-                        : `<span class="badge ${ESTADOS_SUGERENCIA[s.status].clase}">${ESTADOS_SUGERENCIA[s.status].texto}</span>`}
+                        : `<span class="badge ${ESTADOS_SUGERENCIA[s.status].clase}">${esc(t(`admin.sugerencia.${s.status}`))}</span>`}
                 </article>`;
         }
 
@@ -429,13 +428,13 @@
             if (vista === 'GAMES') {
                 $('lista-juegos').innerHTML = sugerencias.length
                     ? sugerencias.map(tarjetaSugerencia).join('')
-                    : '<div class="sf-card text-center text-secondary">No hay juegos sugeridos.</div>';
+                    : `<div class="sf-card text-center text-secondary">${esc(t('admin.sinJuegos'))}</div>`;
                 return;
             }
             const visibles = vista === 'PENDING' ? pendientes : resueltos;
             $('lista-reportes').innerHTML = visibles.length
                 ? visibles.map(tarjeta).join('')
-                : `<div class="sf-card text-center text-secondary">${vista === 'PENDING' ? '🎉 No hay reportes pendientes.' : 'Aún no hay reportes resueltos.'}</div>`;
+                : `<div class="sf-card text-center text-secondary">${vista === 'PENDING' ? t('admin.sinPendientes') : t('admin.sinResueltos')}</div>`;
         }
 
         document.querySelectorAll('input[name="vista"]').forEach((i) => i.addEventListener('change', pintar));
@@ -444,9 +443,9 @@
            Botones de los reportes
            ------------------------------------------------------------- */
         const CONFIRMACIONES = {
-            DISMISSED: { titulo: 'Descartar reporte', texto: 'El reporte se cerrará sin sanción.', boton: 'Descartar', peligro: false },
-            WARNED: { titulo: 'Advertir', texto: 'Se suma una advertencia y se descuentan niveles.', boton: 'Advertir', peligro: true },
-            BANNED: { titulo: 'Eliminar cuenta', texto: 'La cuenta quedará bloqueada para siempre y sus salas abiertas se cancelarán.', boton: 'Eliminar cuenta', peligro: true },
+            DISMISSED: { titulo: () => t('admin.confDescartarTitulo'), texto: () => t('admin.confDescartar'), boton: () => t('admin.descartar'), peligro: false },
+            WARNED: { titulo: () => t('admin.confAdvertirTitulo'), texto: () => t('admin.confAdvertir'), boton: () => t('admin.confAdvertirTitulo'), peligro: true },
+            BANNED: { titulo: () => t('admin.confBanTitulo'), texto: () => t('admin.confBan'), boton: () => t('admin.confBanTitulo'), peligro: true },
         };
 
         $('lista-reportes').addEventListener('click', async (e) => {
@@ -458,7 +457,7 @@
 
             if (accion === 'CUSTOM') {
                 reporteActual = r;
-                $('titulo-sancion').textContent = `⚙️ Personalizar sanción para ${r.reported_username}`;
+                $('titulo-sancion').textContent = t('admin.sancionTituloUsuario', { usuario: r.reported_username });
                 $('form-sancion').reset();
                 $('sancion-nota').value = nota.value;
                 $('sancion-nota').classList.remove('is-invalid');
@@ -476,12 +475,14 @@
             }
 
             const c = CONFIRMACIONES[accion];
-            let mensaje = `${c.texto} Usuario: ${r.reported_username}.`;
+            let mensaje = `${c.texto()}${t('admin.confUsuario', { usuario: r.reported_username })}`;
             if (accion === 'WARNED' && r.reported_warnings + 1 >= reglas.warnings_limit) {
-                mensaje += ` ⚠️ Es su advertencia número ${reglas.warnings_limit}: se aplicará la regla automática (`
-                    + (reglas.auto_action === 'BAN' ? 'eliminar la cuenta' : `suspender ${reglas.auto_suspension_days} días`) + ').';
+                mensaje += t('admin.confUltima', {
+                    limite: reglas.warnings_limit,
+                    regla: reglas.auto_action === 'BAN' ? t('admin.reglaBan') : t('admin.reglaSuspend', { dias: reglas.auto_suspension_days }),
+                });
             }
-            if (await confirmar({ titulo: c.titulo, mensaje, textoBoton: c.boton, peligro: c.peligro })) {
+            if (await confirmar({ titulo: c.titulo(), mensaje, textoBoton: c.boton(), peligro: c.peligro })) {
                 await resolver(r, accion, { nota: nota.value.trim() });
             }
         });
@@ -494,9 +495,9 @@
             const niveles = Math.max(0, Math.min(10, Number($('sancion-niveles').value) || 0));
             const r = reporteActual;
             $('sancion-vista-previa').innerHTML = tipo === 'BANNED'
-                ? '🚫 La cuenta se bloqueará para siempre.'
-                : `Nivel actual ${badgeNivel(r.reported_level)} → quedaría en ${badgeNivel(Math.max(0, r.reported_level - niveles))}`
-                  + (tipo === 'WARNED' ? ` · advertencias ${r.reported_warnings} → ${r.reported_warnings + 1} de ${reglas.warnings_limit}` : '');
+                ? esc(t('admin.previewBan'))
+                : t('admin.previewNivel', { actual: badgeNivel(r.reported_level), nuevo: badgeNivel(Math.max(0, r.reported_level - niveles)) })
+                  + (tipo === 'WARNED' ? esc(t('admin.previewAdvertencias', { antes: r.reported_warnings, despues: r.reported_warnings + 1, limite: reglas.warnings_limit })) : '');
         }
         $('form-sancion').addEventListener('input', actualizarModalSancion);
         $('form-sancion').addEventListener('change', actualizarModalSancion);
@@ -538,9 +539,9 @@
                 $('error-juego-plataformas').classList.add('d-none');
                 modalJuego.show();
             }
-            if (boton.dataset.rechazar && await confirmar({ titulo: 'Rechazar sugerencia', mensaje: `"${s.game_name}" no se agregará al catálogo.`, textoBoton: 'Rechazar', peligro: false })) {
+            if (boton.dataset.rechazar && await confirmar({ titulo: t('admin.rechazarTitulo'), mensaje: t('admin.rechazarMensaje', { juego: s.game_name }), textoBoton: t('admin.rechazar'), peligro: false })) {
                 await accion(() => api(`/admin/game-requests/${id}`, { method: 'PUT', body: { status: 'REJECTED' } }),
-                    'Sugerencia rechazada.', 'info');
+                    t('admin.rechazada'), 'info');
             }
         });
 
@@ -560,11 +561,12 @@
                     status: 'APPROVED', name: nombre, genre_id: Number($('juego-genero').value),
                     platforms: plataformas, crossplay: $('juego-crossplay').checked,
                 },
-            }), `"${nombre}" ya aparece en la lista de juegos para todos.`);
+            }), t('admin.juegoListo', { juego: nombre }));
         });
 
         async function iniciar() {
             try {
+                await i18nListo;
                 yo = await iniciarPagina();
             } catch (e) {
                 return mostrarErrorPagina(e.message);
@@ -576,7 +578,7 @@
                 $('juego-genero').innerHTML = generos.map((g) => `<option value="${g.id}">${esc(g.name)}</option>`).join('');
                 await cargar();
             } catch (e) {
-                avisarError(e, 'No se pudo cargar el panel.');
+                avisarError(e, t('admin.errorCarga'));
             }
         }
         iniciar();

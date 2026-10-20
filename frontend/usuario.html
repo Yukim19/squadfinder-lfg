@@ -55,45 +55,45 @@
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     <h1 class="mb-0" id="u-nombre">Jugador</h1>
                     <span id="u-cuentas-iconos" class="d-inline-flex gap-1"></span>
-                    <span class="badge sf-badge-live d-none" id="u-en-vivo">EN VIVO</span>
+                    <span class="badge sf-badge-live d-none" id="u-en-vivo" data-i18n="usuario.enVivo">EN VIVO</span>
                 </div>
                 <p class="text-secondary mb-0" id="u-detalles"></p>
             </div>
             <div class="text-center" style="min-width: 11rem;">
-                <div class="small text-secondary">Nivel de honor</div>
+                <div class="small text-secondary" data-i18n="usuario.nivelHonor">Nivel de honor</div>
                 <div class="sf-nivel-grande" id="u-nivel">1</div>
                 <div id="u-nivel-badge" class="mb-2"></div>
                 <div id="u-xp" class="text-start"></div>
                 <small class="text-secondary" id="u-total-resenas">0 reseñas</small>
             </div>
             <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-outline-light d-none" id="u-editar" href="perfil_config.html">Editar mi perfil</a>
+                <a class="btn btn-outline-light d-none" id="u-editar" href="perfil_config.html" data-i18n="usuario.editar">Editar mi perfil</a>
                 <button type="button" class="btn btn-outline-light d-none" id="u-bloquear">🚫 Lista negra</button>
-                <button type="button" class="btn btn-outline-danger d-none" id="u-reportar">🚩 Reportar</button>
+                <button type="button" class="btn btn-outline-danger d-none" id="u-reportar" data-i18n="usuario.reportar">🚩 Reportar</button>
             </div>
         </header>
 
         <div class="row g-4">
             <aside class="col-md-5 d-grid gap-4 align-content-start">
                 <section class="sf-card">
-                    <h2 class="h5">Busca compañeros en</h2>
+                    <h2 class="h5" data-i18n="usuario.buscaEn">Busca compañeros en</h2>
                     <div class="d-flex flex-wrap gap-2" id="u-juegos"></div>
-                    <h2 class="h6 mt-3">Géneros favoritos</h2>
+                    <h2 class="h6 mt-3" data-i18n="usuario.generos">Géneros favoritos</h2>
                     <p class="text-secondary mb-0" id="u-generos"></p>
                 </section>
                 <section class="sf-card">
-                    <h2 class="h5">Lo que más destacan</h2>
+                    <h2 class="h5" data-i18n="usuario.destacan">Lo que más destacan</h2>
                     <div id="u-etiquetas" class="d-grid gap-2"></div>
                 </section>
                 <section class="sf-card">
-                    <h2 class="h5">Cuentas</h2>
+                    <h2 class="h5" data-i18n="usuario.cuentas">Cuentas</h2>
                     <div id="u-cuentas"></div>
                 </section>
             </aside>
 
             <section class="col-md-7">
                 <div class="sf-card">
-                    <h2 class="h5">Reseñas recibidas</h2>
+                    <h2 class="h5" data-i18n="usuario.resenasRecibidas">Reseñas recibidas</h2>
                     <div id="u-resenas"></div>
                 </div>
             </section>
@@ -125,7 +125,7 @@
         const botonBloquear = document.getElementById('u-bloquear');
 
         function pintarBloqueo() {
-            botonBloquear.textContent = bloqueado ? '✓ En lista negra · Quitar' : '🚫 Lista negra';
+            botonBloquear.textContent = bloqueado ? t('usuario.enListaNegra') : t('usuario.listaNegra');
         }
 
         function pintar() {
@@ -134,8 +134,10 @@
             document.getElementById('u-avatar').innerHTML = avatar(u.username, 'sf-avatar-lg', u.avatar_url);
             document.getElementById('u-nombre').textContent = u.username;
             document.getElementById('u-cuentas-iconos').innerHTML = iconosCuentas(u.linked_accounts);
-            document.getElementById('u-detalles').textContent =
-                `🌎 ${REGIONES[u.region] ?? 'Sin región'} · Miembro desde ${new Date(u.created_at).toLocaleDateString('es', { month: 'long', year: 'numeric' })}`;
+            document.getElementById('u-detalles').textContent = t('usuario.miembroDesde', {
+                region: REGIONES[u.region] ?? t('detalle.sinRegion'),
+                fecha: new Date(u.created_at).toLocaleDateString(i18next.language, { month: 'long', year: 'numeric' }),
+            });
 
             // Nivel de honor (0 = Rookie) y progreso de XP
             document.getElementById('u-nivel').textContent = honor.is_rookie ? '🐣' : honor.level;
@@ -143,8 +145,8 @@
             document.getElementById('u-xp').innerHTML = barraNivel(honor.xp);
             const { total, average } = honor.reviews;
             document.getElementById('u-total-resenas').innerHTML = total
-                ? `${estrellas(average)} ${average.toFixed(1)} · ${total} ${total === 1 ? 'reseña' : 'reseñas'}`
-                : 'Sin reseñas todavía';
+                ? `${estrellas(average)} ${esc(total === 1 ? t('usuario.unaResena', { prom: average.toFixed(1) }) : t('usuario.variasResenas', { prom: average.toFixed(1), n: total }))}`
+                : t('usuario.sinResenas');
 
             document.getElementById('u-editar').classList.toggle('d-none', !esMiPerfil);
             botonBloquear.classList.toggle('d-none', esMiPerfil);
@@ -152,13 +154,13 @@
 
             document.getElementById('u-juegos').innerHTML = u.games
                 .map((id) => `<span class="badge sf-badge-live">${esc(juegos.find((j) => j.id === id)?.name)}</span>`).join('')
-                || '<span class="text-secondary">Sin juegos elegidos.</span>';
+                || `<span class="text-secondary">${esc(t('usuario.sinJuegos'))}</span>`;
             document.getElementById('u-generos').textContent =
-                u.genres.map((id) => generos.find((g) => g.id === id)?.name).filter(Boolean).join(', ') || 'Sin géneros elegidos.';
+                u.genres.map((id) => generos.find((g) => g.id === id)?.name).filter(Boolean).join(', ') || t('usuario.sinGeneros');
 
             document.getElementById('u-etiquetas').innerHTML = honor.top_tags
                 .map((t) => `<div class="d-flex justify-content-between"><span>${esc(ETIQUETAS_RESENA[t.tag])}</span><span class="badge sf-badge-honor">×${t.total}</span></div>`)
-                .join('') || '<span class="text-secondary">Todavía nadie le ha dado una etiqueta.</span>';
+                .join('') || `<span class="text-secondary">${esc(t('usuario.sinEtiquetas'))}</span>`;
 
             const cuentas = Object.entries(u.linked_accounts);
             document.getElementById('u-cuentas').innerHTML = cuentas.length
@@ -170,7 +172,7 @@
                         <span>${enlace ? `<a href="${enlace}" target="_blank" rel="noopener">${esc(usuario)}</a>` : esc(usuario)}</span>
                     </div>`;
                 }).join('')
-                : '<span class="text-secondary">No tiene cuentas vinculadas.</span>';
+                : `<span class="text-secondary">${esc(t('usuario.sinCuentas'))}</span>`;
 
             document.getElementById('u-resenas').innerHTML = honor.recent_reviews.length
                 ? honor.recent_reviews.map((r) => `
@@ -179,11 +181,11 @@
                             <span>${avatar(r.reviewer_username, 'sf-avatar-sm', r.reviewer_avatar_url)} ${enlaceUsuario(r.reviewer_id, r.reviewer_username)}</span>
                             ${estrellas(r.rating)}
                         </div>
-                        <small class="text-secondary d-block mt-1">${esc(r.game_name)} · ${esc(new Date(r.created_at).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' }))}
+                        <small class="text-secondary d-block mt-1">${esc(r.game_name)} · ${esc(new Date(r.created_at).toLocaleDateString(i18next.language, { day: 'numeric', month: 'short', year: 'numeric' }))}
                             ${r.tag ? ` · <span class="badge sf-badge-honor">${esc(ETIQUETAS_RESENA[r.tag])}</span>` : ''}</small>
                         ${r.comment ? `<p class="mb-0 mt-2">"${esc(r.comment)}"</p>` : ''}
                     </div>`).join('')
-                : '<p class="text-secondary mb-0">Aún no ha recibido reseñas.</p>';
+                : `<p class="text-secondary mb-0">${esc(t('usuario.sinResenasRecibidas'))}</p>`;
         }
 
         // Lista negra: dejar de ver (o volver a ver) las salas de este jugador
@@ -192,11 +194,11 @@
                 if (bloqueado) {
                     await api(`/users/me/blocks/${u.id}`, { method: 'DELETE' });
                     bloqueado = false;
-                    mostrarToast(`${u.username} salió de tu lista negra.`, 'info');
-                } else if (await confirmar({ titulo: 'Agregar a la lista negra', mensaje: `No verás las salas que cree ${u.username}. No se le avisa ni recibe castigo.`, textoBoton: 'Agregar', peligro: false })) {
+                    mostrarToast(t('usuario.quitado', { usuario: u.username }), 'info');
+                } else if (await confirmar({ titulo: t('usuario.confirmarBloqueoTitulo'), mensaje: t('usuario.confirmarBloqueo', { usuario: u.username }), textoBoton: t('usuario.confirmarBoton'), peligro: false })) {
                     await api('/users/me/blocks', { method: 'POST', body: { user_id: u.id } });
                     bloqueado = true;
-                    mostrarToast(`${u.username} está en tu lista negra.`, 'info');
+                    mostrarToast(t('usuario.agregado', { usuario: u.username }), 'info');
                 }
             } catch (e) {
                 avisarError(e);
@@ -209,6 +211,7 @@
 
         async function iniciar() {
             try {
+                await i18nListo;
                 yo = await iniciarPagina();
                 ({ juegos, generos } = await catalogo());
                 const id = idDeUrl(yo.id);
@@ -223,8 +226,7 @@
             const reportar = document.getElementById('u-reportar');
             if (u.id !== yo.id) {
                 reportar.classList.remove('d-none');
-                reportar.addEventListener('click', () => mostrarToast(
-                    'Para reportar a alguien, hazlo desde tu historial de partidas, junto a la partida que jugaron.', 'info'));
+                reportar.addEventListener('click', () => mostrarToast(t('usuario.reportarAyuda'), 'info'));
             }
         }
         iniciar();
