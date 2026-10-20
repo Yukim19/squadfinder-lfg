@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0E0B16">
     <link rel="icon" href="img/icono.svg" type="image/svg+xml">
-    <title>Configurar perfil - SquadFinder LFG</title>
+    <title data-i18n="onboarding.titulo">Configurar perfil - SquadFinder LFG</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -49,71 +49,71 @@
     </nav>
 
     <main id="contenido" tabindex="-1" class="container py-4" style="max-width: 600px;">
-        <h1>Bienvenido, configura tu perfil</h1>
-        <p class="text-secondary">Solo te tomará un minuto. Con esto te mostramos salas compatibles contigo.</p>
+        <h1 data-i18n="onboarding.encabezado">Bienvenido, configura tu perfil</h1>
+        <p class="text-secondary" data-i18n="onboarding.intro">Solo te tomará un minuto. Con esto te mostramos salas compatibles contigo.</p>
         <form id="form-onboarding" class="sf-card mt-4">
             <div class="row mb-3">
                 <div class="col-sm">
-                    <label class="form-label" for="username">Nombre de usuario</label>
+                    <label class="form-label" for="username" data-i18n="onboarding.usuario">Nombre de usuario</label>
                     <input type="text" class="form-control" id="username" required pattern="[A-Za-z0-9_]{3,30}"
                         maxlength="30" autocomplete="nickname" aria-describedby="ayuda-username">
-                    <div id="ayuda-username" class="form-text">3 a 30 letras, números o _ (sin espacios).</div>
-                    <div class="invalid-feedback">Usa de 3 a 30 letras, números o guion bajo.</div>
+                    <div id="ayuda-username" class="form-text" data-i18n="onboarding.usuarioAyuda">3 a 30 letras, números o _ (sin espacios).</div>
+                    <div class="invalid-feedback" data-i18n="onboarding.usuarioError">Usa de 3 a 30 letras, números o guion bajo.</div>
                 </div>
                 <div class="col-sm mt-3 mt-sm-0">
-                    <label class="form-label" for="region">Región</label>
+                    <label class="form-label" for="region" data-i18n="onboarding.region">Región</label>
                     <select class="form-select" id="region" required>
-                        <option value="" selected disabled>Elige tu región</option>
+                        <option value="" selected disabled data-i18n="onboarding.elegirRegion">Elige tu región</option>
                     </select>
-                    <div class="invalid-feedback">Elige la región donde juegas.</div>
+                    <div class="invalid-feedback" data-i18n="onboarding.regionError">Elige la región donde juegas.</div>
                 </div>
             </div>
             <fieldset class="sf-fieldset mb-3">
-                <legend>¿En qué juegos buscas compañeros?</legend>
-                <p class="form-text mt-0">Elige al menos uno. Solo podrás crear salas de estos juegos; puedes cambiarlos luego en tu perfil.</p>
+                <legend data-i18n="onboarding.juegos">¿En qué juegos buscas compañeros?</legend>
+                <p class="form-text mt-0" data-i18n="onboarding.juegosAyuda">Elige al menos uno. Solo podrás crear salas de estos juegos; puedes cambiarlos luego en tu perfil.</p>
                 <div class="d-flex flex-wrap gap-2 mb-2">
-                    <label class="visually-hidden" for="buscar-juego">Buscar juego</label>
-                    <input type="search" class="form-control form-control-sm" id="buscar-juego" placeholder="🔍 Buscar juego..." style="max-width: 14rem;">
-                    <div class="btn-group btn-group-sm sf-filtro-juegos" id="filtro-juegos" role="group" aria-label="Filtrar por plataforma">
-                        <button type="button" class="btn btn-outline-light active" data-filtro-plataforma="">Todos</button>
-                        <button type="button" class="btn btn-outline-light" data-filtro-plataforma="PC">🖥️ PC</button>
-                        <button type="button" class="btn btn-outline-light" data-filtro-plataforma="CONSOLA">🎮 Consola</button>
-                        <button type="button" class="btn btn-outline-light" data-filtro-plataforma="Mobile">📱 Móvil</button>
-                        <button type="button" class="btn btn-outline-light" data-filtro-plataforma="MARCADOS">✓ Elegidos</button>
+                    <label class="visually-hidden" for="buscar-juego" data-i18n="onboarding.buscarJuego">Buscar juego</label>
+                    <input type="search" class="form-control form-control-sm" id="buscar-juego" placeholder="🔍 Buscar juego..." data-i18n-placeholder="onboarding.buscarJuegoEjemplo" style="max-width: 14rem;">
+                    <div class="btn-group btn-group-sm sf-filtro-juegos" id="filtro-juegos" role="group" aria-label="Filtrar por plataforma" data-i18n-aria-label="onboarding.filtrarPlataforma">
+                        <button type="button" class="btn btn-outline-light active" data-filtro-plataforma="" data-i18n="onboarding.fTodos">Todos</button>
+                        <button type="button" class="btn btn-outline-light" data-filtro-plataforma="PC" data-i18n="onboarding.fPc">🖥️ PC</button>
+                        <button type="button" class="btn btn-outline-light" data-filtro-plataforma="CONSOLA" data-i18n="onboarding.fConsola">🎮 Consola</button>
+                        <button type="button" class="btn btn-outline-light" data-filtro-plataforma="Mobile" data-i18n="onboarding.fMovil">📱 Móvil</button>
+                        <button type="button" class="btn btn-outline-light" data-filtro-plataforma="MARCADOS" data-i18n="onboarding.fElegidos">✓ Elegidos</button>
                     </div>
                 </div>
                 <div id="juegos" class="d-flex flex-wrap gap-2"></div>
-                <div id="error-juegos" class="text-danger small mt-2 d-none" role="alert">Elige al menos un juego.</div>
-                <button type="button" class="btn btn-link btn-sm px-0 mt-2" id="btn-sugerir-juego">➕ ¿No está tu juego? Sugiérelo al administrador</button>
+                <div id="error-juegos" class="text-danger small mt-2 d-none" role="alert" data-i18n="onboarding.juegosError">Elige al menos un juego.</div>
+                <button type="button" class="btn btn-link btn-sm px-0 mt-2" id="btn-sugerir-juego" data-i18n="onboarding.sugerir">➕ ¿No está tu juego? Sugiérelo al administrador</button>
             </fieldset>
             <fieldset class="sf-fieldset mb-3">
-                <legend>Géneros favoritos</legend>
+                <legend data-i18n="onboarding.generos">Géneros favoritos</legend>
                 <div id="generos" class="d-flex flex-wrap gap-2"></div>
             </fieldset>
             <div class="row g-3 mb-3">
                 <div class="col-sm">
-                    <label class="form-label" for="idioma-hablar">Idioma que hablas</label>
+                    <label class="form-label" for="idioma-hablar" data-i18n="onboarding.idiomaHablar">Idioma que hablas</label>
                     <select class="form-select" id="idioma-hablar"></select>
                 </div>
                 <div class="col-sm">
-                    <label class="form-label" for="idioma-escribir">Idioma que escribes</label>
+                    <label class="form-label" for="idioma-escribir" data-i18n="onboarding.idiomaEscribir">Idioma que escribes</label>
                     <select class="form-select" id="idioma-escribir"></select>
                 </div>
             </div>
             <div class="mb-4">
-                <label class="form-label" for="filtro">Filtro anti-toxicidad del chat</label>
+                <label class="form-label" for="filtro" data-i18n="onboarding.filtro">Filtro anti-toxicidad del chat</label>
                 <select class="form-select" id="filtro" aria-describedby="ayuda-filtro">
-                    <option value="STRICT">Estricto</option>
-                    <option value="MEDIUM" selected>Medio</option>
-                    <option value="OFF">Apagado</option>
+                    <option value="STRICT" data-i18n="catalogo.filtro.STRICT">Estricto</option>
+                    <option value="MEDIUM" selected data-i18n="catalogo.filtro.MEDIUM">Medio</option>
+                    <option value="OFF" data-i18n="catalogo.filtro.OFF">Apagado</option>
                 </select>
-                <div id="ayuda-filtro" class="form-text">
+                <div id="ayuda-filtro" class="form-text" data-i18n-html="onboarding.filtroAyuda">
                     <strong>Estricto:</strong> oculta insultos y lenguaje ofensivo leve.
                     <strong>Medio:</strong> oculta solo insultos fuertes.
                     <strong>Apagado:</strong> ves todos los mensajes.
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary">Guardar y continuar</button>
+            <button type="submit" class="btn btn-primary" data-i18n="onboarding.guardar">Guardar y continuar</button>
         </form>
     </main>
 
@@ -137,13 +137,9 @@
         const campoUsuario = document.getElementById('username');
         const errorUsuario = campoUsuario.parentElement.querySelector('.invalid-feedback');
         const errorJuegos = document.getElementById('error-juegos');
-        const MENSAJE_USUARIO = errorUsuario.textContent;
+        let MENSAJE_USUARIO = '';
         // Las sugerencias de juegos se envían después de crear el perfil (antes el usuario no existe)
         const sugerencias = [];
-
-        llenarRegiones('region');
-        llenarSelect('idioma-hablar', IDIOMAS_USUARIO, 'es');
-        llenarSelect('idioma-escribir', IDIOMAS_USUARIO, 'es');
 
         campoUsuario.addEventListener('input', () => {
             campoUsuario.setCustomValidity('');
@@ -157,6 +153,13 @@
         });
 
         async function iniciar() {
+            await i18nListo;
+            // Los textos de regiones e idiomas dependen del idioma elegido
+            MENSAJE_USUARIO = t('onboarding.usuarioError');
+            llenarRegiones('region');
+            // Cada sesión nueva empieza con el idioma de la interfaz que eligió
+            llenarSelect('idioma-hablar', IDIOMAS_USUARIO, i18next.language);
+            llenarSelect('idioma-escribir', IDIOMAS_USUARIO, i18next.language);
             // Si ya configuró su perfil, no tiene nada que hacer aquí
             try {
                 await api('/users/me');
@@ -196,18 +199,18 @@
                 } catch (e) {
                     boton.disabled = false;
                     if (e.code === 'USERNAME_TAKEN') {
-                        errorUsuario.textContent = 'Ese nombre ya lo usa otro jugador. Prueba con otro.';
+                        errorUsuario.textContent = t('onboarding.usuarioOcupado');
                         campoUsuario.setCustomValidity('ocupado');
                         campoUsuario.focus();
                         return;
                     }
                     if (e.code === 'ALREADY_ONBOARDED') return location.replace('index.html');
-                    return avisarError(e, 'No se pudo guardar tu perfil.');
+                    return avisarError(e, t('onboarding.errorGuardar'));
                 }
                 for (const sugerencia of sugerencias) {
                     await api('/catalog/game-requests', { method: 'POST', body: sugerencia }).catch(() => {});
                 }
-                mostrarToast('¡Perfil configurado! Bienvenido a SquadFinder.');
+                mostrarToast(t('onboarding.listo'));
                 setTimeout(() => { location.href = 'index.html'; }, 1200);
             });
         }

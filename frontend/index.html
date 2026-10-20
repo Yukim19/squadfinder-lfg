@@ -48,71 +48,71 @@
 
   <main id="contenido" tabindex="-1" class="container pb-5">
     <section class="sf-hero">
-      <p class="sf-kicker mb-2">Looking For Group</p>
-      <h1 class="display-5">Encuentra tu squad ideal</h1>
-      <p class="text-secondary fs-5 mb-4">Salas por juego, rango e idioma, con chat sin toxicidad y reputación de la comunidad.</p>
+      <p class="sf-kicker mb-2" data-i18n="login.kicker">Looking For Group</p>
+      <h1 class="display-5" data-i18n="index.encabezado">Encuentra tu squad ideal</h1>
+      <p class="text-secondary fs-5 mb-4" data-i18n="index.intro">Salas por juego, rango e idioma, con chat sin toxicidad y reputación de la comunidad.</p>
       <a href="crear_post.html" class="btn btn-primary btn-lg" data-i18n="nav.crear">Crear búsqueda</a>
     </section>
 
-    <form id="form-filtros" class="sf-card mb-4" role="search" aria-label="Filtrar salas">
+    <form id="form-filtros" class="sf-card mb-4" role="search" aria-label="Filtrar salas" data-i18n-aria-label="index.filtrarAria">
       <div class="row g-3 align-items-end">
         <div class="col-12 col-lg-2">
-          <label class="form-label" for="filtro-texto">Buscar</label>
-          <input type="search" class="form-control" id="filtro-texto" placeholder="Título, juego...">
+          <label class="form-label" for="filtro-texto" data-i18n="index.buscar">Buscar</label>
+          <input type="search" class="form-control" id="filtro-texto" placeholder="Título, juego..." data-i18n-placeholder="index.buscarEjemplo">
         </div>
         <div class="col-6 col-md-4 col-lg-2">
-          <label class="form-label" for="filtro-modo">Tipo</label>
+          <label class="form-label" for="filtro-modo" data-i18n="index.tipo">Tipo</label>
           <select class="form-select" id="filtro-modo">
-            <option value="">Todos</option>
+            <option value="" data-i18n="index.todos">Todos</option>
           </select>
         </div>
         <div class="col-6 col-md-4 col-lg-2">
-          <label class="form-label" for="filtro-juego">Juego</label>
+          <label class="form-label" for="filtro-juego" data-i18n="index.juego">Juego</label>
           <select class="form-select" id="filtro-juego">
-            <option value="">Todos</option>
+            <option value="" data-i18n="index.todos">Todos</option>
           </select>
         </div>
         <div class="col-6 col-md-4 col-lg-2">
-          <label class="form-label" for="filtro-plataforma">Plataforma</label>
+          <label class="form-label" for="filtro-plataforma" data-i18n="index.plataforma">Plataforma</label>
           <select class="form-select" id="filtro-plataforma">
-            <option value="">Todas</option>
+            <option value="" data-i18n="index.todas">Todas</option>
           </select>
         </div>
         <div class="col-6 col-md-4 col-lg-2">
-          <label class="form-label" for="filtro-region">Región</label>
+          <label class="form-label" for="filtro-region" data-i18n="index.region">Región</label>
           <select class="form-select" id="filtro-region">
-            <option value="">Todas</option>
+            <option value="" data-i18n="index.todas">Todas</option>
           </select>
         </div>
         <div class="col-6 col-md-4 col-lg-2">
-          <label class="form-label" for="filtro-idioma">Idioma</label>
+          <label class="form-label" for="filtro-idioma" data-i18n="index.idioma">Idioma</label>
           <select class="form-select" id="filtro-idioma">
-            <option value="">Todos</option>
+            <option value="" data-i18n="index.todos">Todos</option>
           </select>
         </div>
         <div class="col-12 d-flex flex-wrap justify-content-between align-items-center gap-2">
           <div class="d-flex flex-wrap gap-3">
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" role="switch" id="filtro-mis-juegos">
-              <label class="form-check-label" for="filtro-mis-juegos">Solo mis juegos</label>
+              <label class="form-check-label" for="filtro-mis-juegos" data-i18n="index.soloMisJuegos">Solo mis juegos</label>
             </div>
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" role="switch" id="filtro-sin-mic">
-              <label class="form-check-label" for="filtro-sin-mic">Sin micrófono obligatorio</label>
+              <label class="form-check-label" for="filtro-sin-mic" data-i18n="index.sinMic">Sin micrófono obligatorio</label>
             </div>
           </div>
-          <button type="reset" class="btn btn-sm btn-outline-light">Limpiar filtros</button>
+          <button type="reset" class="btn btn-sm btn-outline-light" data-i18n="index.limpiar">Limpiar filtros</button>
         </div>
       </div>
     </form>
 
     <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-3">
-      <h2 class="h3 mb-0">Salas LFG activas</h2>
+      <h2 class="h3 mb-0" data-i18n="index.salasActivas">Salas LFG activas</h2>
       <!-- aria-live: los lectores de pantalla anuncian cuántas salas hay al cambiar los filtros -->
       <p class="text-secondary mb-0" id="contador-salas" aria-live="polite"></p>
     </div>
     <div id="lista-salas" class="row g-3" aria-busy="true">
-      <p class="text-secondary">Cargando salas…</p>
+      <p class="text-secondary" data-i18n="index.cargando">Cargando salas…</p>
     </div>
   </main>
 
@@ -162,13 +162,13 @@
       const circulos = Array.from({ length: sala.max_players }, (_, i) =>
         `<span class="sf-slot ${i < sala.current_players ? 'sf-slot-lleno' : ''}"></span>`).join('');
       return `<div class="sf-slots" aria-hidden="true">${circulos}</div>
-              <span class="small text-secondary">${sala.current_players}/${sala.max_players} jugadores</span>`;
+              <span class="small text-secondary">${esc(t('ui.jugadores', { actual: sala.current_players, max: sala.max_players }))}</span>`;
     }
 
     // Botón o estado según la relación del usuario con la sala
     function estadoParaMi(sala) {
-      if (sala.is_host) return '<span class="badge text-bg-info">👑 Tu sala</span>';
-      const estados = { PENDING: '⏳ Solicitud enviada', ACCEPTED: '✅ Estás dentro' };
+      if (sala.is_host) return `<span class="badge text-bg-info">${esc(t('index.tuSala'))}</span>`;
+      const estados = { PENDING: t('index.solicitudEnviada'), ACCEPTED: t('index.estasDentro') };
       return estados[sala.my_application_status] ? `<span class="badge text-bg-secondary">${estados[sala.my_application_status]}</span>` : '';
     }
 
@@ -194,12 +194,12 @@
               ${badgeModo(sala.play_mode)}
               ${sala.rank_required ? `<span class="badge">🎯 ${esc(sala.rank_required)}+</span>` : ''}
               <span class="badge">${ICONOS_IDIOMA[sala.required_language]} ${esc(IDIOMAS_SALA[sala.required_language])}</span>
-              <span class="badge">${sala.mic_required ? '🎙️ Con micrófono' : '🔇 Mic opcional'}</span>
+              <span class="badge">${esc(sala.mic_required ? t('index.conMic') : t('index.micOpcional'))}</span>
             </div>
             <div class="small text-secondary">${textoPlataformas(sala.platforms ?? [])}</div>
             <div class="mt-auto d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2">
               <div class="d-flex align-items-center gap-2">${lugares(sala)}</div>
-              ${estadoParaMi(sala) || (compatibilidad !== null ? `<span class="small text-secondary">🤝 ${compatibilidad}% compatible</span>` : '')}
+              ${estadoParaMi(sala) || (compatibilidad !== null ? `<span class="small text-secondary">${esc(t('index.compatible', { n: compatibilidad }))}</span>` : '')}
             </div>
           </article>
         </div>`;
@@ -215,21 +215,22 @@
       try {
         salas = await api('/lfg/posts', { params: parametrosDeFiltros() });
       } catch (e) {
-        lista.innerHTML = '<p class="text-danger">No se pudieron cargar las salas.</p>';
+        lista.innerHTML = `<p class="text-danger">${esc(t('index.errorCarga'))}</p>`;
         return avisarError(e);
       } finally {
         lista.setAttribute('aria-busy', 'false');
       }
       if (numero !== pedidoActual) return;
 
-      contador.textContent = salas.length === 1 ? '1 sala' : `${salas.length} salas`;
+      contador.textContent = salas.length === 1 ? t('index.unaSala') : t('index.variasSalas', { n: salas.length });
       lista.innerHTML = salas.length
         ? salas.map((s) => tarjeta(s, yo)).join('')
         : `<div class="col-12"><div class="sf-card text-center text-secondary">
-             No hay salas con esos filtros. <a href="crear_post.html">¡Crea la tuya!</a></div></div>`;
+             ${esc(t('index.vacio'))} <a href="crear_post.html">${esc(t('index.crearLaTuya'))}</a></div></div>`;
     }
 
     async function iniciar() {
+      await i18nListo;
       const yo = await iniciarPagina();
       const { juegos } = await catalogo();
 

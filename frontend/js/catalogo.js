@@ -171,3 +171,28 @@ function renderChips(contenedorId, items, nombre, seleccionados = []) {
 function chipsMarcados(nombre) {
     return [...document.querySelectorAll(`input[name="${nombre}"]:checked`)].map((i) => i.value);
 }
+
+/* ---------------------------------------------------------------------
+   Idioma: reemplaza los textos de las constantes de arriba por los del idioma
+   elegido (las mismas variables, así el resto del código no cambia).
+   --------------------------------------------------------------------- */
+function localizarCatalogo() {
+    for (const k of Object.keys(REGIONES)) REGIONES[k] = t(`catalogo.regiones.${k}`);
+    IDIOMAS_USUARIO.both = t('catalogo.idiomaAmbos');
+    IDIOMAS_SALA.any = t('catalogo.idiomaTodos');
+    for (const k of Object.keys(MODOS_JUEGO)) {
+        MODOS_JUEGO[k].texto = t(`catalogo.modos.${k}.texto`);
+        MODOS_JUEGO[k].detalle = t(`catalogo.modos.${k}.detalle`);
+    }
+    for (const k of Object.keys(ESTADOS_SALA)) ESTADOS_SALA[k].texto = t(`catalogo.estadosSala.${k}`);
+    for (const k of Object.keys(NIVELES_FILTRO)) NIVELES_FILTRO[k] = t(`catalogo.filtro.${k}`);
+    for (const k of Object.keys(ETIQUETAS_RESENA)) ETIQUETAS_RESENA[k] = t(`catalogo.etiquetas.${k}`);
+    for (const k of Object.keys(MOTIVOS_REPORTE)) MOTIVOS_REPORTE[k].texto = t(`catalogo.motivos.${k}`);
+    for (const k of Object.keys(ESTADOS_REPORTE)) ESTADOS_REPORTE[k].texto = t(`catalogo.estadosReporte.${k}`);
+    for (const k of Object.keys(PLANTILLAS_SALA)) {
+        PLANTILLAS_SALA[k].nombre = t(`catalogo.plantillas.${k}.nombre`);
+        PLANTILLAS_SALA[k].titulo = t(`catalogo.plantillas.${k}.titulo`);
+        PLANTILLAS_SALA[k].descripcion = t(`catalogo.plantillas.${k}.descripcion`);
+    }
+}
+i18nListo.then(localizarCatalogo);

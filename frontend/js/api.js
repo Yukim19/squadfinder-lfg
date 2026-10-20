@@ -11,7 +11,8 @@ const ES_LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
 
 const CONFIG = {
     // En la semana 6 se cambian por las direcciones de Render
-    API_URL: ES_LOCAL ? `http://${location.hostname}:8001/api/v1` : 'https://squadfinder-api.onrender.com/api/v1',
+    // En local se puede apuntar a otra API con localStorage 'sf-api-url' (solo para pruebas)
+    API_URL: ES_LOCAL ? (localStorage.getItem('sf-api-url') || `http://${location.hostname}:8001/api/v1`) : 'https://squadfinder-api.onrender.com/api/v1',
     CHAT_URL: ES_LOCAL ? `ws://${location.hostname}:8002/ws/chat` : 'wss://squadfinder-chat.onrender.com/ws/chat',
     // Subida de fotos de perfil (Cloudinary, plan gratis). Se llenan al crear la cuenta de Cloudinary:
     // cloudName y un "upload preset" sin firma (son datos públicos, no secretos).
@@ -132,13 +133,13 @@ async function pedir(ruta, { method = 'GET', body, params, sinSesion = false, ba
     try {
         respuesta = await fetch(url, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
     } catch {
-        throw new ErrorApi(0, 'NETWORK_ERROR', 'No se pudo conectar con el servidor. Revisa tu conexión o que la API esté encendida.');
+        throw new ErrorApi(0, 'NETWORK_ERROR', t('errores.red'));
     }
     if (respuesta.status === 204) return null;
     const datos = await respuesta.json().catch(() => null);
     if (!respuesta.ok) {
         const e = datos?.error ?? {};
-        throw new ErrorApi(respuesta.status, e.code ?? 'ERROR', e.message ?? 'Ocurrió un error inesperado.', e.details ?? null);
+        throw new ErrorApi(respuesta.status, e.code ?? 'ERROR', (i18next.exists(`errores.${e.code}`) ? t(`errores.${e.code}`) : null) ?? e.message ?? t('errores.generico'), e.details ?? null);
     }
     return datos;
 }
@@ -185,7 +186,7 @@ async function catalogo() {
 }
 
 // Muestra el error de la API en un aviso (si no es un error de sesión, que ya redirige)
-function avisarError(e, porDefecto = 'No se pudo completar la acción.') {
+function avisarError(e, porDefecto = t('errores.accion')) {
     if (ERRORES_DE_SESION[e?.code] || e?.code === 'ONBOARDING_REQUIRED') return;
     mostrarToast(e?.message || porDefecto, 'danger');
 }
