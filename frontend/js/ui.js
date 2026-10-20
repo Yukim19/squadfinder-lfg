@@ -76,7 +76,7 @@ function enlaceUsuario(id, username) {
 }
 
 // Avatar del usuario: su foto, un avatar prediseñado o la inicial del nombre
-function avatar(username, tamano = '', url = usuarioPorNombre(username)?.avatar_url) {
+function avatar(username, tamano = '', url = null) {
     if (url?.startsWith('preset:')) {
         return `<span class="sf-avatar sf-avatar-preset ${tamano}" aria-hidden="true">${esc(url.slice(7))}</span>`;
     }
@@ -151,10 +151,9 @@ function badgeModo(modo) {
 
 // % de compatibilidad entre una sala y el usuario. Versión simple de lo que
 // calculará el matchmaking-service: juego 40 + idioma 30 + región 30.
-function calcularCompatibilidad(sala, usuario = USUARIO_DEMO) {
+function calcularCompatibilidad(sala, usuario) {
     let puntos = 0;
-    // games = juegos del perfil que llegan de la API; juegos = datos de prueba de catalogo.js
-    if ((usuario.games ?? usuario.juegos).includes(sala.game_id)) puntos += 40;
+    if (usuario.games.includes(sala.game_id)) puntos += 40;
     const habla = usuario.preferred_language_speak;
     if (sala.required_language === 'any' || habla === 'both' || sala.required_language === habla) puntos += 30;
     if (sala.host_region === usuario.region) puntos += 30;
@@ -375,7 +374,7 @@ function validarFormulario(form, alEnviar) {
    Barra de navegación y arranque de cada página con sesión
    --------------------------------------------------------------------- */
 // Pone la foto (o el avatar) del usuario en el menú superior
-function pintarAvatarNavbar(usuario = _yo ?? USUARIO_DEMO) {
+function pintarAvatarNavbar(usuario = _yo) {
     const actual = document.getElementById('nav-avatar');
     if (!actual) return;
     const plantilla = document.createElement('template');
