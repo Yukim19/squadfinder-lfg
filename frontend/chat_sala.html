@@ -49,7 +49,7 @@
     </nav>
 
     <main id="contenido" tabindex="-1" class="container py-4">
-        <a href="index.html" class="d-inline-block mb-3" id="enlace-sala">← Volver a la sala</a>
+        <a href="index.html" class="d-inline-block mb-3" id="enlace-sala" data-i18n="chat.volver">← Volver a la sala</a>
 
         <div class="row g-4">
             <section class="col-lg-8">
@@ -59,22 +59,22 @@
                         <small class="text-secondary" id="chat-juego"></small>
                     </div>
                     <a href="perfil_config.html" class="badge sf-badge-honor text-decoration-none" id="chat-filtro"
-                        title="Cambiar el nivel del filtro en tu perfil"></a>
+                        title="Cambiar el nivel del filtro en tu perfil" data-i18n-title="chat.filtroTitulo"></a>
                 </div>
 
                 <div id="no-miembro" class="sf-card text-center d-none">
-                    <p class="mb-3">Solo los integrantes de la sala pueden ver el chat.</p>
-                    <a class="btn btn-primary" id="btn-ver-sala" href="index.html">Ver la sala</a>
+                    <p class="mb-3" data-i18n="chat.soloMiembros">Solo los integrantes de la sala pueden ver el chat.</p>
+                    <a class="btn btn-primary" id="btn-ver-sala" href="index.html" data-i18n="chat.verSala">Ver la sala</a>
                 </div>
 
                 <div id="zona-chat">
-                    <div id="mensajes" class="sf-card sf-chat mb-3" role="log" aria-live="polite" aria-label="Mensajes del chat" tabindex="0"></div>
+                    <div id="mensajes" class="sf-card sf-chat mb-3" role="log" aria-live="polite" aria-label="Mensajes del chat" data-i18n-aria-label="chat.mensajesAria" tabindex="0"></div>
                     <form id="form-chat">
                         <div class="input-group">
-                            <label class="visually-hidden" for="input-mensaje">Mensaje</label>
-                            <input type="text" class="form-control" id="input-mensaje" placeholder="Escribe un mensaje..."
+                            <label class="visually-hidden" for="input-mensaje" data-i18n="chat.mensaje">Mensaje</label>
+                            <input type="text" class="form-control" id="input-mensaje" placeholder="Escribe un mensaje..." data-i18n-placeholder="chat.escribe"
                                 autocomplete="off" maxlength="500" required>
-                            <button class="btn btn-primary" type="submit">Enviar</button>
+                            <button class="btn btn-primary" type="submit" data-i18n="chat.enviar">Enviar</button>
                         </div>
                         <div class="form-text text-end"><span id="contador">0</span>/500</div>
                     </form>
@@ -83,9 +83,9 @@
 
             <aside class="col-lg-4">
                 <section class="sf-card">
-                    <h2 class="h5 mb-2">En la sala</h2>
+                    <h2 class="h5 mb-2" data-i18n="chat.enLaSala">En la sala</h2>
                     <div id="lista-miembros"></div>
-                    <p class="small text-secondary mt-3 mb-0">🛡️ Los mensajes pasan por un filtro anti-toxicidad. Cada jugador decide qué tan estricto es desde su perfil.</p>
+                    <p class="small text-secondary mt-3 mb-0" data-i18n="chat.nota">🛡️ Los mensajes pasan por un filtro anti-toxicidad. Cada jugador decide qué tan estricto es desde su perfil.</p>
                 </section>
             </aside>
         </div>
@@ -144,27 +144,27 @@
             document.getElementById('lista-miembros').innerHTML = miembros.map((m) => `
                 <div class="d-flex flex-wrap align-items-center gap-2 py-2">
                     ${avatar(m.username, 'sf-avatar-sm', m.avatar_url)} ${enlaceUsuario(m.user_id, m.username)}
-                    ${m.role === 'HOST' ? '<span class="badge text-bg-warning">Anfitrión</span>' : ''}
+                    ${m.role === 'HOST' ? `<span class="badge text-bg-warning">${esc(t('chat.anfitrion'))}</span>` : ''}
                     ${badgeNivel(m.level)}
                     <span class="ms-auto small ${enLinea.has(m.user_id) ? 'text-success' : 'text-secondary'}">
-                        ${enLinea.has(m.user_id) ? '● en línea' : '○ desconectado'}</span>
+                        ${esc(enLinea.has(m.user_id) ? t('chat.enLinea') : t('chat.desconectado'))}</span>
                 </div>`).join('');
         }
 
         function pintarMensajes() {
             if (mensajes.length === 0) {
-                caja.innerHTML = '<p class="text-secondary text-center m-auto">Aún no hay mensajes. ¡Saluda a tu squad!</p>';
+                caja.innerHTML = `<p class="text-secondary text-center m-auto">${esc(t('chat.vacio'))}</p>`;
                 return;
             }
             caja.innerHTML = mensajes.map((m) => {
                 const mio = m.sender_id === yo.id;
-                const hora = new Date(m.sent_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+                const hora = new Date(m.sent_at).toLocaleTimeString(i18next.language, { hour: '2-digit', minute: '2-digit' });
                 const texto = m.hidden
-                    ? `<span class="sf-msg-oculto">🚫 Mensaje oculto por tu filtro (${esc(NIVELES_FILTRO[yo.toxicity_filter_level])}).</span>`
+                    ? `<span class="sf-msg-oculto">${esc(t('chat.oculto', { nivel: NIVELES_FILTRO[yo.toxicity_filter_level] }))}</span>`
                     : esc(m.message);
                 return `
                     <div class="sf-msg ${mio ? 'sf-msg-mio' : ''}">
-                        <small class="d-block">${mio ? 'Tú' : esc(m.username)} · ${esc(hora)}</small>
+                        <small class="d-block">${mio ? esc(t('chat.tu')) : esc(m.username)} · ${esc(hora)}</small>
                         <span>${texto}</span>
                     </div>`;
             }).join('');
@@ -185,27 +185,27 @@
 
         // ---- WebSocket ----
         async function conectar() {
-            mostrarEstado(intentos ? 'Reconectando...' : 'Conectando al chat...');
-            bloquearEscritura(true, 'Conectando...');
+            mostrarEstado(intentos ? t('chat.reconectando') : t('chat.conectando'));
+            bloquearEscritura(true, t('chat.conectandoCorto'));
             let token;
             try {
                 token = await tokenChat();
             } catch {
-                return mostrarEstado('No se pudo obtener tu sesión. Recarga la página.', 'text-danger');
+                return mostrarEstado(t('chat.sinSesion'), 'text-danger');
             }
             socket = new WebSocket(`${CONFIG.CHAT_URL}/${idSala}`);
             socket.onopen = () => socket.send(JSON.stringify({ type: 'auth', token }));
             socket.onmessage = (evento) => recibir(JSON.parse(evento.data));
             socket.onclose = (evento) => {
                 clearInterval(latido);
-                bloquearEscritura(true, 'Sin conexión');
+                bloquearEscritura(true, t('chat.sinConexion'));
                 if (cerradoAposta) return;
                 if (evento.code === 4401) return location.replace('login.html?motivo=expirada');
                 if (evento.code === 4403 || evento.code === 4404) return sinAcceso();
                 // Se cayó la conexión: reintenta con espera creciente (1, 2, 4... hasta 15 s)
                 intentos += 1;
                 const espera = Math.min(15000, 1000 * 2 ** (intentos - 1));
-                mostrarEstado(`Sin conexión con el chat. Reintentando en ${Math.round(espera / 1000)} s...`, 'text-warning');
+                mostrarEstado(t('chat.reintentando', { s: Math.round(espera / 1000) }), 'text-warning');
                 setTimeout(conectar, espera);
             };
         }
@@ -216,9 +216,9 @@
                 mensajes = datos.history;
                 soloLectura = datos.read_only;
                 yo.toxicity_filter_level = datos.user.toxicity_filter_level;
-                document.getElementById('chat-filtro').textContent = `🛡️ Filtro: ${NIVELES_FILTRO[yo.toxicity_filter_level]}`;
-                mostrarEstado(soloLectura ? '🔒 Esta partida ya terminó: el chat es de solo lectura.' : '');
-                bloquearEscritura(soloLectura, soloLectura ? 'Chat cerrado' : 'Escribe un mensaje...');
+                document.getElementById('chat-filtro').textContent = t('chat.filtro', { nivel: NIVELES_FILTRO[yo.toxicity_filter_level] });
+                mostrarEstado(soloLectura ? t('chat.soloLectura') : '');
+                bloquearEscritura(soloLectura, soloLectura ? t('chat.cerrado') : t('chat.escribe'));
                 pintarMensajes();
                 // Mantiene viva la conexión (algunos servidores cierran las inactivas)
                 latido = setInterval(() => socket.readyState === 1 && socket.send(JSON.stringify({ type: 'ping' })), 25000);
@@ -231,7 +231,7 @@
             } else if (datos.type === 'error') {
                 const quitado = ['NOT_A_MEMBER', 'POST_NOT_FOUND'].includes(datos.code);
                 if (quitado) return sinAcceso();
-                mostrarEstado(datos.message, datos.code === 'RATE_LIMITED' ? 'text-warning' : 'text-danger');
+                mostrarEstado(i18next.exists(`errores.${datos.code}`) ? t(`errores.${datos.code}`) : datos.message, datos.code === 'RATE_LIMITED' ? 'text-warning' : 'text-danger');
                 setTimeout(() => !soloLectura && mostrarEstado(''), 4000);
             }
         }
@@ -253,6 +253,7 @@
         async function iniciar() {
             if (!idSala) return location.replace('404.html');
             try {
+                await i18nListo;
                 yo = await iniciarPagina();
                 sala = await api(`/lfg/posts/${idSala}`);
             } catch (e) {
@@ -260,12 +261,12 @@
                 return mostrarErrorPagina(e.message);
             }
             miembros = sala.members;
-            document.title = `Chat: ${sala.title} - SquadFinder LFG`;
+            document.title = t('chat.titulo', { sala: sala.title });
             document.getElementById('chat-titulo').textContent = sala.title;
             document.getElementById('chat-juego').textContent = `${sala.game_name} · ${textoPlataformas(sala.platforms)}`;
             document.getElementById('enlace-sala').href = `detalle_post.html?id=${sala.id}`;
             document.getElementById('btn-ver-sala').href = `detalle_post.html?id=${sala.id}`;
-            document.getElementById('chat-filtro').textContent = `🛡️ Filtro: ${NIVELES_FILTRO[yo.toxicity_filter_level]}`;
+            document.getElementById('chat-filtro').textContent = t('chat.filtro', { nivel: NIVELES_FILTRO[yo.toxicity_filter_level] });
             pintarMiembros();
 
             // Solo los integrantes pueden chatear (el servidor también lo comprueba)

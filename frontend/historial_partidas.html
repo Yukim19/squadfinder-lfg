@@ -51,21 +51,21 @@
     <main id="contenido" tabindex="-1" class="container py-4">
         <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
             <div>
-                <h1>Historial de partidas</h1>
-                <p class="text-secondary mb-0">Tus partidas terminadas y los jugadores con los que jugaste. Califícalos para ayudarlos a subir de nivel.</p>
+                <h1 data-i18n="historial.encabezado">Historial de partidas</h1>
+                <p class="text-secondary mb-0" data-i18n="historial.intro">Tus partidas terminadas y los jugadores con los que jugaste. Califícalos para ayudarlos a subir de nivel.</p>
             </div>
-            <div class="btn-group" role="group" aria-label="Secciones del historial">
+            <div class="btn-group" role="group" aria-label="Secciones del historial" data-i18n-aria-label="historial.seccionesAria">
                 <input type="radio" class="btn-check" name="seccion" id="seccion-partidas" value="partidas" checked>
-                <label class="btn btn-outline-light" for="seccion-partidas">🎮 Partidas</label>
+                <label class="btn btn-outline-light" for="seccion-partidas" data-i18n="historial.tabPartidas">🎮 Partidas</label>
                 <input type="radio" class="btn-check" name="seccion" id="seccion-lista-negra" value="lista-negra">
-                <label class="btn btn-outline-light" for="seccion-lista-negra">🚫 Lista negra <span class="badge text-bg-secondary" id="total-lista-negra">0</span></label>
+                <label class="btn btn-outline-light" for="seccion-lista-negra"><span data-i18n="historial.tabListaNegra">🚫 Lista negra</span> <span class="badge text-bg-secondary" id="total-lista-negra">0</span></label>
             </div>
         </div>
 
         <div id="lista-historial" class="d-grid gap-3 mt-4"></div>
 
         <section id="panel-lista-negra" class="mt-4 d-none">
-            <div class="sf-card small text-secondary mb-3">
+            <div class="sf-card small text-secondary mb-3" data-i18n-html="historial.notaListaNegra">
                 🚫 Tu lista negra es <strong>personal</strong>: no castiga a nadie. Solo dejas de ver las salas que creen
                 esas personas hasta que las quites de la lista. Si alguien fue tóxico, mejor usa <strong>🚩 Reportar</strong>.
             </div>
@@ -78,18 +78,18 @@
         <div class="modal-dialog modal-dialog-centered">
             <form class="modal-content sf-modal" id="form-bloquear">
                 <div class="modal-header border-0">
-                    <h2 class="modal-title h5" id="titulo-bloquear">Agregar a la lista negra</h2>
+                    <h2 class="modal-title h5" id="titulo-bloquear" data-i18n="historial.bloquearTitulo">Agregar a la lista negra</h2>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body pt-0">
-                    <p class="small text-secondary">No verás las salas que cree esta persona. No se le avisa ni recibe ningún castigo.</p>
-                    <label class="form-label" for="motivo-bloqueo">Nota para ti <span class="text-secondary">(opcional)</span></label>
+                    <p class="small text-secondary" data-i18n="historial.bloquearAyuda">No verás las salas que cree esta persona. No se le avisa ni recibe ningún castigo.</p>
+                    <label class="form-label" for="motivo-bloqueo" data-i18n-html="historial.notaParaTi">Nota para ti <span class="text-secondary">(opcional)</span></label>
                     <input type="text" class="form-control" id="motivo-bloqueo" maxlength="200"
-                        placeholder="Ej.: No juega en equipo">
+                        placeholder="Ej.: No juega en equipo" data-i18n-placeholder="historial.notaEjemplo">
                 </div>
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Agregar a la lista negra</button>
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal" data-i18n="comun.cancelar">Cancelar</button>
+                    <button type="submit" class="btn btn-danger" data-i18n="historial.bloquearBoton">Agregar a la lista negra</button>
                 </div>
             </form>
         </div>
@@ -105,28 +105,28 @@
                 </div>
                 <div class="modal-body pt-0">
                     <fieldset class="mb-3">
-                        <legend class="form-label fs-6">¿Cómo fue jugar con esta persona?</legend>
+                        <legend class="form-label fs-6" data-i18n="historial.comoFue">¿Cómo fue jugar con esta persona?</legend>
                         <div class="sf-rating" id="estrellas">
-                            <input type="radio" name="rating" id="estrella-5" value="5" required><label for="estrella-5" title="5 - Excelente">★</label>
-                            <input type="radio" name="rating" id="estrella-4" value="4"><label for="estrella-4" title="4 - Muy bien">★</label>
-                            <input type="radio" name="rating" id="estrella-3" value="3"><label for="estrella-3" title="3 - Normal">★</label>
-                            <input type="radio" name="rating" id="estrella-2" value="2"><label for="estrella-2" title="2 - Regular">★</label>
-                            <input type="radio" name="rating" id="estrella-1" value="1"><label for="estrella-1" title="1 - Mala experiencia">★</label>
+                            <input type="radio" name="rating" id="estrella-5" value="5" required><label for="estrella-5" title="5 - Excelente" data-i18n-title="historial.estrella5">★</label>
+                            <input type="radio" name="rating" id="estrella-4" value="4"><label for="estrella-4" title="4 - Muy bien" data-i18n-title="historial.estrella4">★</label>
+                            <input type="radio" name="rating" id="estrella-3" value="3"><label for="estrella-3" title="3 - Normal" data-i18n-title="historial.estrella3">★</label>
+                            <input type="radio" name="rating" id="estrella-2" value="2"><label for="estrella-2" title="2 - Regular" data-i18n-title="historial.estrella2">★</label>
+                            <input type="radio" name="rating" id="estrella-1" value="1"><label for="estrella-1" title="1 - Mala experiencia" data-i18n-title="historial.estrella1">★</label>
                         </div>
-                        <div id="error-rating" class="text-danger small d-none" role="alert">Elige de 1 a 5 estrellas.</div>
+                        <div id="error-rating" class="text-danger small d-none" role="alert" data-i18n="historial.errorEstrellas">Elige de 1 a 5 estrellas.</div>
                     </fieldset>
                     <fieldset class="mb-3">
-                        <legend class="form-label fs-6">Destaca algo (opcional)</legend>
+                        <legend class="form-label fs-6" data-i18n="historial.destaca">Destaca algo (opcional)</legend>
                         <div class="d-flex flex-wrap gap-2" id="etiquetas"></div>
                     </fieldset>
-                    <label class="form-label" for="comentario">Comentario (opcional)</label>
+                    <label class="form-label" for="comentario" data-i18n="historial.comentario">Comentario (opcional)</label>
                     <textarea class="form-control" id="comentario" rows="2" maxlength="300"></textarea>
                     <div class="form-text text-end"><span id="contador-comentario">0</span>/300</div>
                 </div>
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-outline-danger me-auto d-none" id="btn-borrar-resena">Borrar reseña</button>
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-outline-danger me-auto d-none" id="btn-borrar-resena" data-i18n="historial.borrarResena">Borrar reseña</button>
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal" data-i18n="comun.cancelar">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="comun.guardar">Guardar</button>
                 </div>
             </form>
         </div>
@@ -165,7 +165,7 @@
             <input type="radio" class="btn-check" name="tag" id="tag-${valor}" value="${valor}" autocomplete="off">
             <label class="btn btn-outline-light sf-chip" for="tag-${valor}">${esc(texto)}</label>`).join('');
 
-        const fecha = (iso) => (iso ? new Date(iso).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
+        const fecha = (iso) => (iso ? new Date(iso).toLocaleDateString(i18next.language, { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
         async function cargar() {
             [partidas, bloqueados] = await Promise.all([api('/lfg/history'), api('/users/me/blocks')]);
@@ -177,8 +177,8 @@
             if (partidas.length === 0) {
                 lista.innerHTML = `
                     <div class="sf-card text-center">
-                        <p class="text-secondary">Aún no tienes partidas terminadas.</p>
-                        <a href="index.html" class="btn btn-primary">Buscar una sala</a>
+                        <p class="text-secondary">${esc(t('historial.vacio'))}</p>
+                        <a href="index.html" class="btn btn-primary">${esc(t('historial.buscarSala'))}</a>
                     </div>`;
                 return;
             }
@@ -197,17 +197,17 @@
                         <div class="d-flex flex-wrap align-items-center gap-2">
                             ${c.already_reviewed
                                 ? `${estrellas(c.my_review.rating)}
-                                   <button class="btn btn-sm btn-outline-light" data-resena="${p.post_id}-${c.user_id}">Editar</button>`
-                                : `<button class="btn btn-sm btn-warning" data-resena="${p.post_id}-${c.user_id}">⭐ Calificar</button>`}
+                                   <button class="btn btn-sm btn-outline-light" data-resena="${p.post_id}-${c.user_id}">${esc(t('historial.editar'))}</button>`
+                                : `<button class="btn btn-sm btn-warning" data-resena="${p.post_id}-${c.user_id}">${esc(t('historial.calificar'))}</button>`}
                             ${c.already_reported
-                                ? '<span class="badge text-bg-danger" title="Un administrador revisará tu reporte">🚩 Reportado</span>'
+                                ? `<span class="badge text-bg-danger" title="${esc(t('historial.reportadoTitulo'))}">${esc(t('historial.reportado'))}</span>`
                                 : `<button class="btn btn-sm btn-outline-danger" data-reportar="${p.post_id}-${c.user_id}"
-                                       title="Reportar comportamiento tóxico">🚩 Reportar</button>`}
+                                       title="${esc(t('historial.reportarTitulo'))}">${esc(t('historial.reportar'))}</button>`}
                             ${c.is_blocked
                                 ? `<button class="btn btn-sm btn-outline-light" data-desbloquear="${c.user_id}"
-                                       title="Volver a ver sus salas">✓ En lista negra · Quitar</button>`
+                                       title="${esc(t('historial.enListaNegraTitulo'))}">${esc(t('historial.enListaNegra'))}</button>`
                                 : `<button class="btn btn-sm btn-outline-light" data-bloquear="${c.user_id}"
-                                       title="Dejar de ver sus salas">🚫 Lista negra</button>`}
+                                       title="${esc(t('historial.listaNegraTitulo'))}">${esc(t('historial.listaNegra'))}</button>`}
                         </div>
                     </div>`).join('');
 
@@ -217,9 +217,9 @@
                         <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
                             <div>
                                 <h2 class="h5 mb-1">${esc(p.game_name)} · ${esc(p.title)}</h2>
-                                <small class="text-secondary">${esc(textoPlataformas(p.platforms))} · ${esc(fecha(p.closed_at))} · ${p.teammates.length} compañeros</small>
+                                <small class="text-secondary">${esc(textoPlataformas(p.platforms))} · ${esc(fecha(p.closed_at))} · ${esc(t('historial.companeros', { n: p.teammates.length }))}</small>
                             </div>
-                            ${pendientes ? `<span class="badge text-bg-warning">${pendientes} por calificar</span>` : '<span class="badge sf-badge-honor">Todo calificado ✓</span>'}
+                            ${pendientes ? `<span class="badge text-bg-warning">${esc(t('historial.porCalificar', { n: pendientes }))}</span>` : `<span class="badge sf-badge-honor">${esc(t('historial.todoCalificado'))}</span>`}
                         </div>
                         ${companeros}
                     </article>`;
@@ -235,12 +235,12 @@
                             ${avatar(b.username, '', b.avatar_url)}
                             <div>
                                 ${enlaceUsuario(b.user_id, b.username)}
-                                <div class="small text-secondary">Desde ${esc(fecha(b.created_at))}${b.reason ? ` · "${esc(b.reason)}"` : ''}</div>
+                                <div class="small text-secondary">${esc(t('historial.desde', { fecha: fecha(b.created_at) }))}${b.reason ? ` · "${esc(b.reason)}"` : ''}</div>
                             </div>
                         </div>
-                        <button class="btn btn-sm btn-outline-light" data-desbloquear="${b.user_id}">Quitar de la lista</button>
+                        <button class="btn btn-sm btn-outline-light" data-desbloquear="${b.user_id}">${esc(t('historial.quitarDeLista'))}</button>
                     </div>`).join('')
-                : '<div class="sf-card text-center text-secondary">Tu lista negra está vacía.</div>';
+                : `<div class="sf-card text-center text-secondary">${esc(t('historial.listaVacia'))}</div>`;
         }
 
         const buscarCompanero = (clave) => {
@@ -254,7 +254,7 @@
             const form = document.getElementById('form-resena');
             form.reset();
             document.getElementById('error-rating').classList.add('d-none');
-            document.getElementById('titulo-resena').textContent = `Calificar a ${c.username}`;
+            document.getElementById('titulo-resena').textContent = t('historial.calificarA', { usuario: c.username });
             const r = c.my_review;
             if (r) {
                 document.getElementById(`estrella-${r.rating}`).checked = true;
@@ -293,7 +293,7 @@
                     method: 'POST',
                     body: { user_id: usuarioABloquear.user_id, reason: document.getElementById('motivo-bloqueo').value.trim() || null },
                 }),
-                `${usuarioABloquear.username} está en tu lista negra. Ya no verás sus salas.`, 'info');
+                t('historial.bloqueado', { usuario: usuarioABloquear.username }), 'info');
         });
 
         // Botones de bloquear y quitar, tanto en las partidas como en la lista
@@ -303,13 +303,13 @@
             if (boton.dataset.bloquear) {
                 const id = Number(boton.dataset.bloquear);
                 usuarioABloquear = partidas.flatMap((p) => p.teammates).find((t) => t.user_id === id);
-                document.getElementById('titulo-bloquear').textContent = `Agregar a ${usuarioABloquear.username} a la lista negra`;
+                document.getElementById('titulo-bloquear').textContent = t('historial.bloquearTituloUsuario', { usuario: usuarioABloquear.username });
                 document.getElementById('motivo-bloqueo').value = '';
                 modalBloquear.show();
             }
             if (boton.dataset.desbloquear) {
                 await accion(() => api(`/users/me/blocks/${boton.dataset.desbloquear}`, { method: 'DELETE' }),
-                    'Salió de tu lista negra.', 'info');
+                    t('historial.desbloqueado'), 'info');
             }
             if (boton.dataset.reportar) {
                 const { partida, c } = buscarCompanero(boton.dataset.reportar);
@@ -350,19 +350,20 @@
                 () => c.my_review
                     ? api(`/reputation/reviews/${c.my_review.id}`, { method: 'PUT', body: datos })
                     : api('/reputation/reviews', { method: 'POST', body: { ...datos, post_id: partida.post_id, target_user_id: c.user_id } }),
-                c.my_review ? 'Reseña actualizada.' : `¡Gracias! Calificaste a ${c.username}.`);
+                c.my_review ? t('historial.actualizada') : t('historial.gracias', { usuario: c.username }));
         });
 
         document.getElementById('btn-borrar-resena').addEventListener('click', async () => {
             const { c } = companeroActual;
             modalResena.hide();
-            if (await confirmar({ titulo: 'Borrar reseña', mensaje: `Se quitará tu calificación a ${c.username}.`, textoBoton: 'Borrar' })) {
-                await accion(() => api(`/reputation/reviews/${c.my_review.id}`, { method: 'DELETE' }), 'Reseña borrada.', 'info');
+            if (await confirmar({ titulo: t('historial.borrarTitulo'), mensaje: t('historial.borrarMensaje', { usuario: c.username }), textoBoton: t('historial.borrarBoton') })) {
+                await accion(() => api(`/reputation/reviews/${c.my_review.id}`, { method: 'DELETE' }), t('historial.borrada'), 'info');
             }
         });
 
         async function iniciar() {
             try {
+                await i18nListo;
                 yo = await iniciarPagina();
                 await cargar();
             } catch (e) {
