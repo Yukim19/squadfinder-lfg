@@ -68,11 +68,11 @@
                 </div>
 
                 <div id="zona-chat">
-                    <div id="mensajes" class="sf-card sf-chat mb-3" role="log" aria-live="polite" aria-label="Mensajes del chat" data-i18n-aria-label="chat.mensajesAria" tabindex="0"></div>
+                    <div id="mensajes" class="sf-dc mb-3" role="log" aria-live="polite" aria-label="Mensajes del chat" data-i18n-aria-label="chat.mensajesAria" tabindex="0"></div>
                     <form id="form-chat">
-                        <div class="input-group">
+                        <div class="sf-dc-compositor">
                             <label class="visually-hidden" for="input-mensaje" data-i18n="chat.mensaje">Mensaje</label>
-                            <input type="text" class="form-control" id="input-mensaje" placeholder="Escribe un mensaje..." data-i18n-placeholder="chat.escribe"
+                            <input type="text" class="form-control border-0 bg-transparent shadow-none px-0" id="input-mensaje" placeholder="Escribe un mensaje..." data-i18n-placeholder="chat.escribe"
                                 autocomplete="off" maxlength="500" required>
                             <button class="btn btn-primary" type="submit" data-i18n="chat.enviar">Enviar</button>
                         </div>
@@ -106,6 +106,7 @@
     <script src="js/api.js"></script>
     <script src="js/catalogo.js"></script>
     <script src="js/ui.js"></script>
+    <script src="js/mensajes.js"></script>
     <script>
         // Chat en tiempo real. La sala y sus integrantes salen de la API (puerto 8001);
         // los mensajes viajan por WebSocket con el servicio de chat (puerto 8002):
@@ -143,7 +144,7 @@
         function pintarMiembros() {
             document.getElementById('lista-miembros').innerHTML = miembros.map((m) => `
                 <div class="d-flex flex-wrap align-items-center gap-2 py-2">
-                    ${avatar(m.username, 'sf-avatar-sm', m.avatar_url)} ${enlaceUsuario(m.user_id, m.username)}
+                    <span class="sf-av-wrap">${avatar(m.username, 'sf-avatar-sm', m.avatar_url)}<span class="sf-punto ${enLinea.has(m.user_id) ? 'en-linea' : ''}"></span></span> ${enlaceUsuario(m.user_id, m.username)}
                     ${m.role === 'HOST' ? `<span class="badge text-bg-warning">${esc(t('chat.anfitrion'))}</span>` : ''}
                     ${badgeNivel(m.level)}
                     <span class="ms-auto small ${enLinea.has(m.user_id) ? 'text-success' : 'text-secondary'}">
@@ -153,21 +154,14 @@
 
         function pintarMensajes() {
             if (mensajes.length === 0) {
-                caja.innerHTML = `<p class="text-secondary text-center m-auto">${esc(t('chat.vacio'))}</p>`;
+                caja.innerHTML = `<p class="sf-dc-vacio">${esc(t('chat.vacio'))}</p>`;
                 return;
             }
-            caja.innerHTML = mensajes.map((m) => {
-                const mio = m.sender_id === yo.id;
-                const hora = new Date(m.sent_at).toLocaleTimeString(i18next.language, { hour: '2-digit', minute: '2-digit' });
-                const texto = m.hidden
-                    ? `<span class="sf-msg-oculto">${esc(t('chat.oculto', { nivel: NIVELES_FILTRO[yo.toxicity_filter_level] }))}</span>`
-                    : esc(m.message);
-                return `
-                    <div class="sf-msg ${mio ? 'sf-msg-mio' : ''}">
-                        <small class="d-block">${mio ? esc(t('chat.tu')) : esc(m.username)} · ${esc(hora)}</small>
-                        <span>${texto}</span>
-                    </div>`;
-            }).join('');
+            // Mismo estilo que los mensajes privados (htmlMensajesDiscord vive en js/mensajes.js)
+            caja.innerHTML = htmlMensajesDiscord(mensajes, {
+                nivel: yo.toxicity_filter_level,
+                quien: (m) => ({ username: m.username, avatar_url: m.avatar_url }),
+            });
             caja.scrollTop = caja.scrollHeight;
         }
 

@@ -68,6 +68,7 @@
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <a class="btn btn-outline-light d-none" id="u-editar" href="perfil_config.html" data-i18n="usuario.editar">Editar mi perfil</a>
+                <button type="button" class="btn btn-outline-light d-none" id="u-amigo"></button>
                 <button type="button" class="btn btn-outline-light d-none" id="u-bloquear">🚫 Lista negra</button>
                 <button type="button" class="btn btn-outline-danger d-none" id="u-reportar" data-i18n="usuario.reportar">🚩 Reportar</button>
             </div>
@@ -115,6 +116,7 @@
     <script src="js/api.js"></script>
     <script src="js/catalogo.js"></script>
     <script src="js/ui.js"></script>
+    <script src="js/mensajes.js"></script>
     <script>
         // Dos consultas: GET /users/{id} (datos públicos, juegos y cuentas) y
         // GET /reputation/users/{id} (nivel, XP, promedio de reseñas, etiquetas y reseñas recientes).
@@ -206,6 +208,30 @@
             pintarBloqueo();
         });
 
+        // Amistad: agregar, cancelar la solicitud, aceptarla o escribirle (js/mensajes.js)
+        const botonAmigo = document.getElementById('u-amigo');
+        const TEXTO_AMISTAD = { NONE: 'amigos.perfilAgregar', REQUEST_SENT: 'amigos.perfilEnviada', REQUEST_RECEIVED: 'amigos.perfilRecibida', FRIENDS: 'amigos.perfilAmigos' };
+        async function pintarAmistad() {
+            if (u.id === yo.id) return botonAmigo.classList.add('d-none');
+            let estado;
+            try { estado = (await api(`/friends/status/${u.id}`)).status; } catch { return; }
+            botonAmigo.dataset.estado = estado;
+            botonAmigo.textContent = t(TEXTO_AMISTAD[estado]);
+            botonAmigo.className = `btn ${estado === 'FRIENDS' ? 'btn-primary' : estado === 'REQUEST_RECEIVED' ? 'btn-success' : 'btn-outline-light'}`;
+        }
+        botonAmigo.addEventListener('click', async () => {
+            const estado = botonAmigo.dataset.estado;
+            try {
+                if (estado === 'NONE') await agregarAmigo(u.id, u.username);
+                else if (estado === 'REQUEST_SENT') { await eliminarAmistad(u.id); mostrarToast(t('amigos.cancelada'), 'info'); }
+                else if (estado === 'REQUEST_RECEIVED') await aceptarSolicitudDe(u.id, u.username);
+                else if (estado === 'FRIENDS') abrirMensajes(u.id);
+            } catch (err) {
+                avisarError(err);
+            }
+            pintarAmistad();
+        });
+
         let juegos = [];
         let generos = [];
 
@@ -222,6 +248,7 @@
             }
             bloqueado = u.is_blocked_by_me;
             pintar();
+            pintarAmistad();
             // El servidor solo acepta reportes de gente con la que se jugó una partida
             const reportar = document.getElementById('u-reportar');
             if (u.id !== yo.id) {

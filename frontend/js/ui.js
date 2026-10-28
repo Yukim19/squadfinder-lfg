@@ -434,6 +434,8 @@ async function iniciarNavbar() {
     nombre.textContent = yo.username;
     pintarAvatarNavbar(yo);
     agregarBotonIdioma();
+    // Amigos y mensajes privados (js/mensajes.js); si falla, la página sigue funcionando
+    if (typeof iniciarMensajes === 'function') iniciarMensajes(yo).catch(() => {});
     document.getElementById('nav-perfil-publico').href = `usuario.html?id=${yo.id}`;
 
     // Solo los administradores ven el panel de moderación

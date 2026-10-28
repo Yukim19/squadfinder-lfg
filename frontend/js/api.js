@@ -14,6 +14,9 @@ const CONFIG = {
     // En local se puede apuntar a otra API con localStorage 'sf-api-url' (solo para pruebas)
     API_URL: ES_LOCAL ? (localStorage.getItem('sf-api-url') || `http://${location.hostname}:8001/api/v1`) : 'https://squadfinder-api.onrender.com/api/v1',
     CHAT_URL: ES_LOCAL ? `ws://${location.hostname}:8002/ws/chat` : 'wss://squadfinder-chat.onrender.com/ws/chat',
+    // Mensajes privados entre amigos: el mismo servicio de chat, otra ruta
+    DM_URL: ES_LOCAL ? `ws://${location.hostname}:8002/ws/dm` : 'wss://squadfinder-chat.onrender.com/ws/dm',
+    CHAT_API: ES_LOCAL ? `http://${location.hostname}:8002/api/v1` : 'https://squadfinder-chat.onrender.com/api/v1',
     // Subida de fotos de perfil (Cloudinary, plan gratis). Se llenan al crear la cuenta de Cloudinary:
     // cloudName y un "upload preset" sin firma (son datos públicos, no secretos).
     CLOUDINARY: { cloudName: '', uploadPreset: '' },
@@ -66,6 +69,11 @@ async function clienteAuth0() {
             clientId: CONFIG.AUTH0.clientId,
             // La sesión se recuerda al cambiar de página (cada página es una carga nueva)
             cacheLocation: 'localstorage',
+            // Renueva el acceso con un "refresh token". Si Auth0 no lo entrega (la API no tiene activado
+            // "Allow Offline Access"), usa el método anterior (una ventana oculta), que algunos
+            // navegadores bloquean. Así la sesión no se cae sola al vencer el token.
+            useRefreshTokens: true,
+            useRefreshTokensFallback: true,
             authorizationParams: {
                 audience: CONFIG.AUTH0.audience,
                 redirect_uri: `${location.origin}/login.html`,

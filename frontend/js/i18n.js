@@ -18,7 +18,9 @@ function idiomaInicial() {
         const guardado = localStorage.getItem(CLAVE_IDIOMA);
         if (IDIOMAS_UI.includes(guardado)) return guardado;
     } catch { /* sin almacenamiento */ }
-    return navigator.language?.toLowerCase().startsWith('en') ? 'en' : 'es';
+    // La plataforma es hispanohablante: el español es el idioma por defecto, sin importar el idioma
+    // del navegador. Quien prefiera inglés lo elige en el menú (se guarda en su perfil).
+    return 'es';
 }
 
 const t = (clave, opciones) => i18next.t(clave, opciones);
@@ -47,7 +49,13 @@ const i18nListo = i18next
 // Cambia el idioma, lo recuerda y recarga la página para volver a pintar todo
 async function cambiarIdioma(idioma, { recargar = true } = {}) {
     if (!IDIOMAS_UI.includes(idioma) || idioma === i18next.language) return;
-    try { localStorage.setItem(CLAVE_IDIOMA, idioma); } catch { /* nada */ }
+    let recordado = false;
+    try {
+        localStorage.setItem(CLAVE_IDIOMA, idioma);
+        recordado = localStorage.getItem(CLAVE_IDIOMA) === idioma;
+    } catch { /* sin almacenamiento (modo privado) */ }
     await i18next.changeLanguage(idioma);
-    if (recargar) location.reload();
+    // Si el navegador no puede recordar la elección, recargar lo devolvería al idioma anterior
+    // y se repetiría sin fin: en ese caso solo se cambia el idioma de este momento.
+    if (recargar && recordado) location.reload();
 }
