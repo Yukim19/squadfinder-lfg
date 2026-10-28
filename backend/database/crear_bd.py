@@ -55,6 +55,7 @@ def main() -> None:
 
     url = leer_database_url()
     host = conninfo_to_dict(url).get("host", "")
+    print(f"Conectando a: {host or '(servidor local por defecto)'}")
     if args.reset and host not in ("localhost", "127.0.0.1", "::1") and not args.forzar:
         sys.exit(f"--reset borraría todos los datos de '{host}'. Si de verdad quieres hacerlo, agrega --forzar.")
 

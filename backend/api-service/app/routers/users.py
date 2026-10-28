@@ -1,6 +1,8 @@
 """Usuarios: onboarding, perfil, cuentas vinculadas, perfil público y lista negra."""
 
-from fastapi import APIRouter, Response
+from typing import Annotated
+
+from fastapi import APIRouter, Query, Response
 from psycopg import Connection
 
 from ..errors import ApiError
@@ -189,6 +191,36 @@ def desbloquear(user_id: int, usuario: Usuario, db: Db) -> Response:
     if not borrado:
         raise ApiError(404, "NOT_BLOCKED", "Ese jugador no está en tu lista negra.")
     return Response(status_code=204)
+
+
+# ---------------------------------------------------------------------------
+# Buscador de jugadores (para agregar amigos). Va antes de /{user_id}
+# ---------------------------------------------------------------------------
+@router.get("/search", summary="Buscar jugadores por nombre de usuario")
+def buscar(usuario: Usuario, db: Db, q: Annotated[str, Query(min_length=2, max_length=30)]) -> list[dict]:
+    # Los comodines de LIKE escritos por el usuario se escapan para que se busquen como texto normal
+    patron = "%" + q.strip().replace("\\", "\\\\").replace("%", r"\%").replace("_", r"\_") + "%"
+    return db.execute(
+        """
+        SELECT u.id, u.username, u.avatar_url, u.level,
+               CASE WHEN f.id IS NULL THEN 'NONE'
+                    WHEN f.status = 'ACCEPTED' THEN 'FRIENDS'
+                    WHEN f.requester_id = %(yo)s THEN 'REQUEST_SENT'
+                    ELSE 'REQUEST_RECEIVED' END AS friendship
+        FROM users u
+        LEFT JOIN friendships f
+               ON LEAST(f.requester_id, f.addressee_id) = LEAST(u.id, %(yo)s)
+              AND GREATEST(f.requester_id, f.addressee_id) = GREATEST(u.id, %(yo)s)
+        WHERE u.username ILIKE %(patron)s AND u.id <> %(yo)s
+          AND u.is_onboarding_completed AND u.account_status <> 'BANNED'
+          AND NOT EXISTS (SELECT 1 FROM user_blocks b
+                          WHERE (b.blocker_id = %(yo)s AND b.blocked_id = u.id)
+                             OR (b.blocker_id = u.id AND b.blocked_id = %(yo)s))
+        ORDER BY (LOWER(u.username) = LOWER(%(q)s)) DESC, u.username
+        LIMIT 8
+        """,
+        {"yo": usuario["id"], "patron": patron, "q": q.strip()},
+    ).fetchall()
 
 
 # ---------------------------------------------------------------------------

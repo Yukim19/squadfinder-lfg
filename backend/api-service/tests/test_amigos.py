@@ -93,3 +93,21 @@ def test_bloquear_deshace_la_amistad(cliente):
     assert r.status_code == 201
     assert cliente.get(f"{AMIGOS}/status/2", headers=como("ana")).json()["status"] == "NONE"
     assert cliente.get(AMIGOS, headers=como("bruno")).json() == []
+
+
+def test_buscar_jugadores_para_agregar(cliente):
+    def buscar(usuario, q):
+        return cliente.get("/api/v1/users/search", headers=como(usuario), params={"q": q})
+
+    r = buscar("ana", "br").json()
+    assert [(j["username"], j["friendship"]) for j in r] == [("bruno_tank", "FRIENDS")]
+    assert [(j["username"], j["friendship"]) for j in buscar("ana", "carl").json()] == [("carla_heals", "REQUEST_RECEIVED")]
+    assert [(j["username"], j["friendship"]) for j in buscar("carla", "ana").json()] == [("ana_gg", "REQUEST_SENT")]
+    assert [(j["username"], j["friendship"]) for j in buscar("diego", "carla").json()] == [("carla_heals", "NONE")]
+    # No aparece uno mismo ni quien está en una lista negra (en ningún sentido)
+    assert buscar("ana", "ana").json() == []
+    assert buscar("diego", "bruno").json() == []
+    assert buscar("bruno", "diego").json() == []
+    # Los comodines se buscan como texto, y se piden al menos 2 letras
+    assert buscar("ana", "%%").json() == []
+    assert buscar("ana", "b").status_code == 422
