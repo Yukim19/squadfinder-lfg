@@ -1,0 +1,59 @@
+# Configuración de despliegue del backend en Render (plan gratis).
+# Render lee este archivo cuando creas un "Blueprint" desde el panel (ver docs/despliegue.md).
+# Los valores con "sync: false" son secretos o dependen de tu cuenta: Render te los pide al
+# crear el Blueprint y NUNCA se escriben en este archivo ni se suben a GitHub.
+
+services:
+  # API REST: usuarios, salas, reseñas, reportes, amigos y administración
+  - type: web
+    name: squadfinder-api
+    runtime: python
+    plan: free
+    rootDir: backend/api-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.5
+      - key: ENVIRONMENT
+        value: production
+      - key: AUTH_MODE
+        value: auth0
+      # Datos públicos de Auth0 (no son secretos)
+      - key: AUTH0_DOMAIN
+        value: squadfinder-lfg.us.auth0.com
+      - key: AUTH0_AUDIENCE
+        value: https://api.squadfinder-lfg
+      # Cadena de conexión de Neon (secreta)
+      - key: DATABASE_URL
+        sync: false
+      # Páginas que pueden llamar a la API, en formato JSON. Ejemplo:
+      # ["https://squadfinder-lfg.netlify.app"]
+      - key: CORS_ORIGINS
+        sync: false
+
+  # Chat en vivo (salas y mensajes privados) por WebSocket con filtro anti-toxicidad
+  - type: web
+    name: squadfinder-chat
+    runtime: python
+    plan: free
+    rootDir: backend/realtime-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.5
+      - key: ENVIRONMENT
+        value: production
+      - key: AUTH_MODE
+        value: auth0
+      - key: AUTH0_DOMAIN
+        value: squadfinder-lfg.us.auth0.com
+      - key: AUTH0_AUDIENCE
+        value: https://api.squadfinder-lfg
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false

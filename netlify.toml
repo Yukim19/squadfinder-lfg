@@ -1,0 +1,31 @@
+# Configuración de despliegue del frontend en Netlify (plan gratis).
+# Son páginas estáticas: no hay paso de compilación, solo se publica la carpeta "frontend".
+
+[build]
+  publish = "frontend"
+
+# Seguridad básica para todas las páginas
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# El navegador revisa si hay una versión nueva antes de usar sus copias guardadas, así
+# nadie se queda con scripts o estilos viejos después de una actualización.
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache"
